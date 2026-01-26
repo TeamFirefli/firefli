@@ -323,12 +323,12 @@ export default function StickyNoteAnnouncement() {
                     </a>
                     . Submit suggestions in
                     <a
-                      href="https://discord.gg/planetary"
+                      href="https://discord.gg/WtEkchUKqe"
                       target="_blank"
                       rel="noreferrer noopener"
                       className="ml-1 text-primary underline"
                     >
-                      .gg/planetary
+                      .gg/firefli
                     </a>
                     .
                   </p>
