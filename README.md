@@ -1,5 +1,5 @@
 >[!IMPORTANT]
->**Work-in-progress** - Planetary is currently in the process of updating this read me and creating our documentation for Firefli. We recommend you host for free with our online platform, however you can still self-host by following our <a href="https://docs.firefli.net">Documentation</a>. Expect bugs in this beta. We've tried our best to iron out everything we could find in Tovy and Orbit, but we expect there to be issues. Let us know by creating an issue, or if you're adventurous... patch it yourself and send in a PR.
+>**Work-in-progress** - Firefli is currently in the process of updating this read me and creating our documentation for Firefli. We recommend you host for free with our online platform, however you can still self-host by following our <a href="https://docs.firefli.net">Documentation</a>. Expect bugs in this beta. We've tried our best to iron out everything we could find in Tovy and Orbit, but we expect there to be issues. Let us know by creating an issue, or if you're adventurous... patch it yourself and send in a PR.
 
 >[!TIP]
 > The best and easiest way to get started with Firefli is our cloud hosting solution. It's easy, secure, and superfast. See https://firefli.net to get started. The best part? It's **FREE**!
