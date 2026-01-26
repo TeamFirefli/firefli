@@ -35,7 +35,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 		}
 
 		// Generate a secure API key
-		const apiKeyValue = `orbit_${crypto.randomBytes(32).toString("hex")}`
+		const apiKeyValue = `firefli_${crypto.randomBytes(32).toString("hex")}`
 
 		// Calculate expiration date if provided
 		let expiresAt = null

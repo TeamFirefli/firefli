@@ -93,7 +93,7 @@ export default async function handler(
 
           if (workspace.groupName) {
             embed.footer = {
-              text: `${workspace.groupName} • Orbit`,
+              text: `${workspace.groupName} | Firefli`,
             };
           }
 

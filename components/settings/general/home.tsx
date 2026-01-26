@@ -94,8 +94,8 @@ const Color: FC<props> = (props) => {
           onClick={updateHome}
           className={clsx(
             "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-            workspace.groupTheme === "bg-orbit"
-              ? "bg-orbit text-white hover:bg-orbit/90"
+            workspace.groupTheme === "bg-firefli"
+              ? "bg-firefli text-white hover:bg-firefli/90"
               : workspace.groupTheme === "bg-blue-500"
               ? "bg-blue-500 text-white hover:bg-blue-600"
               : workspace.groupTheme === "bg-red-500"

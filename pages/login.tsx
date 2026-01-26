@@ -531,7 +531,7 @@ const Login: NextPage = () => {
                     🔨 Create an account
                   </p>
                   <p className="text-md text-zinc-600 dark:text-zinc-300 mb-6">
-                    Create a new account for Orbit
+                    Create a new account for Firefli
                   </p>
 
                   {!oauthOnly && (

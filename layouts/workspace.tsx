@@ -47,7 +47,7 @@ const workspace: LayoutProps = ({ children }) => {
 			"bg-sky-400": colors.sky[400],
 			"bg-indigo-400": colors.indigo[400],
 			"bg-violet-400": colors.violet[400],
-			"bg-orbit": "#FF0099",
+			"bg-firefli": "#3498db",
 			"bg-rose-600": colors.rose[600],
 			"bg-orange-600": colors.orange[600],
 			"bg-amber-600": colors.amber[600],
@@ -111,7 +111,7 @@ const workspace: LayoutProps = ({ children }) => {
 	return (
 		<div className="h-screen bg-zinc-50 dark:bg-zinc-900 overflow-hidden">
 			<Head>
-				<title>{workspace.groupName ? `Orbit - ${workspace.groupName}` : "Loading..."}</title>
+				<title>{workspace.groupName ? `Firefli - ${workspace.groupName}` : "Loading..."}</title>
 				<link rel="icon" href={`${workspace.groupThumbnail}`} />
 			</Head>
 

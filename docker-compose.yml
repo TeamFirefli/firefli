@@ -1,5 +1,5 @@
 services:
-  orbit:
+  firefli:
     restart: "unless-stopped"
     tty: true
     build: "."
@@ -10,7 +10,7 @@ services:
       db: # Disable this if you are using an external Postgres database
         condition: service_healthy
     ports:
-      - "3000:3000" # Set these to the port you wish to run Orbit on.
+      - "3000:3000" # Set these to the port you wish to run Firefli on.
 
   # Comment out everything below this point if you are using an external Postgres database
   db:

@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: planetaryorbit/orbit
+  IMAGE_NAME: teamfirefli/firefli
 
 jobs:
   build-and-push:

@@ -8,14 +8,10 @@ module.exports = {
 	theme: {
 	  extend: {
 		colors: {
-		  tovybg: "#FF0099",
-		  orbit: "#FF0099",
+		  tovybg: "#3498db",
+		  orbit: "#3498db",
 		  primary: 'rgb(var(--group-theme) / <alpha-value>)',
 		},
-		backgroundImage: theme => ({
-		  'infobg-light': "url('/orbitbackground-light.svg')",
-		  'infobg-dark': "url('/orbitbackground-dark.svg')",
-		}),
 	  },
 	},
 	plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],

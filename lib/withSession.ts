@@ -26,7 +26,7 @@ const code = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"
 
 const sessionOptions: SessionOptions = {
   password: code,
-  cookieName: "orbit_session",
+  cookieName: "firefli_session",
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,

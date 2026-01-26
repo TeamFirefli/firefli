@@ -149,7 +149,7 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
     "bg-sky-400",
     "bg-indigo-400",
     "bg-violet-400",
-    "bg-orbit",
+	"bg-firefli",
     "bg-rose-600",
     "bg-orange-600",
     "bg-amber-600",
@@ -172,7 +172,6 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
     "bg-purple-500",
     "bg-pink-500",
     "bg-zinc-500",
-    "bg-orbit",
   ];
 
   const sessionColorTypes = [
@@ -305,7 +304,6 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
 
 function getColorDisplayName(color: string): string {
   const colorDisplayMap: Record<string, string> = {
-    "bg-orbit": "Orbit",
     "bg-blue-500": "Blue",
     "bg-red-500": "Red",
     "bg-red-700": "Dark Red",
@@ -331,7 +329,7 @@ function getRGBFromTailwindColor(tw: any): string {
   }
   const colorName = tw.replace("bg-", "");
 
-  if (colorName === "orbit") {
+  if (colorName === "firefli") {
     return "0, 112, 240";
   }
 

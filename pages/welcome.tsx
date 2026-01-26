@@ -16,7 +16,7 @@ type FormData = {
 };
 
 const Login: NextPage = () => {
-	const [selectedColor, setSelectedColor] = useState("bg-orbit");
+	const [selectedColor, setSelectedColor] = useState("bg-firefli");
 	const [login, setLogin] = useRecoilState(loginState);
 	const [isLoading, setIsLoading] = useState(false);
 	const methods = useForm<{groupid: string}>();
@@ -104,7 +104,7 @@ const Login: NextPage = () => {
 		"bg-sky-400",
 		"bg-indigo-400",
 		"bg-violet-400",
-		"bg-orbit",
+		"bg-firefli",
 		"bg-rose-600",
 		"bg-orange-600",
 		"bg-amber-600",
@@ -119,13 +119,13 @@ const Login: NextPage = () => {
 	return (
 		<div className="flex bg-infobg-light dark:bg-infobg-dark h-screen bg-no-repeat bg-cover bg-center">
 			<p className="text-md -mt-1 text-white absolute top-4 left-4 xs:hidden md:text-6xl font-extrabold">
-				👋 Welcome <br /> to <span className="text-pink-100 "> Orbit </span>
+				👋 Welcome <br /> to <span className="text-pink-100 "> Firefli </span>
 			</p>
 			<Slider activeSlide={selectedSlide}>
 				<div>
 					<p className="font-bold text-2xl dark:text-white">Let's get started</p>
 					<p className="text-md -mt-1 text-zinc-500 dark:text-zinc-200">
-						To configure your Orbit instance, we'll need some information
+						To configure your Firefli instance, we'll need some information
 					</p>
 					<FormProvider {...methods}>
 						<form className="mt-2" onSubmit={handleSubmit(nextSlide)}>
@@ -169,14 +169,14 @@ const Login: NextPage = () => {
 						<button 
 							type="button"
 							onClick={() => window.open("https://docs.firefli.net/", "_blank", "noopener,noreferrer")}
-							className="border-orbit border-2 py-3 text-sm rounded-xl px-6 text-zinc-600 dark:text-white font-bold hover:bg-orbit/80 dark:hover:bg-blue-400 transition"
+							className="border-firefli border-2 py-3 text-sm rounded-xl px-6 text-zinc-600 dark:text-white font-bold hover:bg-firefli/80 dark:hover:bg-blue-400 transition"
 						>
 							Documentation
 						</button>
 						<button
 							type="button"
 							onClick={handleSubmit(nextSlide)}
-							className="ml-auto bg-orbit py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-orbit/80 transition"
+							className="ml-auto bg-firefli py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-firefli/80 transition"
 						>
 							Continue
 						</button>
@@ -184,10 +184,10 @@ const Login: NextPage = () => {
 				</div>
 				<div>
 					<p className="font-bold text-2xl dark:text-white" id="2">
-						Make your Orbit account
+						Make your Firefli account
 					</p>
 					<p className="text-md -mt-1 text-zinc-500 dark:text-zinc-200">
-						You need to create an Orbit account to continue
+						You need to create a Firefli account to continue
 					</p>
 					<FormProvider {...signupform}>
 						<form onSubmit={signupform.handleSubmit(createAccount)}>
@@ -242,7 +242,7 @@ const Login: NextPage = () => {
 						<button
 							type="button"
 							onClick={() => setSelectedSlide(0)}
-							className="bg-orbit ml-auto py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-orbit/80 transition"
+							className="bg-firefli ml-auto py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-firefli/80 transition"
 						>
 							Back
 						</button>
@@ -250,7 +250,7 @@ const Login: NextPage = () => {
 							type="button"
 							onClick={signupform.handleSubmit(createAccount)}
 							disabled={isLoading}
-							className={`ml-4 bg-orbit py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-orbit/80 transition ${
+							className={`ml-4 bg-firefli py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-firefli/80 transition ${
 								isLoading ? 'opacity-50 cursor-not-allowed' : ''
 							}`}
 						>

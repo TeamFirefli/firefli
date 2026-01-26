@@ -129,7 +129,7 @@ export async function handler(
 			data: {
 				key: 'theme',
 				workspaceGroupId: groupId,
-				value: 'bg-orbit'
+				value: 'bg-firefli'
 			}
 		})
 
@@ -137,7 +137,7 @@ export async function handler(
 			data: {
 				key: 'customization',
 				workspaceGroupId: groupId,
-				value: 'bg-orbit'
+				value: 'bg-firefli'
 			}
 		})
 

@@ -78,7 +78,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         },
       ],
       footer: {
-        text: "Orbit Birthday Notifications",
+        text: "Firefli Birthday Notifications",
       },
       timestamp: new Date().toISOString(),
     };

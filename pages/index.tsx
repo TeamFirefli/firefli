@@ -126,8 +126,8 @@ const Home: NextPage = () => {
   return (
     <div>
       <Head>
-        <title>Orbit - Workspaces</title>
-        <meta name="description" content="Manage your Roblox workspaces with Orbit" />
+        <title>Firefli - Workspaces</title>
+        <meta name="description" content="Manage your Roblox workspaces with Firefli" />
       </Head>
 
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-800">
