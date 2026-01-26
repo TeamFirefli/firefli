@@ -312,7 +312,7 @@ export default function StickyNoteAnnouncement() {
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     Read the full changelog
                     <a
-                      href="/api/changelog"
+                      href="https://feedback.firefli.net/changelog"
                       target="_blank"
                       rel="noreferrer noopener"
                       className="ml-1 text-primary underline"

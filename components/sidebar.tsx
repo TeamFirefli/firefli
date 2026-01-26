@@ -84,7 +84,6 @@ const ChangelogContent: React.FC<{ workspaceId: number }> = ({ workspaceId }) =>
           )}
         >
           <a
-            href={entry.link}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-primary hover:underline"
@@ -631,7 +630,7 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                         idx < changelog.length - 1 && "border-b border-zinc-200 dark:border-zinc-700"
                       )}
                     >
-                      <a href={entry.link} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                      <a target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
                         {entry.title}
                       </a>
                       <div className="text-xs text-zinc-400 mt-1 mb-3">{entry.pubDate}</div>
