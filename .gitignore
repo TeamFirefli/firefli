@@ -49,6 +49,3 @@ Frame_5_3.png
 # build
 deploy.sh
 deploy.sh
-
-# Livechat (customize locally)
-/pages/_document.tsx

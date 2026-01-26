@@ -8,14 +8,14 @@ export default function Document() {
           httpEquiv="Content-Security-Policy"
           content={
             "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.posthog.com https://js.posthog.com  https://uploads.intercomcdn.com https://uranus.planetaryapp.cloud https://code.tidio.co; " +
-            "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com/ https://*.posthog.com  https://js.intercomcdn.com https://cdn.posthog.com https://js.posthog.com https://uranus.planetaryapp.cloud https://code.tidio.co; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.posthog.com https://cdn.intercom.com; " +
+            "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com/ https://*.posthog.com https://cdn.posthog.com https://js.posthog.com; " +
             "script-src-attr 'self' 'unsafe-inline'; " +
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-            "font-src 'self' https://fonts.gstatic.com https://fonts.intercomcdn.com; " +
+            "font-src 'self' https://fonts.gstatic.com; " +
             "img-src 'self' data: https: blob:; " +
-            "connect-src 'self' https: https://events.posthog.com https://app.posthog.com https://uranus.planetaryapp.cloud wss://*.intercom.io wss: wss://*.tidio.co; " +
-            "frame-src 'self' https://*.tidio.co; " +
+            "connect-src 'self' https:  https://events.posthog.com https://app.posthog.com; " +
+            "frame-src 'self'; " +
             "base-uri 'self'; form-action 'self';"
           }
         />
