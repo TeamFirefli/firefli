@@ -45,13 +45,13 @@ const Login: NextPage = () => {
   const [signupStep, setSignupStep] = useState<0 | 1 | 2>(0);
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationError, setVerificationError] = useState<string | null>(
-    null
+    null,
   );
   const [showPassword, setShowPassword] = useState(false);
   const [showCopyright, setShowCopyright] = useState(false);
   const [usernameCheckLoading, setUsernameCheckLoading] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
-    null
+    null,
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,7 +72,7 @@ const Login: NextPage = () => {
 
   useEffect(() => {
     if (!mounted) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -95,7 +95,7 @@ const Login: NextPage = () => {
 
       time += 0.005;
       const dark = isDarkModeRef.current;
-      
+
       if (dark) {
         const bgGrad = ctx.createLinearGradient(0, 0, width, height);
         bgGrad.addColorStop(0, "#0a0a0f");
@@ -114,25 +114,32 @@ const Login: NextPage = () => {
       const waveCount = 4;
       for (let w = 0; w < waveCount; w++) {
         ctx.beginPath();
-        
+
         const waveOffset = w * 0.5;
         const amplitude = 30 + w * 15;
         const frequency = 0.003 + w * 0.001;
         const yBase = height * (0.5 + w * 0.12);
-        
+
         ctx.moveTo(0, height);
-        
+
         for (let x = 0; x <= width; x += 5) {
-          const y = yBase + 
+          const y =
+            yBase +
             Math.sin(x * frequency + time + waveOffset) * amplitude +
-            Math.sin(x * frequency * 2 + time * 1.5 + waveOffset) * (amplitude * 0.5);
+            Math.sin(x * frequency * 2 + time * 1.5 + waveOffset) *
+              (amplitude * 0.5);
           ctx.lineTo(x, y);
         }
         ctx.lineTo(width, height);
         ctx.closePath();
-        const waveGrad = ctx.createLinearGradient(0, yBase - amplitude, width, yBase + amplitude);
+        const waveGrad = ctx.createLinearGradient(
+          0,
+          yBase - amplitude,
+          width,
+          yBase + amplitude,
+        );
         const alpha = 0.15 - w * 0.03;
-        
+
         if (dark) {
           waveGrad.addColorStop(0, `rgba(99, 102, 241, ${alpha})`);
           waveGrad.addColorStop(0.5, `rgba(139, 92, 246, ${alpha})`);
@@ -154,9 +161,9 @@ const Login: NextPage = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
-    
+
     window.addEventListener("resize", resize);
-    
+
     return () => {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animationId);
@@ -367,7 +374,10 @@ const Login: NextPage = () => {
         className="absolute inset-0 w-full h-full"
         style={{ zIndex: 0 }}
       />
-      <div className="flex items-center justify-center min-h-screen px-4 relative" style={{ zIndex: 1 }}>
+      <div
+        className="flex items-center justify-center min-h-screen px-4 relative"
+        style={{ zIndex: 1 }}
+      >
         <div className="bg-white/90 dark:bg-zinc-800/80 backdrop-blur-md max-w-md w-full rounded-3xl p-8 shadow-lg relative">
           <div className="absolute top-4 right-4">
             <ThemeToggle />
@@ -427,78 +437,79 @@ const Login: NextPage = () => {
                       id="password"
                       {...regLogin("password", {
                         required: "This field is required",
-                    })}
-                  />
-                  <div className="flex items-center mb-2">
-                    <input
-                      id="show-password"
-                      type="checkbox"
-                      checked={showPassword}
-                      onChange={() => setShowPassword((v) => !v)}
-                      className="mr-2 rounded-md border-gray-300 focus:ring-primary focus:border-primary transition"
+                      })}
                     />
-                    <label
-                      htmlFor="show-password"
-                      className="text-sm text-zinc-600 dark:text-zinc-300 select-none"
-                    >
-                      Show password
-                    </label>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Link
-                        href="/forgot-password"
-                        className="text-sm text-blue-600 hover:underline"
+                    <div className="flex items-center mb-2">
+                      <input
+                        id="show-password"
+                        type="checkbox"
+                        checked={showPassword}
+                        onChange={() => setShowPassword((v) => !v)}
+                        className="mr-2 rounded-md border-gray-300 focus:ring-primary focus:border-primary transition"
+                      />
+                      <label
+                        htmlFor="show-password"
+                        className="text-sm text-zinc-600 dark:text-zinc-300 select-none"
                       >
-                        Forgot password?
-                      </Link>
-                      <Button
-                        type="submit"
-                        classoverride="px-6 py-2 text-sm rounded-lg"
-                        loading={loading}
-                        disabled={loading}
-                      >
-                        Login
-                      </Button>
+                        Show password
+                      </label>
                     </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <Link
+                          href="/forgot-password"
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          Forgot password?
+                        </Link>
+                        <Button
+                          type="submit"
+                          classoverride="px-6 py-2 text-sm rounded-lg"
+                          loading={loading}
+                          disabled={loading}
+                        >
+                          Login
+                        </Button>
+                      </div>
 
-                    {isOAuth && (
-                      <>
-                        <div className="text-center">
-                          <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                              <span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                              <span className="bg-white dark:bg-zinc-700 px-2 text-zinc-500 dark:text-zinc-400">
-                                Or
-                              </span>
+                      {isOAuth && (
+                        <>
+                          <div className="text-center">
+                            <div className="relative">
+                              <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
+                              </div>
+                              <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white dark:bg-zinc-700 px-2 text-zinc-500 dark:text-zinc-400">
+                                  Or
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="w-full">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              (window.location.href = "/api/auth/roblox/start")
-                            }
-                            disabled={loading}
-                            className="w-full flex items-center justify-center px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg shadow-sm bg-white dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <img
-                              src="/roblox.svg"
-                              alt="Roblox"
-                              className="w-5 h-5 mr-2 dark:invert-0 invert"
-                            />
-                            Continue with Roblox
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </form>
-              </FormProvider>
+                          <div className="w-full">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                (window.location.href =
+                                  "/api/auth/roblox/start")
+                              }
+                              disabled={loading}
+                              className="w-full flex items-center justify-center px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg shadow-sm bg-white dark:bg-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <img
+                                src="/roblox.svg"
+                                alt="Roblox"
+                                className="w-5 h-5 mr-2 dark:invert-0 invert"
+                              />
+                              Continue with Roblox
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </form>
+                </FormProvider>
               )}
 
               {isOAuth && oauthOnly && (
@@ -537,51 +548,52 @@ const Login: NextPage = () => {
                   {!oauthOnly && (
                     <FormProvider {...signupMethods}>
                       <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        setSignupStep(1);
-                      }}
-                      className="space-y-5 mb-6"
-                      noValidate
-                    >
-                      <Input
-                        label="Username"
-                        placeholder="Username"
-                        id="signup-username"
-                        {...regSignup("username", {
-                          required: "This field is required",
-                          onChange: (e) => {
-                            regSignup("username").onChange(e);
-                            onUsernameChange(e.target.value);
-                          },
-                        })}
-                      />
-                      {usernameCheckLoading && (
-                        <p className="text-sm text-blue-500 mt-1">
-                          Checking username...
-                        </p>
-                      )}
-                      {!usernameCheckLoading && usernameAvailable === true && (
-                        <p className="text-sm text-green-500 mt-1">
-                          ✓ User signup is available
-                        </p>
-                      )}
-                      <div className="flex justify-end">
-                        <Button
-                          type="submit"
-                          loading={loading}
-                          disabled={
-                            loading ||
-                            usernameCheckLoading ||
-                            usernameAvailable !== true ||
-                            !!signupMethods.formState.errors.username
-                          }
-                        >
-                          Continue
-                        </Button>
-                      </div>
-                    </form>
-                  </FormProvider>
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          setSignupStep(1);
+                        }}
+                        className="space-y-5 mb-6"
+                        noValidate
+                      >
+                        <Input
+                          label="Username"
+                          placeholder="Username"
+                          id="signup-username"
+                          {...regSignup("username", {
+                            required: "This field is required",
+                            onChange: (e) => {
+                              regSignup("username").onChange(e);
+                              onUsernameChange(e.target.value);
+                            },
+                          })}
+                        />
+                        {usernameCheckLoading && (
+                          <p className="text-sm text-blue-500 mt-1">
+                            Checking username...
+                          </p>
+                        )}
+                        {!usernameCheckLoading &&
+                          usernameAvailable === true && (
+                            <p className="text-sm text-green-500 mt-1">
+                              ✓ User signup is available
+                            </p>
+                          )}
+                        <div className="flex justify-end">
+                          <Button
+                            type="submit"
+                            loading={loading}
+                            disabled={
+                              loading ||
+                              usernameCheckLoading ||
+                              usernameAvailable !== true ||
+                              !!signupMethods.formState.errors.username
+                            }
+                          >
+                            Continue
+                          </Button>
+                        </div>
+                      </form>
+                    </FormProvider>
                   )}
 
                   {isOAuth && (
@@ -815,7 +827,6 @@ const Login: NextPage = () => {
             </div>
 
             <div className="space-y-4">
-
               <div>
                 <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
                   Firefli features, enhancements, and modifications:
@@ -830,7 +841,7 @@ const Login: NextPage = () => {
                   Orbit features, enhancements, and modifications:
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Copyright © 2025 Planetary. All rights reserved.
+                  Copyright © 2025 Firefli. All rights reserved.
                 </p>
               </div>
 

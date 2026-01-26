@@ -25,7 +25,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function retryNobloxRequest<T>(
   fn: () => Promise<T>,
   maxRetries = 5,
-  initialDelay = 1000
+  initialDelay = 1000,
 ): Promise<T> {
   let lastError: any;
 
@@ -36,7 +36,7 @@ async function retryNobloxRequest<T>(
         console.log(
           `[retryNobloxRequest] Retrying after ${delayMs}ms (attempt ${
             attempt + 1
-          }/${maxRetries})`
+          }/${maxRetries})`,
         );
         await delay(delayMs);
       }
@@ -55,7 +55,7 @@ async function retryNobloxRequest<T>(
         console.log(
           `[retryNobloxRequest] Rate limit hit, will retry (attempt ${
             attempt + 1
-          }/${maxRetries})`
+          }/${maxRetries})`,
         );
         continue;
       }
@@ -71,7 +71,7 @@ async function retryNobloxRequest<T>(
 
 export function withPermissionCheck(
   handler: NextApiHandler,
-  permission?: string | string[]
+  permission?: string | string[],
 ) {
   return withSessionRoute(async (req: NextApiRequest, res: NextApiResponse) => {
     if (!validateCsrf(req, res)) {
@@ -82,17 +82,14 @@ export function withPermissionCheck(
     }
 
     const uid = req.session.userid;
-    const PLANETARY_CLOUD_URL = process.env.PLANETARY_CLOUD_URL;
-    const PLANETARY_CLOUD_SERVICE_KEY = process.env.PLANETARY_CLOUD_SERVICE_KEY;
+    const FIREFLI_CLOUD_URL = process.env.FIREFLI_CLOUD_URL;
+    const FIREFLI_CLOUD_SERVICE_KEY = process.env.FIREFLI_CLOUD_SERVICE_KEY;
     if (
-      PLANETARY_CLOUD_URL !== undefined &&
-      PLANETARY_CLOUD_SERVICE_KEY !== undefined &&
-      PLANETARY_CLOUD_SERVICE_KEY.length > 0
+      FIREFLI_CLOUD_URL !== undefined &&
+      FIREFLI_CLOUD_SERVICE_KEY !== undefined &&
+      FIREFLI_CLOUD_SERVICE_KEY.length > 0
     ) {
-      if (
-        req.headers["x-service-key"] ===
-        PLANETARY_CLOUD_SERVICE_KEY
-      ) {
+      if (req.headers["x-service-key"] === FIREFLI_CLOUD_SERVICE_KEY) {
         return handler(req, res);
       }
     }
@@ -113,7 +110,7 @@ export function withPermissionCheck(
       if (!permission) return handler(req, res);
       const permissions = Array.isArray(permission) ? permission : [permission];
       const hasPermission = permissions.some((perm) =>
-        cachedData.permissions?.includes(perm)
+        cachedData.permissions?.includes(perm),
       );
       if (hasPermission) return handler(req, res);
       return res.status(401).json({ success: false, error: "Unauthorized" });
@@ -180,7 +177,7 @@ export function withPermissionCheck(
       return res.status(401).json({ success: false, error: "Unauthorized" });
     const permissions = Array.isArray(permission) ? permission : [permission];
     const hasPermission = permissions.some((perm) =>
-      userrole?.permissions?.includes(perm)
+      userrole?.permissions?.includes(perm),
     );
     if (hasPermission) return handler(req, res);
     return res.status(401).json({ success: false, error: "Unauthorized" });
@@ -189,22 +186,19 @@ export function withPermissionCheck(
 
 export function withPermissionCheckSsr(
   handler: (context: GetServerSidePropsContext) => Promise<any>,
-  permission?: string | string[]
+  permission?: string | string[],
 ) {
   return withSessionSsr(async (context) => {
     const { req, res, query } = context;
     const uid = req.session.userid;
-    const PLANETARY_CLOUD_URL = process.env.PLANETARY_CLOUD_URL;
-    const PLANETARY_CLOUD_SERVICE_KEY = process.env.PLANETARY_CLOUD_SERVICE_KEY;
+    const FIREFLI_CLOUD_URL = process.env.FIREFLI_CLOUD_URL;
+    const FIREFLI_CLOUD_SERVICE_KEY = process.env.FIREFLI_CLOUD_SERVICE_KEY;
     if (
-      PLANETARY_CLOUD_URL !== undefined &&
-      PLANETARY_CLOUD_SERVICE_KEY !== undefined &&
-      PLANETARY_CLOUD_SERVICE_KEY.length > 0
+      FIREFLI_CLOUD_URL !== undefined &&
+      FIREFLI_CLOUD_SERVICE_KEY !== undefined &&
+      FIREFLI_CLOUD_SERVICE_KEY.length > 0
     ) {
-      if (
-        req.headers["x-service-key"] ===
-        PLANETARY_CLOUD_SERVICE_KEY
-      ) {
+      if (req.headers["x-service-key"] === FIREFLI_CLOUD_SERVICE_KEY) {
         return handler(context);
       }
     }
@@ -233,7 +227,7 @@ export function withPermissionCheckSsr(
       if (!permission) return handler(context);
       const permissions = Array.isArray(permission) ? permission : [permission];
       const hasPermission = permissions.some((perm) =>
-        cachedData.permissions?.includes(perm)
+        cachedData.permissions?.includes(perm),
       );
       if (hasPermission) return handler(context);
       return {
@@ -325,7 +319,7 @@ export function withPermissionCheckSsr(
 
     const permissions = Array.isArray(permission) ? permission : [permission];
     const hasPermission = user.roles.some((role) =>
-      permissions.some((perm) => role.permissions.includes(perm))
+      permissions.some((perm) => role.permissions.includes(perm)),
     );
 
     if (!hasPermission) {
@@ -379,7 +373,7 @@ export async function checkGroupRoles(groupID: number) {
 
       for (const ownerRole of ownerRoles) {
         console.log(
-          `[update-group] Migrating ${ownerRole.members.length} users from owner role ${ownerRole.id} to membership admin`
+          `[update-group] Migrating ${ownerRole.members.length} users from owner role ${ownerRole.id} to membership admin`,
         );
         const availableRoles = await prisma.role.findMany({
           where: {
@@ -402,7 +396,7 @@ export async function checkGroupRoles(groupID: number) {
             },
           });
           console.log(
-            `[update-group] Created default fallback role for group ${groupID}`
+            `[update-group] Created default fallback role for group ${groupID}`,
           );
           availableRoles.push(fallbackRole);
         }
@@ -429,7 +423,7 @@ export async function checkGroupRoles(groupID: number) {
             .catch((error) => {
               console.error(
                 `[update-group] Failed to set isAdmin for user ${member.userid}:`,
-                error
+                error,
               );
             });
 
@@ -446,11 +440,11 @@ export async function checkGroupRoles(groupID: number) {
           if (userRank) {
             const rankId = Number(userRank.rankId);
             const roleWithRank = await retryNobloxRequest(() =>
-              noblox.getRole(groupID, rankId)
+              noblox.getRole(groupID, rankId),
             )
               .then((roleInfo) => {
                 return availableRoles.find((r) =>
-                  r.groupRoles?.includes(roleInfo.id)
+                  r.groupRoles?.includes(roleInfo.id),
                 );
               })
               .catch(() => null);
@@ -458,7 +452,7 @@ export async function checkGroupRoles(groupID: number) {
             if (roleWithRank) {
               targetRole = roleWithRank;
               console.log(
-                `[update-group] Found role ${targetRole.name} matching user ${member.userid} rank`
+                `[update-group] Found role ${targetRole.name} matching user ${member.userid} rank`,
               );
             }
           }
@@ -466,7 +460,7 @@ export async function checkGroupRoles(groupID: number) {
           if (!targetRole && availableRoles.length > 0) {
             targetRole = availableRoles[0];
             console.log(
-              `[update-group] Using fallback role ${targetRole.name} for user ${member.userid}`
+              `[update-group] Using fallback role ${targetRole.name} for user ${member.userid}`,
             );
           }
 
@@ -490,7 +484,7 @@ export async function checkGroupRoles(groupID: number) {
               .catch((error) => {
                 console.error(
                   `[update-group] Failed to swap role for user ${member.userid}:`,
-                  error
+                  error,
                 );
               });
           }
@@ -505,20 +499,20 @@ export async function checkGroupRoles(groupID: number) {
           .catch((error) => {
             console.error(
               `[update-group] Failed to delete owner role ${ownerRole.id}:`,
-              error
+              error,
             );
           });
       }
 
       if (ownerRoles.length > 0) {
         console.log(
-          `[update-group] Migrated ${ownerRoles.length} owner roles to isAdmin memberships for group ${groupID}`
+          `[update-group] Migrated ${ownerRoles.length} owner roles to isAdmin memberships for group ${groupID}`,
         );
       }
     } catch (error) {
       console.error(
         `[update-group] Failed to migrate owner roles for group ${groupID}:`,
-        error
+        error,
       );
     }
 
@@ -526,10 +520,10 @@ export async function checkGroupRoles(groupID: number) {
       (error) => {
         console.error(
           `[update-group] Failed to get roles for group ${groupID}:`,
-          error
+          error,
         );
         return null;
-      }
+      },
     );
     if (!rss) {
       console.log(`[update-group] No roles found for group ${groupID}`);
@@ -547,7 +541,7 @@ export async function checkGroupRoles(groupID: number) {
       .catch((error) => {
         console.error(
           `[update-group] Failed to fetch roles from database for group ${groupID}:`,
-          error
+          error,
         );
         return [];
       });
@@ -555,7 +549,7 @@ export async function checkGroupRoles(groupID: number) {
     const config = await getConfig("activity", groupID).catch((error) => {
       console.error(
         `[update-group] Failed to get config for group ${groupID}:`,
-        error
+        error,
       );
       return null;
     });
@@ -566,53 +560,55 @@ export async function checkGroupRoles(groupID: number) {
       ranks.push(role);
     }
     console.log(
-      `[update-group] Processing ${ranks.length} tracked ranks for group ${groupID}`
+      `[update-group] Processing ${ranks.length} tracked ranks for group ${groupID}`,
     );
     const userRoleMap = new Map<number, { roleId: number; username: string }>();
-    
+
     if (ranks && ranks.length) {
-      console.log(`[update-group] Fetching members for ${ranks.length} tracked ranks...`);
-      
+      console.log(
+        `[update-group] Fetching members for ${ranks.length} tracked ranks...`,
+      );
+
       for (const rank of ranks) {
         if (rank.rank === 0) continue;
-        
+
         console.log(
-          `[update-group] Fetching members from rank ${rank.name} (Role ID: ${rank.id}, Rank: ${rank.rank})...`
+          `[update-group] Fetching members from rank ${rank.name} (Role ID: ${rank.id}, Rank: ${rank.rank})...`,
         );
-        
+
         await delay(500);
         const members = await retryNobloxRequest(() =>
-          noblox.getPlayers(groupID, rank.id)
+          noblox.getPlayers(groupID, rank.id),
         ).catch((error) => {
           console.error(
             `[update-group] Failed to get players for rank ${rank.name}:`,
-            error
+            error,
           );
           return null;
         });
-        
+
         if (!members) {
           console.log(`[update-group] No members found for rank ${rank.name}`);
           continue;
         }
-        
+
         console.log(
-          `[update-group] Fetched ${members.length} members from rank ${rank.name}`
+          `[update-group] Fetched ${members.length} members from rank ${rank.name}`,
         );
 
         for (const member of members) {
-          userRoleMap.set(member.userId, { 
-            roleId: rank.id, 
-            username: member.username 
+          userRoleMap.set(member.userId, {
+            roleId: rank.id,
+            username: member.username,
           });
         }
       }
-      
+
       console.log(
-        `[update-group] Cached ${userRoleMap.size} unique users across all tracked ranks`
+        `[update-group] Cached ${userRoleMap.size} unique users across all tracked ranks`,
       );
     }
-    
+
     const users = await prisma.user
       .findMany({
         where: {},
@@ -632,29 +628,29 @@ export async function checkGroupRoles(groupID: number) {
       .catch((error) => {
         console.error(
           `[update-group] Failed to fetch users from database:`,
-          error
+          error,
         );
         return [];
       });
-    
+
     console.log(`[update-group] Fetched ${users.length} users from database`);
 
     for (const [userId, userData] of userRoleMap.entries()) {
       try {
         const { roleId, username } = userData;
         const workspaceRole = rs.find((r) => r.groupRoles?.includes(roleId));
-        
+
         if (!workspaceRole) {
           continue;
         }
-        
+
         if (workspaceRole.isOwnerRole) {
           continue;
         }
-        
+
         const userInDb = users.find((u) => Number(u.userid) === userId);
         const hasRole = userInDb?.roles.some((r) => r.id === workspaceRole.id);
-        
+
         if (hasRole) {
           await prisma.user
             .update({
@@ -664,14 +660,14 @@ export async function checkGroupRoles(groupID: number) {
             .catch((error) => {
               console.error(
                 `[update-group] Failed to update username for user ${userId}:`,
-                error
+                error,
               );
             });
         } else {
           console.log(
-            `[update-group] Adding role "${workspaceRole.name}" to user ${userId} (RID: ${roleId})`
+            `[update-group] Adding role "${workspaceRole.name}" to user ${userId} (RID: ${roleId})`,
           );
-          
+
           await prisma.user
             .upsert({
               where: { userid: BigInt(userId) },
@@ -693,7 +689,7 @@ export async function checkGroupRoles(groupID: number) {
             .catch((error) => {
               console.error(
                 `[update-group] Failed to upsert user ${userId}:`,
-                error
+                error,
               );
             });
           await prisma.roleMember
@@ -714,11 +710,11 @@ export async function checkGroupRoles(groupID: number) {
             .catch((error) => {
               console.error(
                 `[update-group] Failed to create RoleMember for user ${userId}:`,
-                error
+                error,
               );
             });
         }
-        
+
         await prisma.rank
           .upsert({
             where: {
@@ -739,14 +735,11 @@ export async function checkGroupRoles(groupID: number) {
           .catch((error) => {
             console.error(
               `[update-group] Failed to upsert rank for user ${userId}:`,
-              error
+              error,
             );
           });
       } catch (error) {
-        console.error(
-          `[update-group] Error processing user ${userId}:`,
-          error
-        );
+        console.error(`[update-group] Error processing user ${userId}:`, error);
       }
     }
 
@@ -775,38 +768,41 @@ export async function checkGroupRoles(groupID: number) {
       });
 
       console.log(
-        `[update-group] Found ${usersWithRoles.length} users with roles for cleanup check`
+        `[update-group] Found ${usersWithRoles.length} users with roles for cleanup check`,
       );
       console.log(
-        `[update-group] Reusing cached role membership data (${userRoleMap.size} group members)`
+        `[update-group] Reusing cached role membership data (${userRoleMap.size} group members)`,
       );
 
       for (const user of usersWithRoles) {
         const membership = user.workspaceMemberships[0];
         if (membership?.isAdmin) {
           console.log(
-            `[update-group] Skipping cleanup for workspace owner ${user.userid}.`
+            `[update-group] Skipping cleanup for workspace owner ${user.userid}.`,
           );
           continue;
         }
 
         const userId = Number(user.userid);
         const userRankData = userRoleMap.get(userId);
-        
+
         if (!userRankData) {
           console.log(
-            `[update-group] User ${user.userid} is not in any tracked roles - checking for auto-synced roles to remove`
+            `[update-group] User ${user.userid} is not in any tracked roles - checking for auto-synced roles to remove`,
           );
-          
+
           for (const userRole of user.roles) {
             if (userRole.isOwnerRole) {
               continue;
             }
-            
-            if (userRole.groupRoles === null || userRole.groupRoles === undefined) {
+
+            if (
+              userRole.groupRoles === null ||
+              userRole.groupRoles === undefined
+            ) {
               continue;
             }
-            
+
             const roleMember = await prisma.roleMember.findUnique({
               where: {
                 roleId_userId: {
@@ -815,18 +811,18 @@ export async function checkGroupRoles(groupID: number) {
                 },
               },
             });
-            
+
             if (roleMember?.manuallyAdded) {
               console.log(
-                `[update-group] Keeping manually added role "${userRole.name}" for user ${user.userid}`
+                `[update-group] Keeping manually added role "${userRole.name}" for user ${user.userid}`,
               );
               continue;
             }
-            
+
             console.log(
-              `[update-group] Removing auto-synced role "${userRole.name}" from user ${user.userid} (user no longer qualifies)`
+              `[update-group] Removing auto-synced role "${userRole.name}" from user ${user.userid} (user no longer qualifies)`,
             );
-            
+
             await prisma.user
               .update({
                 where: { userid: user.userid },
@@ -835,10 +831,10 @@ export async function checkGroupRoles(groupID: number) {
               .catch((error) => {
                 console.error(
                   `[update-group] Failed to remove role ${userRole.id} from user ${user.userid}:`,
-                  error
+                  error,
                 );
               });
-            
+
             await prisma.roleMember.deleteMany({
               where: {
                 roleId: userRole.id,
@@ -848,9 +844,9 @@ export async function checkGroupRoles(groupID: number) {
           }
           continue;
         }
-        
+
         const currentRobloxRoleId = userRankData.roleId;
-        
+
         await prisma.rank
           .upsert({
             where: {
@@ -871,7 +867,7 @@ export async function checkGroupRoles(groupID: number) {
           .catch((error) => {
             console.error(
               `[update-group] Failed to update rank for user ${user.userid}:`,
-              error
+              error,
             );
           });
         for (const userRole of user.roles) {
@@ -879,12 +875,14 @@ export async function checkGroupRoles(groupID: number) {
             continue;
           }
 
-          if (userRole.groupRoles === null || userRole.groupRoles === undefined) {
+          if (
+            userRole.groupRoles === null ||
+            userRole.groupRoles === undefined
+          ) {
             continue;
           }
 
           if (userRole.groupRoles.length === 0) {
-
             const roleMember = await prisma.roleMember.findUnique({
               where: {
                 roleId_userId: {
@@ -893,18 +891,18 @@ export async function checkGroupRoles(groupID: number) {
                 },
               },
             });
-            
+
             if (roleMember?.manuallyAdded) {
               console.log(
-                `[update-group] Keeping manually added role "${userRole.name}" for user ${user.userid}.`
+                `[update-group] Keeping manually added role "${userRole.name}" for user ${user.userid}.`,
               );
               continue;
             }
-            
+
             console.log(
-              `[update-group] Removing role "${userRole.name}" from user ${user.userid}.`
+              `[update-group] Removing role "${userRole.name}" from user ${user.userid}.`,
             );
-            
+
             await prisma.user
               .update({
                 where: { userid: user.userid },
@@ -913,7 +911,7 @@ export async function checkGroupRoles(groupID: number) {
               .catch((error) => {
                 console.error(
                   `[update-group] Failed to remove role ${userRole.id} from user ${user.userid}:`,
-                  error
+                  error,
                 );
               });
             await prisma.roleMember.deleteMany({
@@ -927,7 +925,7 @@ export async function checkGroupRoles(groupID: number) {
 
           const groupRoleIds = userRole.groupRoles.map((id: any) => Number(id));
           const hasQualifyingRank = groupRoleIds.includes(currentRobloxRoleId);
-          
+
           if (!hasQualifyingRank) {
             const roleMember = await prisma.roleMember.findUnique({
               where: {
@@ -937,18 +935,18 @@ export async function checkGroupRoles(groupID: number) {
                 },
               },
             });
-            
+
             if (roleMember?.manuallyAdded) {
               console.log(
-                `[update-group] Keeping manually added role "${userRole.name}" for user ${user.userid}`
+                `[update-group] Keeping manually added role "${userRole.name}" for user ${user.userid}`,
               );
               continue;
             }
-            
+
             console.log(
-              `[update-group] Removing auto-synced role "${userRole.name}" from user ${user.userid} - no longer has qualifying rank (current role ID: ${currentRobloxRoleId}, required: [${groupRoleIds.join(", ")}])`
+              `[update-group] Removing auto-synced role "${userRole.name}" from user ${user.userid} - no longer has qualifying rank (current role ID: ${currentRobloxRoleId}, required: [${groupRoleIds.join(", ")}])`,
             );
-            
+
             await prisma.user
               .update({
                 where: { userid: user.userid },
@@ -957,7 +955,7 @@ export async function checkGroupRoles(groupID: number) {
               .catch((error) => {
                 console.error(
                   `[update-group] Failed to remove role ${userRole.id} from user ${user.userid}:`,
-                  error
+                  error,
                 );
               });
             await prisma.roleMember.deleteMany({
@@ -966,27 +964,29 @@ export async function checkGroupRoles(groupID: number) {
                 userId: user.userid,
               },
             });
-            
-            const remainingRoles = user.roles.filter(r => {
+
+            const remainingRoles = user.roles.filter((r) => {
               if (r.isOwnerRole || !r.groupRoles) return false;
               return r.id !== userRole.id;
             });
-            
+
             if (remainingRoles.length === 0) {
               console.log(
-                `[update-group] User ${user.userid} has no more valid roles - removing all department assignments`
+                `[update-group] User ${user.userid} has no more valid roles - removing all department assignments`,
               );
-              await prisma.departmentMember.deleteMany({
-                where: {
-                  workspaceGroupId: groupID,
-                  userId: user.userid,
-                },
-              }).catch((error) => {
-                console.error(
-                  `[update-group] Failed to remove departments for user ${user.userid}:`,
-                  error
-                );
-              });
+              await prisma.departmentMember
+                .deleteMany({
+                  where: {
+                    workspaceGroupId: groupID,
+                    userId: user.userid,
+                  },
+                })
+                .catch((error) => {
+                  console.error(
+                    `[update-group] Failed to remove departments for user ${user.userid}:`,
+                    error,
+                  );
+                });
             }
           }
         }
@@ -996,7 +996,7 @@ export async function checkGroupRoles(groupID: number) {
     } catch (error) {
       console.error(
         `[update-group] Error during role cleanup for group ${groupID}:`,
-        error
+        error,
       );
     }
 
@@ -1004,7 +1004,7 @@ export async function checkGroupRoles(groupID: number) {
   } catch (error) {
     console.error(
       `[update-group] Fatal error syncing group ${groupID}:`,
-      error
+      error,
     );
     throw error;
   }
@@ -1016,7 +1016,7 @@ export async function checkSpecificUser(userID: number) {
     await delay(500); // Delay between workspace checks
 
     const rankId = await retryNobloxRequest(() =>
-      noblox.getRankInGroup(w.groupId, userID)
+      noblox.getRankInGroup(w.groupId, userID),
     ).catch(() => null);
     await prisma.rank.upsert({
       where: {
@@ -1039,7 +1039,7 @@ export async function checkSpecificUser(userID: number) {
 
     await delay(300);
     const rankInfo = await retryNobloxRequest(() =>
-      noblox.getRole(w.groupId, rankId)
+      noblox.getRole(w.groupId, rankId),
     ).catch(() => null);
     if (!rankInfo) continue;
     const rank = rankInfo.id;
@@ -1070,7 +1070,7 @@ export async function checkSpecificUser(userID: number) {
     if (user.roles.length) {
       if (user.roles[0].isOwnerRole) {
         console.log(
-          `[update-group]Skipping role update for user ${userID} - they have an owner role`
+          `[update-group]Skipping role update for user ${userID} - they have an owner role`,
         );
         continue;
       }
@@ -1089,7 +1089,7 @@ export async function checkSpecificUser(userID: number) {
     }
     if (role.isOwnerRole) {
       console.log(
-        `[update-group] Skipping assignment of owner role ${role.id} to user ${userID}`
+        `[update-group] Skipping assignment of owner role ${role.id} to user ${userID}`,
       );
       continue;
     }

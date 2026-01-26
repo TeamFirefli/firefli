@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Planetary only provide support and security fixes for the latest builds.
+firefli only provide support and security fixes for the latest builds.
 We always recommend keeping your Instance up-to-date to ensure you have the best user experience.
 
 | Version | Supported          |
@@ -20,4 +20,4 @@ To allow us to promptly address the concern, please provide us with:
 - PM2 / NPM Logs
 - Description
 
-E: IT@planetaryapp.us
+E: IT@firefliapp.us

@@ -20,7 +20,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       .json({ success: false, error: "Method not allowed" });
   let activityconfig = await getConfig(
     "activity",
-    parseInt(req.query.id as string)
+    parseInt(req.query.id as string),
   );
   if (!activityconfig?.key) {
     activityconfig = {
@@ -32,7 +32,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   let xml_string = fs.readFileSync(path.join("Orbit-activity.rbxmx"), "utf8");
   res.setHeader(
     "Content-Disposition",
-    "attachment; filename=Orbit-activity.rbxmx"
+    "attachment; filename=Orbit-activity.rbxmx",
   );
 
   // Fix the protocol handling to ensure it's a valid protocol string
@@ -48,7 +48,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     protocol = protocol[0].split(",")[0];
   }
 
-  // use PLANETARY_CLOUD_URL if available, else use VERCEL_URL if available, else use the host
+  // use FIREFLI_CLOUD_URL if available, else use VERCEL_URL if available, else use the host
   const host = req.headers.host;
 
   let currentUrl = new URL(`${protocol}://${host}`);

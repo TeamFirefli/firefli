@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react"
-import type { NextPage } from "next"
-import { loginState, workspacestate } from "@/state"
-import { themeState } from "@/state/theme"
-import { useRecoilState } from "recoil"
-import { Menu, Listbox, Dialog } from "@headlessui/react"
-import { useRouter } from "next/router"
+import { useState, useEffect } from "react";
+import type { NextPage } from "next";
+import { loginState, workspacestate } from "@/state";
+import { themeState } from "@/state/theme";
+import { useRecoilState } from "recoil";
+import { Menu, Listbox, Dialog } from "@headlessui/react";
+import { useRouter } from "next/router";
 import {
   IconHome,
   IconHomeFilled,
@@ -42,28 +42,30 @@ import {
   IconBrandGithub,
   IconHistory,
   IconBug,
-} from "@tabler/icons-react"
-import axios from "axios"
-import clsx from "clsx"
-import Parser from "rss-parser"
+} from "@tabler/icons-react";
+import axios from "axios";
+import clsx from "clsx";
+import Parser from "rss-parser";
 import ReactMarkdown from "react-markdown";
 import packageJson from "../package.json";
 
 interface SidebarProps {
-  isCollapsed: boolean
-  setIsCollapsed: (value: boolean) => void
+  isCollapsed: boolean;
+  setIsCollapsed: (value: boolean) => void;
 }
 
-const ChangelogContent: React.FC<{ workspaceId: number }> = ({ workspaceId }) => {
+const ChangelogContent: React.FC<{ workspaceId: number }> = ({
+  workspaceId,
+}) => {
   const [entries, setEntries] = useState<
     { title: string; pubDate: string; content: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/changelog')
-      .then(res => res.json())
-      .then(data => {
+    fetch("/api/changelog")
+      .then((res) => res.json())
+      .then((data) => {
         setEntries(data);
         setLoading(false);
       })
@@ -71,16 +73,18 @@ const ChangelogContent: React.FC<{ workspaceId: number }> = ({ workspaceId }) =>
   }, [workspaceId]);
 
   if (loading) return <p className="text-sm text-zinc-500">Loading...</p>;
-  if (!entries.length) return <p className="text-sm text-zinc-500">No entries found.</p>;
+  if (!entries.length)
+    return <p className="text-sm text-zinc-500">No entries found.</p>;
 
   return (
     <div className="space-y-6">
       {entries.map((entry, idx) => (
-        <div 
+        <div
           key={idx}
           className={clsx(
             "pb-6",
-            idx < entries.length - 1 && "border-b border-zinc-200 dark:border-zinc-700"
+            idx < entries.length - 1 &&
+              "border-b border-zinc-200 dark:border-zinc-700",
           )}
         >
           <a
@@ -101,13 +105,15 @@ const ChangelogContent: React.FC<{ workspaceId: number }> = ({ workspaceId }) =>
 };
 
 const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
-  const [login, setLogin] = useRecoilState(loginState)
-  const [workspace, setWorkspace] = useRecoilState(workspacestate)
-  const [theme, setTheme] = useRecoilState(themeState)
+  const [login, setLogin] = useRecoilState(loginState);
+  const [workspace, setWorkspace] = useRecoilState(workspacestate);
+  const [theme, setTheme] = useRecoilState(themeState);
   const [showCopyright, setShowCopyright] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
-  const [changelog, setChangelog] = useState<{ title: string, pubDate: string, content: string }[]>([]);
+  const [changelog, setChangelog] = useState<
+    { title: string; pubDate: string; content: string }[]
+  >([]);
   const [docsEnabled, setDocsEnabled] = useState(false);
   const [alliesEnabled, setAlliesEnabled] = useState(false);
   const [sessionsEnabled, setSessionsEnabled] = useState(false);
@@ -115,65 +121,138 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const [policiesEnabled, setPoliciesEnabled] = useState(false);
   const [pendingPolicyCount, setPendingPolicyCount] = useState(0);
   const [pendingNoticesCount, setPendingNoticesCount] = useState(0);
-  const router = useRouter()
+  const router = useRouter();
 
   // Add body class to prevent scrolling when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.classList.add("overflow-hidden")
+      document.body.classList.add("overflow-hidden");
     } else {
-      document.body.classList.remove("overflow-hidden")
+      document.body.classList.remove("overflow-hidden");
     }
     return () => {
-      document.body.classList.remove("overflow-hidden")
-    }
-  }, [isMobileMenuOpen])
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [isMobileMenuOpen]);
 
   const pages: {
-    name: string
-    href: string
-    icon: React.ElementType
-    filledIcon?: React.ElementType
-    accessible?: boolean
+    name: string;
+    href: string;
+    icon: React.ElementType;
+    filledIcon?: React.ElementType;
+    accessible?: boolean;
   }[] = [
-    { name: "Home", href: `/workspace/${workspace.groupId}`, icon: IconHome, filledIcon: IconHomeFilled },
-    { name: "Wall", href: `/workspace/${workspace.groupId}/wall`, icon: IconMessage2, filledIcon: IconMessage2Filled, accessible: workspace.yourPermission.includes("view_wall") },
-    { name: "Activity", href: `/workspace/${workspace.groupId}/activity`, icon: IconClipboardList, filledIcon: IconClipboardListFilled, accessible: true },
-    { name: "Quotas", href: `/workspace/${workspace.groupId}/quotas`, icon: IconTarget, accessible: true },
-   ...(noticesEnabled ? [{
-      name: "Notices",
-      href: `/workspace/${workspace.groupId}/notices`,
-      icon: IconClock,
-      filledIcon: IconClockFilled,
+    {
+      name: "Home",
+      href: `/workspace/${workspace.groupId}`,
+      icon: IconHome,
+      filledIcon: IconHomeFilled,
+    },
+    {
+      name: "Wall",
+      href: `/workspace/${workspace.groupId}/wall`,
+      icon: IconMessage2,
+      filledIcon: IconMessage2Filled,
+      accessible: workspace.yourPermission.includes("view_wall"),
+    },
+    {
+      name: "Activity",
+      href: `/workspace/${workspace.groupId}/activity`,
+      icon: IconClipboardList,
+      filledIcon: IconClipboardListFilled,
       accessible: true,
-    }] : []),
-    ...(alliesEnabled ? [{
-      name: "Alliances",
-      href: `/workspace/${workspace.groupId}/alliances`,
-      icon: IconRosetteDiscountCheck,
-      filledIcon: IconRosetteDiscountCheckFilled,
+    },
+    {
+      name: "Quotas",
+      href: `/workspace/${workspace.groupId}/quotas`,
+      icon: IconTarget,
       accessible: true,
-    }] : []),
-    ...(sessionsEnabled ? [{
-      name: "Sessions",
-      href: `/workspace/${workspace.groupId}/sessions`,
-      icon: IconBell,
-      filledIcon: IconBellFilled,
-      accessible: true,
-    }] : []),
-    { name: "Staff", href: `/workspace/${workspace.groupId}/views`, icon: IconUser, filledIcon: IconUserFilled, accessible: workspace.yourPermission.includes("view_members") },
-    ...(docsEnabled ? [{ name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: IconFileText, filledIcon: IconFileTextFilled, accessible: true }] : []),
-    ...(policiesEnabled ? [{ name: "Policies", href: `/workspace/${workspace.groupId}/policies`, icon: IconShield, filledIcon: IconShieldFilled, accessible: true }] : []),
-    { name: "Settings", href: `/workspace/${workspace.groupId}/settings`, icon: IconSettings, filledIcon: IconSettingsFilled, accessible: ["admin", "workspace_customisation", "reset_activity", "manage_features", "manage_apikeys", "view_audit_logs"].some(perm => workspace.yourPermission.includes(perm)) },
+    },
+    ...(noticesEnabled
+      ? [
+          {
+            name: "Notices",
+            href: `/workspace/${workspace.groupId}/notices`,
+            icon: IconClock,
+            filledIcon: IconClockFilled,
+            accessible: true,
+          },
+        ]
+      : []),
+    ...(alliesEnabled
+      ? [
+          {
+            name: "Alliances",
+            href: `/workspace/${workspace.groupId}/alliances`,
+            icon: IconRosetteDiscountCheck,
+            filledIcon: IconRosetteDiscountCheckFilled,
+            accessible: true,
+          },
+        ]
+      : []),
+    ...(sessionsEnabled
+      ? [
+          {
+            name: "Sessions",
+            href: `/workspace/${workspace.groupId}/sessions`,
+            icon: IconBell,
+            filledIcon: IconBellFilled,
+            accessible: true,
+          },
+        ]
+      : []),
+    {
+      name: "Staff",
+      href: `/workspace/${workspace.groupId}/views`,
+      icon: IconUser,
+      filledIcon: IconUserFilled,
+      accessible: workspace.yourPermission.includes("view_members"),
+    },
+    ...(docsEnabled
+      ? [
+          {
+            name: "Docs",
+            href: `/workspace/${workspace.groupId}/docs`,
+            icon: IconFileText,
+            filledIcon: IconFileTextFilled,
+            accessible: true,
+          },
+        ]
+      : []),
+    ...(policiesEnabled
+      ? [
+          {
+            name: "Policies",
+            href: `/workspace/${workspace.groupId}/policies`,
+            icon: IconShield,
+            filledIcon: IconShieldFilled,
+            accessible: true,
+          },
+        ]
+      : []),
+    {
+      name: "Settings",
+      href: `/workspace/${workspace.groupId}/settings`,
+      icon: IconSettings,
+      filledIcon: IconSettingsFilled,
+      accessible: [
+        "admin",
+        "workspace_customisation",
+        "reset_activity",
+        "manage_features",
+        "manage_apikeys",
+        "view_audit_logs",
+      ].some((perm) => workspace.yourPermission.includes(perm)),
+    },
   ];
 
   const gotopage = (page: string) => {
-    router.push(page)
-    setIsMobileMenuOpen(false)
-  }
+    router.push(page);
+    setIsMobileMenuOpen(false);
+  };
 
   const logout = async () => {
-    await axios.post("/api/auth/logout")
+    await axios.post("/api/auth/logout");
     setLogin({
       userId: 1,
       username: "",
@@ -182,35 +261,35 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
       thumbnail: "",
       workspaces: [],
       isOwner: false,
-    })
-    router.push("/login")
-  }
+    });
+    router.push("/login");
+  };
 
   const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark"
-    setTheme(newTheme)
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
     if (typeof window !== "undefined") {
-      localStorage.setItem("theme", newTheme)
+      localStorage.setItem("theme", newTheme);
     }
-  }
+  };
 
   useEffect(() => {
     if (showChangelog && changelog.length === 0) {
-      fetch('/api/changelog')
-        .then(res => res.json())
-        .then(items => setChangelog(items));
+      fetch("/api/changelog")
+        .then((res) => res.json())
+        .then((items) => setChangelog(items));
     }
   }, [showChangelog, changelog.length]);
 
   useEffect(() => {
     fetch(`/api/workspace/${workspace.groupId}/settings/general/configuration`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setDocsEnabled(data.value.guides?.enabled ?? false);
-		setAlliesEnabled(data.value.allies?.enabled ?? false);
-		setSessionsEnabled(data.value.sessions?.enabled ?? false);
-		setNoticesEnabled(data.value.notices?.enabled ?? false);
-		setPoliciesEnabled(data.value.policies?.enabled ?? false);
+        setAlliesEnabled(data.value.allies?.enabled ?? false);
+        setSessionsEnabled(data.value.sessions?.enabled ?? false);
+        setNoticesEnabled(data.value.notices?.enabled ?? false);
+        setPoliciesEnabled(data.value.policies?.enabled ?? false);
       })
       .catch(() => setDocsEnabled(false));
   }, [workspace.groupId]);
@@ -218,8 +297,8 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   useEffect(() => {
     if (policiesEnabled) {
       fetch(`/api/workspace/${workspace.groupId}/policies/pending`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.success) {
             setPendingPolicyCount(data.count);
           }
@@ -230,10 +309,14 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
   useEffect(() => {
     if (noticesEnabled) {
-      if (workspace.yourPermission?.includes("approve_notices") || workspace.yourPermission?.includes("manage_notices") || workspace.yourPermission?.includes("admin")) {
+      if (
+        workspace.yourPermission?.includes("approve_notices") ||
+        workspace.yourPermission?.includes("manage_notices") ||
+        workspace.yourPermission?.includes("admin")
+      ) {
         fetch(`/api/workspace/${workspace.groupId}/activity/notices/count`)
-          .then(res => res.json())
-          .then(data => {
+          .then((res) => res.json())
+          .then((data) => {
             if (data.success) {
               setPendingNoticesCount(data.count || 0);
             }
@@ -262,15 +345,16 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
-      
+
       {/* Sidebar */}
       <div
-  		className={clsx(
-  			"fixed lg:static top-0 left-0 h-screen lg:w-auto z-[99999] transition-transform duration-300 flex flex-col",
-    		isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-  		)}
+        className={clsx(
+          "fixed lg:static top-0 left-0 h-screen lg:w-auto z-[99999] transition-transform duration-300 flex flex-col",
+          isMobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full lg:translate-x-0",
+        )}
       >
-
         <aside
           className={clsx(
             "h-screen flex flex-col pointer-events-auto shadow-xl transition-all duration-300",
@@ -283,15 +367,17 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               <Listbox
                 value={workspace.groupId}
                 onChange={(id) => {
-                  const selected = login.workspaces?.find((ws) => ws.groupId === id)
+                  const selected = login.workspaces?.find(
+                    (ws) => ws.groupId === id,
+                  );
                   if (selected) {
                     setWorkspace({
                       ...workspace,
                       groupId: selected.groupId,
                       groupName: selected.groupName,
                       groupThumbnail: selected.groupThumbnail,
-                    })
-                    router.push(`/workspace/${selected.groupId}`)
+                    });
+                    router.push(`/workspace/${selected.groupId}`);
                   }
                 }}
               >
@@ -300,7 +386,7 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                     "w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-300",
                     "hover:bg-[color:rgb(var(--group-theme)/0.1)] hover:text-[color:rgb(var(--group-theme))]",
                     "dark:hover:bg-zinc-700",
-                    isCollapsed && "justify-center"
+                    isCollapsed && "justify-center",
                   )}
                 >
                   <img
@@ -308,7 +394,7 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                     alt=""
                     className={clsx(
                       "w-10 h-10 rounded-lg object-cover transition-all duration-300",
-                      isCollapsed && "scale-90 opacity-80"
+                      isCollapsed && "scale-90 opacity-80",
                     )}
                   />
                   {!isCollapsed && (
@@ -325,15 +411,15 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                     <IconChevronDown className="w-4 h-4 text-zinc-400 dark:text-white transition-all duration-300" />
                   )}
                 </Listbox.Button>
-              
+
                 <Listbox.Options
                   className={clsx(
-                    "absolute top-0 left-0 z-50 w-[calc(100%-0.5rem)] mt-14 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border dark:border-zinc-700 max-h-60 overflow-y-auto"
+                    "absolute top-0 left-0 z-50 w-[calc(100%-0.5rem)] mt-14 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border dark:border-zinc-700 max-h-60 overflow-y-auto",
                   )}
                 >
                   {login?.workspaces && login.workspaces.length > 1 ? (
                     login.workspaces
-                      .filter(ws => ws.groupId !== workspace.groupId)
+                      .filter((ws) => ws.groupId !== workspace.groupId)
                       .map((ws) => (
                         <Listbox.Option
                           key={ws.groupId}
@@ -341,7 +427,8 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                           className={({ active }) =>
                             clsx(
                               "flex items-center gap-3 px-3 py-2 cursor-pointer rounded-md transition duration-200",
-                              active && "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))]"
+                              active &&
+                                "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))]",
                             )
                           }
                         >
@@ -350,8 +437,12 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                             alt=""
                             className="w-8 h-8 rounded-lg object-cover transition duration-200"
                           />
-                          <span className="flex-1 truncate text-sm dark:text-white">{ws.groupName}</span>
-                          {workspace.groupId === ws.groupId && <IconCheck className="w-5 h-5 text-primary" />}
+                          <span className="flex-1 truncate text-sm dark:text-white">
+                            {ws.groupName}
+                          </span>
+                          {workspace.groupId === ws.groupId && (
+                            <IconCheck className="w-5 h-5 text-primary" />
+                          )}
                         </Listbox.Option>
                       ))
                   ) : (
@@ -364,60 +455,76 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             </div>
 
             <nav className="flex-1 space-y-1 mt-4">
-              {pages.map((page) =>
-                (page.accessible === undefined || page.accessible) && (
-                  <button
-                    key={page.name}
-                    onClick={() => gotopage(page.href)}
-                    className={clsx(
-                      "w-full gap-3 px-2 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative",
-                      router.asPath === page.href.replace("[id]", workspace.groupId.toString())
-                        ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] font-semibold"
-                        : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700",
-                      isCollapsed ? "grid place-content-center" : "flex gap-2 items-center",
-                    )}
-                  >
-                    {(() => {
-                      const IconComponent: React.ElementType =
-                        router.asPath === page.href.replace("[id]", workspace.groupId.toString())
-                          ? page.filledIcon || page.icon
-                          : page.icon;
-                      return <IconComponent className="w-5 h-5" />;
-                    })()}
-                    {!isCollapsed && (
-                      <div className="flex items-center gap-2">
-                        <span>{page.name}</span>
-                        {page.name === "Policies" && (
-                          <>
-                            <span className="px-1.5 py-0.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full">
-                              BETA
-                            </span>
-                            {pendingPolicyCount > 0 && (
-                              <span className="px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
-                                {pendingPolicyCount}
+              {pages.map(
+                (page) =>
+                  (page.accessible === undefined || page.accessible) && (
+                    <button
+                      key={page.name}
+                      onClick={() => gotopage(page.href)}
+                      className={clsx(
+                        "w-full gap-3 px-2 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative",
+                        router.asPath ===
+                          page.href.replace(
+                            "[id]",
+                            workspace.groupId.toString(),
+                          )
+                          ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] font-semibold"
+                          : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700",
+                        isCollapsed
+                          ? "grid place-content-center"
+                          : "flex gap-2 items-center",
+                      )}
+                    >
+                      {(() => {
+                        const IconComponent: React.ElementType =
+                          router.asPath ===
+                          page.href.replace(
+                            "[id]",
+                            workspace.groupId.toString(),
+                          )
+                            ? page.filledIcon || page.icon
+                            : page.icon;
+                        return <IconComponent className="w-5 h-5" />;
+                      })()}
+                      {!isCollapsed && (
+                        <div className="flex items-center gap-2">
+                          <span>{page.name}</span>
+                          {page.name === "Policies" && (
+                            <>
+                              <span className="px-1.5 py-0.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full">
+                                BETA
+                              </span>
+                              {pendingPolicyCount > 0 && (
+                                <span className="px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                                  {pendingPolicyCount}
+                                </span>
+                              )}
+                            </>
+                          )}
+                          {page.name === "Notices" &&
+                            pendingNoticesCount > 0 && (
+                              <span className="px-1.5 py-0.5 text-xs font-bold bg-amber-500 text-white rounded-full">
+                                {pendingNoticesCount}
                               </span>
                             )}
-                          </>
+                        </div>
+                      )}
+                      {isCollapsed &&
+                        page.name === "Policies" &&
+                        pendingPolicyCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                            {pendingPolicyCount}
+                          </span>
                         )}
-                        {page.name === "Notices" && pendingNoticesCount > 0 && (
-                          <span className="px-1.5 py-0.5 text-xs font-bold bg-amber-500 text-white rounded-full">
+                      {isCollapsed &&
+                        page.name === "Notices" &&
+                        pendingNoticesCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
                             {pendingNoticesCount}
                           </span>
                         )}
-                      </div>
-                    )}
-                    {isCollapsed && page.name === "Policies" && pendingPolicyCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                        {pendingPolicyCount}
-                      </span>
-                    )}
-                    {isCollapsed && page.name === "Notices" && pendingNoticesCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                        {pendingNoticesCount}
-                      </span>
-                    )}
-                  </button>
-                )
+                    </button>
+                  ),
               )}
             </nav>
 
@@ -484,7 +591,7 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                   "w-full flex items-center gap-3 p-2 rounded-lg transition-all duration-300",
                   "hover:bg-[color:rgb(var(--group-theme)/0.1)] hover:text-[color:rgb(var(--group-theme))]",
                   "dark:hover:bg-zinc-700",
-                  isCollapsed ? "justify-center" : "justify-start"
+                  isCollapsed ? "justify-center" : "justify-start",
                 )}
               >
                 <img
@@ -492,12 +599,14 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                   alt=""
                   className={clsx(
                     "w-10 h-10 rounded-lg object-cover transition-all duration-300",
-                    isCollapsed && "scale-90 opacity-80"
+                    isCollapsed && "scale-90 opacity-80",
                   )}
                 />
                 {!isCollapsed && (
                   <div className="flex-1 min-w-0 text-left transition-all duration-300">
-                    <p className="text-sm font-medium truncate dark:text-white">{login?.displayname}</p>
+                    <p className="text-sm font-medium truncate dark:text-white">
+                      {login?.displayname}
+                    </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                       Manage account
                     </p>
@@ -507,15 +616,15 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                   <IconChevronDown className="w-4 h-4 text-zinc-400 dark:text-white transition-all duration-300" />
                 )}
               </Menu.Button>
-          
+
               <Menu.Items className="absolute bottom-14 left-0 w-full bg-white dark:bg-zinc-700 rounded-lg shadow-lg z-50 py-2">
-                  <Menu.Item>
+                <Menu.Item>
                   {({ active }) => (
                     <button
                       onClick={toggleTheme}
                       className={clsx(
                         "w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-white transition-all duration-200",
-                        active && "bg-zinc-100 dark:bg-zinc-600"
+                        active && "bg-zinc-100 dark:bg-zinc-600",
                       )}
                     >
                       {theme === "dark" ? (
@@ -530,14 +639,14 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                     </button>
                   )}
                 </Menu.Item>
-                
+
                 <Menu.Item>
                   {({ active }) => (
                     <button
                       onClick={logout}
                       className={clsx(
                         "w-full text-left px-4 py-2 text-sm text-red-500 transition-all duration-200",
-                        active && "bg-red-50 dark:bg-red-900/40"
+                        active && "bg-red-50 dark:bg-red-900/40",
                       )}
                     >
                       Logout
@@ -570,7 +679,6 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                 </div>
 
                 <div className="space-y-4">
-
                   <div>
                     <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
                       Firefli features, enhancements, and modifications:
@@ -585,7 +693,7 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                       Orbit features, enhancements, and modifications:
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Copyright © 2025 Planetary. All rights reserved.
+                      Copyright © 2025 Firefli. All rights reserved.
                     </p>
                   </div>
 
@@ -616,24 +724,34 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                   </Dialog.Title>
                   <button
                     onClick={() => setShowChangelog(false)}
-                    className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
+                    className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  >
                     <IconX className="w-5 h-5 text-zinc-500" />
                   </button>
                 </div>
                 <div className="space-y-6 max-h-96 overflow-y-auto">
-                  {changelog.length === 0 && <p className="text-sm text-zinc-500">Loading...</p>}
+                  {changelog.length === 0 && (
+                    <p className="text-sm text-zinc-500">Loading...</p>
+                  )}
                   {changelog.map((entry, idx) => (
-                    <div 
+                    <div
                       key={idx}
                       className={clsx(
                         "pb-6",
-                        idx < changelog.length - 1 && "border-b border-zinc-200 dark:border-zinc-700"
+                        idx < changelog.length - 1 &&
+                          "border-b border-zinc-200 dark:border-zinc-700",
                       )}
                     >
-                      <a target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-primary hover:underline"
+                      >
                         {entry.title}
                       </a>
-                      <div className="text-xs text-zinc-400 mt-1 mb-3">{entry.pubDate}</div>
+                      <div className="text-xs text-zinc-400 mt-1 mb-3">
+                        {entry.pubDate}
+                      </div>
                       <div className="text-sm text-zinc-700 dark:text-zinc-300 prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:my-2">
                         <ReactMarkdown>{entry.content}</ReactMarkdown>
                       </div>
@@ -646,7 +764,7 @@ const Sidebar: NextPage<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
         </aside>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;
