@@ -98,7 +98,7 @@
   <ul>
     <li><code>ROBLOX_CLIENT_ID</code> – Roblox oAuth ID (e.g. 1312974419555602493</code>)</li>
     <li><code>ROBLOX_CLIENT_SECRET</code> – Your client secret (e.g. RBX-GLEmbz3yrU...)</li>
-    <li><code>ROBLOX_REDIRECT_URI</code> – Your Domain Callback URI (e.g. https://domain.domain.com/api/auth/roblox/callbackend.)</li>
+    <li><code>ROBLOX_REDIRECT_URI</code> – Your Domain Callback URI (e.g. https://domain.domain.com/api/auth/roblox/callback .)</li>
     <li><code>ROBLOX_OAUTH_ONLY</code> – Force oAuth as only login method (e.g. true/false)</li>
   </ul>
 
