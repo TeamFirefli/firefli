@@ -1,5 +1,4 @@
 import { Html, Head, Main, NextScript } from "next/document";
-import LiveChat from "../components/livechat";
 
 export default function Document() {
   return (
@@ -33,7 +32,6 @@ export default function Document() {
       <body>
         <Main />
         <NextScript />
-        <LiveChat />
       </body>
     </Html>
   );
