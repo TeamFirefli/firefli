@@ -29,10 +29,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     setConfig("activity", activityconfig, parseInt(req.query.id as string));
   }
 
-  let xml_string = fs.readFileSync(path.join("Orbit-activity.rbxmx"), "utf8");
+  let xml_string = fs.readFileSync(path.join("Firefli-activity.rbxmx"), "utf8");
   res.setHeader(
     "Content-Disposition",
-    "attachment; filename=Orbit-activity.rbxmx"
+    "attachment; filename=Firefli-activity.rbxmx"
   );
 
   // Fix the protocol handling to ensure it's a valid protocol string

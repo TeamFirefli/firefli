@@ -7,23 +7,22 @@
 			<BinaryString name="AttributesSerialize"></BinaryString>
 			<bool name="Disabled">false</bool>
 			<Content name="LinkedSource"><null></null></Content>
-			<string name="Name">OrbitActivity</string>
+			<string name="Name">FirefliActivity</string>
 			<token name="RunContext">0</token>
 			<string name="ScriptGuid">{57280D02-3DDB-4992-BA62-09F779557E92}</string>
 			<ProtectedString name="Source"><![CDATA[
-
--- Orbit Activity Tracking Module
+-- Firefli Activity Tracking Module
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local HttpQueue = require(script.Components.HttpQueue)
 local FastWait = require(script.Components.FastWait)
-local TovyFolder = Instance.new("Folder", ReplicatedStorage)
-TovyFolder.Name = "Orbit Assets"
-local TovyEvent = Instance.new("RemoteEvent", TovyFolder)
-TovyEvent.Name = "Activity"
-local TovyClient = script:WaitForChild("Components"):WaitForChild("OrbitClient")
-TovyClient.Event.Value = TovyEvent
+local FirefliFolder = Instance.new("Folder", ReplicatedStorage)
+FirefliFolder.Name = "FirefliAssets"
+local FirefliEvent = Instance.new("RemoteEvent", FirefliFolder)
+FirefliEvent.Name = "Activity"
+local FirefliClient = script:WaitForChild("Components"):WaitForChild("FirefliClient")
+FirefliClient.Event.Value = FirefliEvent
 local Close = Instance.new("BindableEvent")
 
 -- Set up tables
@@ -37,22 +36,19 @@ local Configuration = {
 	url = "<url>",
 	auth = "<apikey>",
 	-- Edit to your liking
-	privateEnabled = false, -- Set to false if you do not want Orbit to track private servers
-	bansEnabled = false, -- Set to false if you do not want Orbit to handle bans (This will use less HTTP requests)
+	privateEnabled = false, -- Set to false if you do not want Fire to track private servers (or studio)
 	cooldownPeriod = 30, -- The interval (seconds) between retrying failed HTTP requests
-	rankChecking = false, -- Enables rank checking on player join/leave to ensure only relevant data is sent to Orbit (RECOMMENDED)
-	groupId = 0, -- The group ID to perform activity tracking for
-	minTrackedRank = 0,	 -- The minimum rank ID to perform activity tracking for (This value is retrieved from your Orbit instance on game launch)
+	rankChecking = false, -- Enables rank checking on player join/leave to ensure only relevant data is sent to Firefli (RECOMMENDED)
+	groupId = 0, -- The group ID to perform activity tracking for (RECOMMENDED)
+	minTrackedRank = 0,	 -- The minimum rank ID to perform activity tracking for (This value is retrieved from your Firefli instance on game launch)
 	minutesTillAFK = 2, -- How long a player can last without moving before being marked AFK
 }
 
 if Configuration.privateEnabled == false then
 	if game:GetService("RunService"):IsStudio() or game.PrivateServerId ~= "" and game.PrivateServerOwnerId ~= 0 then
-		return warn("Orbit: Your activity does not track in private servers or Studio.")
+		return warn("Firefli: Your activity does not track in private servers or Studio.")
 	end
 end
-warn("Orbit: Module loaded; activity will be tracked.")
-
 
 -- Functions
 local function isUserTracked(Player)
@@ -77,6 +73,9 @@ local function CreateSession(Player)
 	);
 	
 	local result = request:Send()
+	result:andThen(function()
+		warn("Firefli: Module loaded; activity will be tracked for " .. Player.Name)
+	end)
 
 end
 
@@ -85,7 +84,7 @@ local function EndSession(Player)
 		local request = HttpQueue.HttpRequest.new(
 			Configuration.url .. "/api/activity/session?type=end",
 			"POST",
-			HttpService:JSONEncode({ userid = Player.UserId, idleTime = Player["Orbit AFK Timer"].Value, messages = messageTable[Player.UserId] }),
+			HttpService:JSONEncode({ userid = Player.UserId, idleTime = Player["AFKTimer"].Value, messages = messageTable[Player.UserId] }),
 			nil,
 			{
 				["Content-Type"] = "application/json",
@@ -101,8 +100,10 @@ end
 local function InputChange(Player, Status)
 	if Status and not table.find(afkTable, Player) then
 		table.insert(afkTable, Player)
+		warn("Firefli: AFK detected for " .. Player.Name)
 	elseif not Status then
 		table.remove(afkTable, table.find(afkTable, Player))
+		warn("Firefli: AFK stopped for " .. Player.Name)
 	end
 end
 
@@ -121,11 +122,13 @@ local function MovementDetection(Player)
 			if lastMovement == CurrentTime then
 				if not table.find(afkTable, Player) then
 					table.insert(afkTable, Player)
+					warn("Firefli: AFK detected for " .. Player.Name)
 				end	
 			end
 		else
 			if table.find(afkTable, Player) then
 				table.remove(afkTable, table.find(afkTable, Player))
+				warn("Firefli: AFK stopped for " .. Player.Name)
 			end	
 		end
 	end
@@ -140,25 +143,25 @@ local function MovementDetection(Player)
 	
 end
 
-local function InitiateTovy(Player)
+local function InitiateFirefli(Player)
 	rankTable[Player.UserId] = {
 		Rank = Player:GetRankInGroup(Configuration.groupId)
 	}
 	messageTable[Player.UserId] = 0
 	if isUserTracked(Player) then
-		local TovyAFKTimer = Instance.new("NumberValue", Player)
-		TovyAFKTimer.Name = "Orbit AFK Timer"
-		TovyClient:Clone().Parent = Player:WaitForChild("PlayerGui")
+		local AFKTimer = Instance.new("NumberValue", Player)
+		AFKTimer.Name = "AFKTimer"
+		FirefliClient:Clone().Parent = Player:WaitForChild("PlayerGui")
 		CreateSession(Player)
 		MovementDetection(Player)
 	end
 end
 
 -- Events
-TovyEvent.OnServerEvent:Connect(InputChange)
+FirefliEvent.OnServerEvent:Connect(InputChange)
 
 Players.PlayerAdded:Connect(function(Player)
-	InitiateTovy(Player)
+	InitiateFirefli(Player)
 	Player.CharacterAdded:Connect(function()
 		MovementDetection(Player)
 	end)
@@ -188,7 +191,7 @@ game:BindToClose(function()
 		if isUserTracked(Player) then
 			table.insert(sessions, {
 				userid = Player.UserId,
-				idleTime = Player["Orbit AFK Timer"].Value,
+				idleTime = Player["AFKTimer"].Value,
 				messages = messageTable[Player.UserId]
 			})
 		end
@@ -208,9 +211,9 @@ game:BindToClose(function()
 		end)
 		
 		if success then
-			warn(string.format("Orbit: Ended %d sessions on shutdown", #sessions))
+			warn(string.format("Firefli: Ended %d sessions on shutdown", #sessions))
 		else
-			warn("Orbit: Failed to send shutdown session - " .. tostring(response))
+			warn("Firefli: Failed to send shutdown session - " .. tostring(response))
 		end
 	end
 	
@@ -218,12 +221,12 @@ game:BindToClose(function()
 end)
 
 for _,Player in pairs(Players:GetPlayers()) do
-	InitiateTovy(Player)
+	InitiateFirefli(Player)
 end
 
 while true do
 	for index, Player in pairs(afkTable) do
-		local t = Player["Orbit AFK Timer"]
+		local t = Player["AFKTimer"]
 		if Players:GetPlayerByUserId(Player.UserId) and t then
 			t.Value += 1
 		else 
@@ -3474,7 +3477,7 @@ return t
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<bool name="Disabled">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">OrbitClient</string>
+					<string name="Name">FirefliClient</string>
 					<token name="RunContext">0</token>
 					<string name="ScriptGuid">{EC2C7152-6EB3-4E25-8EA5-8767FF7B9CC6}</string>
 					<ProtectedString name="Source"><![CDATA[--[[
@@ -3484,8 +3487,8 @@ return t
 ▀░░▀ ▀▀▀ ▀░▀▀ ▀▀▀ ▀░░▀ ▀▀▀░ ▄▄▄█ ▀░░ ▀░░▀ ▀░░▀ ▀▀▀
 
 Author: alreadyfans
-For: Orbit
-Description: Handles Orbit activity tracking
+For: Firefli
+Description: Handles Firefli activity tracking
 
 ]]
 
