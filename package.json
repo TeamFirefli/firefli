@@ -80,6 +80,7 @@
     "sanitize-html": "^2.16.0",
     "sass": "^1.77.4",
     "sharp": "^0.34.5",
+    "swr": "^2.3.8",
     "tailwind-merge": "^2.2.0",
     "ts-node": "^10.9.2",
     "uuid": "^9.0.1",

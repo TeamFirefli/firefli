@@ -11,7 +11,18 @@ import {
 import { getConfig } from "@/utils/configEngine";
 
 const activityUsersCache = new Map<string, { data: any; timestamp: number }>();
-const ACTIVITY_CACHE_DURATION = 30000;
+const ACTIVITY_CACHE_DURATION = 60000; // Increase from 30s to 60s
+const ACTIVITY_STALE_DURATION = 300000; // 5 min stale-while-revalidate
+
+// Add cache cleanup every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of activityUsersCache.entries()) {
+    if (now - value.timestamp > ACTIVITY_STALE_DURATION) {
+      activityUsersCache.delete(key);
+    }
+  }
+}, 600000);
 
 type Data = {
   success: boolean;
@@ -43,108 +54,96 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const cacheKey = `activity_users_${workspaceId}`;
   const now = Date.now();
   const cached = activityUsersCache.get(cacheKey);
-  if (cached && now - cached.timestamp < ACTIVITY_CACHE_DURATION) {
-    return res.status(200).json({ success: true, message: cached.data });
+  if (cached) {
+    const age = now - cached.timestamp;
+
+    // Return fresh cache immediately
+    if (age < ACTIVITY_CACHE_DURATION) {
+      return res.status(200).json({ success: true, message: cached.data });
+    }
+
+    // Return stale data, refresh in background (stale-while-revalidate)
+    if (age < ACTIVITY_STALE_DURATION) {
+      res.status(200).json({ success: true, message: cached.data });
+
+      // Refresh in background (non-blocking)
+      setImmediate(async () => {
+        try {
+          const freshData = await fetchActivityData(workspaceId);
+          activityUsersCache.set(cacheKey, {
+            data: freshData,
+            timestamp: Date.now()
+          });
+        } catch (error) {
+          console.error('[activity/users] Background refresh failed:', error);
+        }
+      });
+      return;
+    }
   }
 
-  const lastReset = await prisma.activityReset.findFirst({
-    where: {
-      workspaceGroupId: workspaceId,
-    },
-    orderBy: {
-      resetAt: "desc",
-    },
-  });
+  // Parallel queries for lastReset and activityConfig
+  const [lastReset, activityConfig] = await Promise.all([
+    prisma.activityReset.findFirst({
+      where: { workspaceGroupId: workspaceId },
+      orderBy: { resetAt: "desc" },
+    }),
+    getConfig("activity", workspaceId)
+  ]);
 
   const startDate = lastReset?.resetAt || new Date("2025-01-01");
   const currentDate = new Date();
-
-  const activityConfig = await getConfig("activity", workspaceId);
   const leaderboardRank = activityConfig?.leaderboardRole;
   const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true;
 
-  const sessions = await prisma.activitySession.findMany({
-    where: {
-      workspaceGroupId: workspaceId,
-      startTime: {
-        gte: startDate,
-        lte: currentDate,
+  // Parallel queries for all session and user data
+  const [sessions, activeSession, inactiveSession, users] = await Promise.all([
+    prisma.activitySession.findMany({
+      where: {
+        workspaceGroupId: workspaceId,
+        startTime: { gte: startDate, lte: currentDate },
+        archived: { not: true }
+      }
+    }),
+    prisma.activitySession.findMany({
+      where: {
+        active: true,
+        workspaceGroupId: workspaceId,
+        archived: { not: true }
       },
-      archived: { not: true },
-    },
-  });
-
-  const activeSession = await prisma.activitySession.findMany({
-    where: {
-      active: true,
-      workspaceGroupId: workspaceId,
-      archived: { not: true },
-    },
-    select: {
-      userId: true,
-    },
-  });
-  const inactiveSession = await prisma.inactivityNotice.findMany({
-    where: {
-      endTime: {
-        gt: new Date(),
+      select: { userId: true }
+    }),
+    prisma.inactivityNotice.findMany({
+      where: {
+        endTime: { gt: currentDate },
+        startTime: { lt: currentDate },
+        workspaceGroupId: workspaceId,
+        approved: true,
+        reviewed: true
       },
-      startTime: {
-        lt: new Date(),
-      },
-      workspaceGroupId: parseInt(req.query.id as string),
-      approved: true,
-      reviewed: true,
-    },
-    select: {
-      userId: true,
-      reason: true,
-      startTime: true,
-      endTime: true,
-    },
-  });
-
-  let userQuery: any = {
-    where: {
-      workspaceMemberships: {
-        some: {
-          workspaceGroupId: workspaceId,
-        },
-      },
-    },
-    select: {
-      userid: true,
-      username: true,
-      picture: true,
-    },
-  };
-
-  if (leaderboardRank) {
-    userQuery = {
+      select: { userId: true, reason: true, startTime: true, endTime: true }
+    }),
+    prisma.user.findMany({
       where: {
         workspaceMemberships: {
-          some: {
-            workspaceGroupId: workspaceId,
-          },
-        },
+          some: { workspaceGroupId: workspaceId }
+        }
       },
       select: {
         userid: true,
         username: true,
         picture: true,
-        ranks: {
-          where: {
-            workspaceGroupId: parseInt(req.query.id as string),
-          },
-          select: {
-            rankId: true,
-          },
-        },
-      },
-    };
-  }
+        ...(leaderboardRank ? {
+          ranks: {
+            where: { workspaceGroupId: workspaceId },
+            select: { rankId: true }
+          }
+        } : {})
+      }
+    })
+  ]);
 
-  const users = await prisma.user.findMany(userQuery);
+  // Users already fetched in parallel above
 
   var activeUsers: {
     userId: number;
@@ -290,4 +289,194 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   activityUsersCache.set(cacheKey, { data: responseData, timestamp: now });
 
   return res.status(200).json({ success: true, message: responseData });
+}
+
+// Helper function for background refresh
+async function fetchActivityData(workspaceId: number) {
+  const [lastReset, activityConfig] = await Promise.all([
+    prisma.activityReset.findFirst({
+      where: { workspaceGroupId: workspaceId },
+      orderBy: { resetAt: "desc" },
+    }),
+    getConfig("activity", workspaceId)
+  ]);
+
+  const startDate = lastReset?.resetAt || new Date("2025-01-01");
+  const currentDate = new Date();
+  const leaderboardRank = activityConfig?.leaderboardRole;
+  const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true;
+
+  const [sessions, activeSession, inactiveSession, users] = await Promise.all([
+    prisma.activitySession.findMany({
+      where: {
+        workspaceGroupId: workspaceId,
+        startTime: { gte: startDate, lte: currentDate },
+        archived: { not: true }
+      }
+    }),
+    prisma.activitySession.findMany({
+      where: {
+        active: true,
+        workspaceGroupId: workspaceId,
+        archived: { not: true }
+      },
+      select: { userId: true }
+    }),
+    prisma.inactivityNotice.findMany({
+      where: {
+        endTime: { gt: currentDate },
+        startTime: { lt: currentDate },
+        workspaceGroupId: workspaceId,
+        approved: true,
+        reviewed: true
+      },
+      select: { userId: true, reason: true, startTime: true, endTime: true }
+    }),
+    prisma.user.findMany({
+      where: {
+        workspaceMemberships: {
+          some: { workspaceGroupId: workspaceId }
+        }
+      },
+      select: {
+        userid: true,
+        username: true,
+        picture: true,
+        ...(leaderboardRank ? {
+          ranks: {
+            where: { workspaceGroupId: workspaceId },
+            select: { rankId: true }
+          }
+        } : {})
+      }
+    })
+  ]);
+
+  const adjustments = await prisma.activityAdjustment.findMany({
+    where: {
+      workspaceGroupId: workspaceId,
+      createdAt: { gte: startDate, lte: currentDate },
+      archived: { not: true }
+    }
+  });
+
+  // Process active users
+  const activeUsers = activeSession.map((session) => {
+    const u = users.find((u) => u.userid === session.userId);
+    return {
+      userId: Number(session.userId),
+      username: u?.username || "Unknown",
+      picture: u?.picture || "",
+    };
+  }).filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
+
+  // Process inactive users
+  let inactiveUsers = inactiveSession.map((session) => {
+    const u = users.find((u) => u.userid === session.userId);
+    return {
+      userId: Number(session.userId),
+      reason: session.reason,
+      from: session.startTime,
+      to: session.endTime!,
+      username: u?.username || "Unknown",
+      picture: u?.picture || "",
+    };
+  }).filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
+
+  inactiveUsers = inactiveUsers.filter(
+    (x) => !activeUsers.find((y) => x.userId === y.userId)
+  );
+
+  // Calculate combined minutes
+  const combinedMinutes: CombinedObj[] = [];
+  sessions.forEach((session) => {
+    if (!session.endTime) return;
+    const found = combinedMinutes.find(
+      (x) => x.userId == Number(session.userId)
+    );
+    const sessionDuration =
+      session.endTime.getTime() - session.startTime.getTime();
+    const idleTimeMs =
+      idleTimeEnabled && session.idleTime
+        ? Number(session.idleTime) * 60000
+        : 0;
+    const effectiveTime = sessionDuration - idleTimeMs;
+
+    if (found) {
+      found.ms.push(effectiveTime);
+    } else {
+      combinedMinutes.push({
+        userId: Number(session.userId),
+        ms: [effectiveTime],
+      });
+    }
+  });
+
+  // Add adjustments
+  adjustments.forEach((adjustment: any) => {
+    const found = combinedMinutes.find(
+      (x) => x.userId == Number(adjustment.userId)
+    );
+    const adjustmentMs = adjustment.minutes * 60000;
+    if (found) {
+      found.ms.push(adjustmentMs);
+    } else {
+      combinedMinutes.push({
+        userId: Number(adjustment.userId),
+        ms: [adjustmentMs],
+      });
+    }
+  });
+
+  // Build top staff
+  const topStaff: TopStaff[] = [];
+  const processedUserIds = new Set<number>();
+  for (const min of combinedMinutes) {
+    const minSum = min.ms.reduce((partial, a) => partial + a, 0);
+    const found = users.find((x) => x.userid === BigInt(min.userId));
+    if (leaderboardRank && found) {
+      const userRank = (found as any).ranks?.[0]?.rankId;
+      if (!userRank || Number(userRank) < leaderboardRank) {
+        continue;
+      }
+    }
+
+    if (found) {
+      topStaff.push({
+        userId: min.userId,
+        username: found?.username || "Unknown",
+        ms: minSum,
+        picture: found?.picture || "Unknown",
+      });
+      processedUserIds.add(min.userId);
+    }
+  }
+
+  for (const user of users) {
+    const userId = Number(user.userid);
+    if (processedUserIds.has(userId)) continue;
+
+    if (leaderboardRank) {
+      const userRank = (user as any).ranks?.[0]?.rankId;
+      if (!userRank || Number(userRank) < leaderboardRank) {
+        continue;
+      }
+    }
+
+    topStaff.push({
+      userId: userId,
+      username: user.username || "Unknown",
+      ms: 0,
+      picture: user.picture || "Unknown",
+    });
+  }
+
+  const bestStaff = topStaff.sort((a, b) => {
+    if (b.ms !== a.ms) {
+      return b.ms - a.ms;
+    }
+    return a.username.localeCompare(b.username);
+  });
+
+  return { activeUsers, inactiveUsers, topStaff: bestStaff };
 }
