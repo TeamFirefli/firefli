@@ -5,7 +5,6 @@ import Image from "next/image";
 import Sidebar from "@/components/sidebar";
 import Topbar from "@/components/topbar";
 import BottomBar from "@/components/bottombar";
-import HelpWidget from "@/components/helpwidget";
 import type { LayoutProps } from "@/layoutTypes";
 import axios from "axios";
 import { useRecoilState } from "recoil";
@@ -462,7 +461,7 @@ const workspace: LayoutProps = ({ children }) => {
 
 			<div className="flex flex-col h-screen-safe">
 				<Topbar />
-				<div className="flex flex-1 overflow-hidden">
+				<div className="flex flex-1 overflow-hidden sticky top-0 z-50 backdrop-blur-sm bg-white/80 dark:bg-zinc-800/80">
 					<Sidebar />
 					{getSecondarySidebar ? (
 						<div className="hidden md:flex">
@@ -489,7 +488,6 @@ const workspace: LayoutProps = ({ children }) => {
 					</main>
 				</div>
 				<BottomBar />
-				<HelpWidget />
 			</div>
 		</div>
 	);
