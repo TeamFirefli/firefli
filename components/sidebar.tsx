@@ -6,50 +6,21 @@ import { useRecoilState } from "recoil"
 import { Menu, Listbox, Dialog, Transition } from "@headlessui/react"
 import { useRouter } from "next/router"
 import ThemeToggle from "./ThemeToggle";
-import {
-  Home,
-  HomeOutlined,
-  Chat,
-  ChatOutlined,
-  Assignment,
-  AssignmentOutlined,
-  Notifications,
-  NotificationsOutlined,
-  Person,
-  PersonOutlined,
-  Settings,
-  SettingsOutlined,
-  KeyboardArrowDown,
-  Description,
-  DescriptionOutlined,
-  Shield,
-  ShieldOutlined,
-  Check,
-  Handshake,
-  HandshakeOutlined,
-  ChevronLeft,
-  ChevronRight,
-  Menu as MenuIcon,
-  LightMode,
-  DarkMode,
-  Close,
-  Schedule,
-  ScheduleOutlined,
-  EmojiEvents,
-  EmojiEventsOutlined,
-  TrackChanges,
-  Copyright,
-  MenuBook,
-  GitHub,
-  History,
-  BugReport,
-  Add,
-  Search,
-  Dashboard,
-  Leaderboard,
-  Timeline,
-  BarChart,
-} from "@mui/icons-material"
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
+import { 
+  Home07Icon,
+  Comment01Icon,
+  Task01Icon,
+  File02Icon,
+  UserMultipleIcon,
+  UserIcon,
+  Agreement01Icon,
+  Settings01Icon,
+  Sun03Icon,
+  Moon02Icon,
+  Beach02Icon,
+  UserShield01Icon
+} from "@hugeicons/core-free-icons"
 import {
   IconStar,
   IconSparkles,
@@ -70,6 +41,7 @@ import {
   IconCoffee,
   IconSchool,
   IconPlus,
+  IconX,
 } from "@tabler/icons-react"
 import { Fragment } from "react"
 import axios from "axios"
@@ -171,8 +143,7 @@ const Sidebar: NextPage = () => {
   // Define section categories with their sub-pages
   type SectionConfig = {
     name: string;
-    icon: React.ElementType;
-    filledIcon?: React.ElementType;
+    icon: IconSvgElement | React.ElementType;
     accessible?: boolean;
     href?: string;
     matchPaths?: string[];
@@ -185,21 +156,18 @@ const Sidebar: NextPage = () => {
     { 
       name: "Home", 
       href: `/workspace/${workspace.groupId}`, 
-      icon: HomeOutlined, 
-      filledIcon: Home 
+      icon: Home07Icon,
     },
     { 
       name: "Wall", 
       href: `/workspace/${workspace.groupId}/wall`, 
-      icon: ChatOutlined, 
-      filledIcon: Chat, 
+      icon: Comment01Icon,
       accessible: workspace.yourPermission?.includes("view_wall") 
     },
     { 
       name: "Activity", 
       href: `/workspace/${workspace.groupId}/activity`,
-      icon: AssignmentOutlined, 
-      filledIcon: Assignment,
+      icon: Task01Icon,
       accessible: true,
       matchPaths: [
         `/workspace/${workspace.groupId}/activity`,
@@ -210,8 +178,7 @@ const Sidebar: NextPage = () => {
     ...((docsEnabled || policiesEnabled) ? [{ 
       name: "Docs", 
       href: docsEnabled ? `/workspace/${workspace.groupId}/docs` : `/workspace/${workspace.groupId}/policies`, 
-      icon: DescriptionOutlined, 
-      filledIcon: Description, 
+      icon: File02Icon,
       accessible: true,
       matchPaths: [
         `/workspace/${workspace.groupId}/docs`,
@@ -221,8 +188,7 @@ const Sidebar: NextPage = () => {
     { 
       name: "Staff", 
       href: `/workspace/${workspace.groupId}/views`,
-      icon: PersonOutlined, 
-      filledIcon: Person,
+      icon: UserIcon, 
       accessible: workspace.yourPermission?.includes("view_members"),
       matchPaths: [
         `/workspace/${workspace.groupId}/views`,
@@ -232,8 +198,7 @@ const Sidebar: NextPage = () => {
     ...(alliesEnabled ? [{
       name: "Alliances",
       href: `/workspace/${workspace.groupId}/alliances`,
-      icon: HandshakeOutlined,
-      filledIcon: Handshake,
+      icon: Agreement01Icon,
       accessible: true,
     }] : []),
   ];
@@ -245,37 +210,33 @@ const Sidebar: NextPage = () => {
   const pages: {
     name: string
     href: string
-    icon: React.ElementType
-    filledIcon?: React.ElementType
+    icon: IconSvgElement | React.ElementType
     accessible?: boolean
   }[] = [
-    { name: "Home", href: `/workspace/${workspace.groupId}`, icon: HomeOutlined, filledIcon: Home },
-    { name: "Wall", href: `/workspace/${workspace.groupId}/wall`, icon: ChatOutlined, filledIcon: Chat, accessible: workspace.yourPermission.includes("view_wall") },
-    { name: "Activity", href: `/workspace/${workspace.groupId}/activity`, icon: AssignmentOutlined, filledIcon: Assignment, accessible: true },
+    { name: "Home", href: `/workspace/${workspace.groupId}`, icon: Home07Icon },
+    { name: "Wall", href: `/workspace/${workspace.groupId}/wall`, icon: Comment01Icon, accessible: workspace.yourPermission.includes("view_wall") },
+    { name: "Activity", href: `/workspace/${workspace.groupId}/activity`, icon: Task01Icon, accessible: true },
    ...(noticesEnabled ? [{
       name: "Notices",
       href: `/workspace/${workspace.groupId}/notices`,
-      icon: ScheduleOutlined,
-      filledIcon: Schedule,
+      icon: Beach02Icon,
       accessible: true,
     }] : []),
     ...(alliesEnabled ? [{
       name: "Alliances",
       href: `/workspace/${workspace.groupId}/alliances`,
-      icon: HandshakeOutlined,
-      filledIcon: Handshake,
+      icon: Agreement01Icon,
       accessible: true,
     }] : []),
     ...(sessionsEnabled ? [{
       name: "Sessions",
       href: `/workspace/${workspace.groupId}/sessions`,
-      icon: NotificationsOutlined,
-      filledIcon: Notifications,
+      icon: IconCalendarWeekFilled,
       accessible: true,
     }] : []),
-    { name: "Staff", href: `/workspace/${workspace.groupId}/views`, icon: PersonOutlined, filledIcon: Person, accessible: workspace.yourPermission.includes("view_members") },
-    ...(docsEnabled ? [{ name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: DescriptionOutlined, filledIcon: Description, accessible: true }] : []),
-    ...(policiesEnabled ? [{ name: "Policies", href: `/workspace/${workspace.groupId}/policies`, icon: ShieldOutlined, filledIcon: Shield, accessible: true }] : []),
+    { name: "Staff", href: `/workspace/${workspace.groupId}/views`, icon: UserMultipleIcon, accessible: workspace.yourPermission.includes("view_members") },
+    ...(docsEnabled ? [{ name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: File02Icon, accessible: true }] : []),
+    ...(policiesEnabled ? [{ name: "Policies", href: `/workspace/${workspace.groupId}/policies`, icon: UserShield01Icon, accessible: true }] : []),
   ];
 
   const settingsAccessible = ["admin", "workspace_customisation", "reset_activity", "manage_features", "manage_apikeys", "view_audit_logs"].some(perm => workspace.yourPermission.includes(perm));
@@ -373,10 +334,7 @@ const Sidebar: NextPage = () => {
                 const isActive = section.matchPaths 
                   ? section.matchPaths.some(path => router.asPath.startsWith(path))
                   : (section.href && router.asPath === section.href.replace("[id]", workspace.groupId.toString()));
-                const IconComponent: React.ElementType = isActive
-                  ? section.filledIcon || section.icon
-                  : section.icon;
-                
+                const isHugeIcon = Array.isArray(section.icon);
                 return (
                   <button
                     key={section.name}
@@ -393,7 +351,11 @@ const Sidebar: NextPage = () => {
                         : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700",
                     )}
                   >
-                    <IconComponent className="w-5 h-5" />
+                    {isHugeIcon ? (
+                      <HugeiconsIcon icon={section.icon as IconSvgElement} className="w-5 h-5" strokeWidth={1.5} />
+                    ) : (
+                      (() => { const IconComponent = section.icon as React.ElementType; return <IconComponent className="w-5 h-5" />; })()
+                    )}
                     {section.name === "Docs" && pendingPolicyCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {pendingPolicyCount > 9 ? '9+' : pendingPolicyCount}
@@ -429,11 +391,7 @@ const Sidebar: NextPage = () => {
                     : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700",
                 )}
               >
-                {isSettingsActive ? (
-                  <Settings className="w-5 h-5" />
-                ) : (
-                  <SettingsOutlined className="w-5 h-5" />
-                )}
+                <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5" strokeWidth={1.5} />
               </button>
             </div>
           )}
@@ -458,7 +416,7 @@ const Sidebar: NextPage = () => {
                 onClick={() => setShowCopyright(false)}
                 className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
               >
-                <Close className="w-5 h-5 text-zinc-500" />
+                <IconX className="w-5 h-5 text-zinc-500" />
               </button>
             </div>
 
@@ -510,7 +468,7 @@ const Sidebar: NextPage = () => {
               <button
                 onClick={() => setShowChangelog(false)}
                 className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
-                <Close className="w-5 h-5 text-zinc-500" />
+                <IconX className="w-5 h-5 text-zinc-500" />
               </button>
             </div>
             <div className="space-y-6 max-h-96 overflow-y-auto">

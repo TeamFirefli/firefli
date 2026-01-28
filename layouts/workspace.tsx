@@ -17,6 +17,23 @@ import WorkspaceBirthdayPrompt from '@/components/bdayprompt';
 import { useEffect, useState, useMemo, useCallback } from "react";
 import clsx from 'clsx';
 import SecondarySidebar, { SecondarySidebarSection, SecondarySidebarItem } from "@/components/tabs";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Home07Icon,
+  HourglassIcon,
+  Target01Icon,
+  ChampionIcon,
+  Calendar01Icon,
+  UserMultiple02Icon,
+  Beach02Icon,
+  File02Icon,
+  UserShield01Icon,
+  Flag01Icon,
+  Key01Icon,
+  LockIcon,
+  Alert02Icon,
+  ServerStack01Icon,
+} from "@hugeicons/core-free-icons";
 import {
   IconTrophy,
   IconCalendarStats,
@@ -228,13 +245,13 @@ const workspace: LayoutProps = ({ children }) => {
 				{
 					label: "Activity",
 					href: `/workspace/${id}/activity`,
-					icon: IconHourglassHigh,
+					icon: HourglassIcon,
 					active: path.includes(`/workspace/${id}/activity`),
 				},
 				{
 					label: "Quotas",
 					href: `/workspace/${id}/quotas`,
-					icon: IconTarget,
+					icon: Target01Icon,
 					active: path.includes(`/workspace/${id}/quotas`),
 				},
 			];
@@ -243,7 +260,7 @@ const workspace: LayoutProps = ({ children }) => {
 				activityItems.push({
 					label: "Leaderboard",
 					href: `/workspace/${id}/leaderboard`,
-					icon: IconTrophy,
+					icon: ChampionIcon,
 					active: path.includes(`/workspace/${id}/leaderboard`),
 				});
 			}
@@ -252,7 +269,7 @@ const workspace: LayoutProps = ({ children }) => {
 				activityItems.push({
 					label: "Sessions",
 					href: `/workspace/${id}/sessions`,
-					icon: IconCalendarStats,
+					icon: Calendar01Icon,
 					active: path.includes(`/workspace/${id}/sessions`),
 				});
 			}
@@ -294,13 +311,13 @@ const workspace: LayoutProps = ({ children }) => {
 						{
 							label: "Views",
 							href: `/workspace/${id}/views`,
-							icon: IconUsers,
+							icon: UserMultiple02Icon,
 							active: !isOnNotices && !currentViewId,
 						},
 						{
 							label: "Notices",
 							href: `/workspace/${id}/notices`,
-							icon: IconBeach,
+							icon: Beach02Icon,
 							active: isOnNotices,
 						},
 					],
@@ -333,12 +350,12 @@ const workspace: LayoutProps = ({ children }) => {
 						{
 							label: "Docs",
 							href: `/workspace/${id}/docs`,
-							icon: IconFileText,
+							icon: File02Icon,
 						},
 						{
 							label: "Policies",
 							href: `/workspace/${id}/policies`,
-							icon: IconShield,
+							icon: UserShield01Icon,
 						},
 					],
 				},
@@ -369,7 +386,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "General",
 					href: `/workspace/${id}/settings?section=general`,
-					icon: IconHome,
+					icon: Home07Icon,
 					active: currentSection === 'general',
 				});
 			}
@@ -377,7 +394,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "Activity",
 					href: `/workspace/${id}/settings?section=activity`,
-					icon: IconHourglassHigh,
+					icon: HourglassIcon,
 					active: currentSection === 'activity',
 				});
 			}
@@ -385,7 +402,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "Feature Flags",
 					href: `/workspace/${id}/settings?section=features`,
-					icon: IconFlag,
+					icon: Flag01Icon,
 					active: currentSection === 'features',
 				});
 			}
@@ -393,7 +410,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "Public API",
 					href: `/workspace/${id}/settings?section=api`,
-					icon: IconKey,
+					icon: Key01Icon,
 					active: currentSection === 'api',
 				});
 			}
@@ -401,7 +418,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "Permissions",
 					href: `/workspace/${id}/settings?section=permissions`,
-					icon: IconLock,
+					icon: LockIcon,
 					active: currentSection === 'permissions',
 				});
 			}
@@ -409,7 +426,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "Audit Logs",
 					href: `/workspace/${id}/settings?section=audit`,
-					icon: IconBellExclamation,
+					icon: Alert02Icon,
 					active: currentSection === 'audit',
 				});
 			}
@@ -417,7 +434,7 @@ const workspace: LayoutProps = ({ children }) => {
 				settingsItems.push({
 					label: "Services",
 					href: `/workspace/${id}/settings?section=instance`,
-					icon: IconServer,
+					icon: ServerStack01Icon,
 					active: currentSection === 'instance',
 				});
 			}

@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import clsx from "clsx";
 import { IconPlus, IconX } from "@tabler/icons-react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { ComponentType, useState } from "react";
 
 export interface SecondarySidebarItem {
@@ -9,7 +10,7 @@ export interface SecondarySidebarItem {
   label?: string;
   name?: string;
   href?: string;
-  icon?: ComponentType<{ className?: string }> | React.ReactNode;
+  icon?: ComponentType<{ className?: string }> | React.ReactNode | IconSvgElement;
   color?: string;
   onClick?: () => void;
   active?: boolean;
@@ -97,14 +98,24 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                     const isActive = item.active === true || item.isActive === true || router.asPath === item.href;
                     const displayName = item.label || item.name || "";
                     const itemKey = item.id || `item-${itemIndex}`;
-                    const renderIcon = () => {
+                    const renderIcon = (hasColorBg = false): React.ReactNode => {
                       if (!item.icon) return null;
-                      const IconComponent = item.icon as ComponentType<{ className?: string }>;
-                      if (typeof item.icon === 'function' || 
-                          (typeof item.icon === 'object' && item.icon !== null && '$$typeof' in item.icon)) {
-                        return <IconComponent className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />;
+                      const iconClass = hasColorBg 
+                        ? "w-4 h-4 text-white dark:text-black" 
+                        : "w-4 h-4 text-zinc-700 dark:text-zinc-200";
+                      
+                      if (Array.isArray(item.icon)) {
+                        return <HugeiconsIcon icon={item.icon as IconSvgElement} className={iconClass} strokeWidth={1.5} />;
                       }
-                      return item.icon;
+                      if (typeof item.icon === 'function') {
+                        const IconComponent = item.icon as ComponentType<{ className?: string }>;
+                        return <IconComponent className={iconClass} />;
+                      }
+                      if (typeof item.icon === 'object' && item.icon !== null && '$$typeof' in item.icon) {
+                        const IconComponent = item.icon as unknown as ComponentType<{ className?: string }>;
+                        return <IconComponent className={iconClass} />;
+                      }
+                      return null;
                     };
 
                     const itemContent = (
@@ -114,7 +125,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                             className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
                             style={{ background: item.color }}
                           >
-                            {renderIcon()}
+                            {renderIcon(true)}
                           </span>
                         ) : item.icon ? (
                           <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">

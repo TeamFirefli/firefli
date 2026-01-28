@@ -3,31 +3,22 @@ import type { NextPage } from "next"
 import { loginState, workspacestate } from "@/state"
 import { useRecoilState } from "recoil"
 import { useRouter } from "next/router"
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
-  Home,
-  HomeOutlined,
-  Assignment,
-  AssignmentOutlined,
-  Person,
-  PersonOutlined,
-  Settings,
-  SettingsOutlined,
-  MoreHoriz,
-  Chat,
-  ChatOutlined,
-  Notifications,
-  NotificationsOutlined,
-  Schedule,
-  ScheduleOutlined,
-  Handshake,
-  HandshakeOutlined,
-  Description,
-  DescriptionOutlined,
-  Shield,
-  ShieldOutlined,
-  TrackChanges,
-  Close,
-} from "@mui/icons-material"
+  Home07Icon,
+  Task01Icon,
+  Target01Icon,
+  Calendar01Icon,
+  Comment01Icon,
+  UserMultipleIcon,
+  Beach02Icon,
+  Agreement01Icon,
+  File02Icon,
+  UserShield01Icon,
+  Settings01Icon,
+  MoreHorizontalIcon,
+  Cancel01Icon,
+} from "@hugeicons/core-free-icons"
 import { Dialog, Transition } from "@headlessui/react"
 import { Fragment } from "react"
 import axios from "axios"
@@ -64,20 +55,20 @@ const BottomBar: NextPage = () => {
   }, [workspace.groupId])
 
   const mainPages = [
-    { name: "Home", href: `/workspace/${workspace.groupId}`, icon: HomeOutlined, filledIcon: Home },
-    { name: "Activity", href: `/workspace/${workspace.groupId}/activity`, icon: AssignmentOutlined, filledIcon: Assignment },
-    { name: "Quotas", href: `/workspace/${workspace.groupId}/quotas`, icon: TrackChanges, filledIcon: TrackChanges, accessible: true },
-    ...(sessionsEnabled ? [{ name: "Sessions", href: `/workspace/${workspace.groupId}/sessions`, icon: NotificationsOutlined, filledIcon: Notifications, accessible: true }] : []),
+    { name: "Home", href: `/workspace/${workspace.groupId}`, icon: Home07Icon },
+    { name: "Activity", href: `/workspace/${workspace.groupId}/activity`, icon: Task01Icon },
+    { name: "Quotas", href: `/workspace/${workspace.groupId}/quotas`, icon: Target01Icon, accessible: true },
+    ...(sessionsEnabled ? [{ name: "Sessions", href: `/workspace/${workspace.groupId}/sessions`, icon: Calendar01Icon, accessible: true }] : []),
   ]
 
   const morePages = [
-    { name: "Wall", href: `/workspace/${workspace.groupId}/wall`, icon: ChatOutlined, filledIcon: Chat, accessible: workspace.yourPermission.includes("view_wall") },
-    { name: "Staff", href: `/workspace/${workspace.groupId}/views`, icon: PersonOutlined, filledIcon: Person, accessible: workspace.yourPermission.includes("view_members") },
-    ...(noticesEnabled ? [{ name: "Notices", href: `/workspace/${workspace.groupId}/notices`, icon: ScheduleOutlined, filledIcon: Schedule, accessible: true }] : []),
-    ...(alliesEnabled ? [{ name: "Alliances", href: `/workspace/${workspace.groupId}/alliances`, icon: HandshakeOutlined, filledIcon: Handshake, accessible: true }] : []),
-    ...(docsEnabled ? [{ name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: DescriptionOutlined, filledIcon: Description, accessible: true }] : []),
-    ...(policiesEnabled ? [{ name: "Policies", href: `/workspace/${workspace.groupId}/policies`, icon: ShieldOutlined, filledIcon: Shield, accessible: true }] : []),
-    { name: "Settings", href: `/workspace/${workspace.groupId}/settings`, icon: SettingsOutlined, filledIcon: Settings, accessible: ["admin", "workspace_customisation", "reset_activity", "manage_features", "manage_apikeys", "view_audit_logs"].some(perm => workspace.yourPermission.includes(perm)) },
+    { name: "Wall", href: `/workspace/${workspace.groupId}/wall`, icon: Comment01Icon, accessible: workspace.yourPermission.includes("view_wall") },
+    { name: "Staff", href: `/workspace/${workspace.groupId}/views`, icon: UserMultipleIcon, accessible: workspace.yourPermission.includes("view_members") },
+    ...(noticesEnabled ? [{ name: "Notices", href: `/workspace/${workspace.groupId}/notices`, icon: Beach02Icon, accessible: true }] : []),
+    ...(alliesEnabled ? [{ name: "Alliances", href: `/workspace/${workspace.groupId}/alliances`, icon: Agreement01Icon, accessible: true }] : []),
+    ...(docsEnabled ? [{ name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: File02Icon, accessible: true }] : []),
+    ...(policiesEnabled ? [{ name: "Policies", href: `/workspace/${workspace.groupId}/policies`, icon: UserShield01Icon, accessible: true }] : []),
+    { name: "Settings", href: `/workspace/${workspace.groupId}/settings`, icon: Settings01Icon, accessible: ["admin", "workspace_customisation", "reset_activity", "manage_features", "manage_apikeys", "view_audit_logs"].some(perm => workspace.yourPermission.includes(perm)) },
   ].filter(page => page.accessible !== false)
 
   const isActive = (href: string) => {
@@ -104,14 +95,15 @@ const BottomBar: NextPage = () => {
         <div className="flex justify-around items-center h-16 px-2">
           {visibleMainPages.map((page) => {
             const active = isActive(page.href)
-            const Icon = active && page.filledIcon ? page.filledIcon : page.icon
             return (
               <button
                 key={page.name}
                 onClick={() => gotoPage(page.href)}
                 className="flex flex-col items-center justify-center flex-1 py-2 group"
               >
-                <Icon
+                <HugeiconsIcon
+                  icon={page.icon as IconSvgElement}
+                  strokeWidth={1.5}
                   className={`w-6 h-6 transition-colors ${
                     active
                       ? "text-primary"
@@ -136,7 +128,9 @@ const BottomBar: NextPage = () => {
               onClick={() => { setShowMore(true); }}
               className="flex flex-col items-center justify-center flex-1 py-2 group"
             >
-              <MoreHoriz
+              <HugeiconsIcon
+                icon={MoreHorizontalIcon}
+                strokeWidth={1.5}
                 className={`w-6 h-6 transition-colors ${
                   isMoreActive
                     ? "text-primary"
@@ -181,14 +175,13 @@ const BottomBar: NextPage = () => {
                       onClick={() => setShowMore(false)}
                       className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                     >
-                      <Close className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+                      <HugeiconsIcon icon={Cancel01Icon} strokeWidth={1.5} className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
                     </button>
                   </div>
 
                   <div className="p-4 grid grid-cols-3 gap-4">
                     {morePages.map((page) => {
                       const active = isActive(page.href)
-                      const Icon = active && page.filledIcon ? page.filledIcon : page.icon
                       return (
                         <button
                           key={page.name}
@@ -199,7 +192,9 @@ const BottomBar: NextPage = () => {
                               : "hover:bg-zinc-100 dark:hover:bg-zinc-700"
                           }`}
                         >
-                          <Icon
+                          <HugeiconsIcon
+                            icon={page.icon as IconSvgElement}
+                            strokeWidth={1.5}
                             className={`w-7 h-7 ${
                               active ? "text-primary" : "text-zinc-600 dark:text-zinc-300"
                             }`}
