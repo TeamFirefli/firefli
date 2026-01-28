@@ -258,7 +258,7 @@ export const ApiKeys = ({ triggerToast }: { triggerToast: any }) => {
             <div className="px-6 py-5 sm:px-8">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 mt-0.5">
-                  <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-[#ff66b2] to-[#ff0099] flex items-center justify-center text-white shadow-md">
+                  <div className="h-12 w-12 rounded-lg bg-firefli flex items-center justify-center text-white shadow-md">
                     <IconKey size={24} />
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export const ApiKeys = ({ triggerToast }: { triggerToast: any }) => {
                       </code>
                       <button
                         onClick={() => copyToClipboard(createdKey.key)}
-                        className="p-2 bg-[#ff0099] text-white rounded hover:bg-[#ff0099]/95 transition-colors"
+                        className="p-2 bg-firefli text-white rounded hover:bg-firefli/90 transition-colors"
                       >
                         <IconCopy size={18} />
                       </button>
@@ -304,7 +304,7 @@ export const ApiKeys = ({ triggerToast }: { triggerToast: any }) => {
                       setCreatedKey(null);
                       setNewKeyData({ name: "", expiresIn: "90days" });
                     }}
-                    className="w-full px-4 py-2 rounded-lg bg-[#ff0099] hover:bg-[#ff0099]/95 text-white font-medium shadow-md"
+                    className="w-full px-4 py-2 rounded-lg bg-firefli hover:bg-firefli/90 text-white font-medium shadow-md"
                   >
                     Done
                   </button>
@@ -332,7 +332,7 @@ export const ApiKeys = ({ triggerToast }: { triggerToast: any }) => {
                           setNewKeyData({ ...newKeyData, name: e.target.value })
                         }
                         placeholder="e.g., Production API Key"
-                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#ff0099]/40"
+                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-firefli/40"
                       />
                     </div>
                     <div>
@@ -348,7 +348,7 @@ export const ApiKeys = ({ triggerToast }: { triggerToast: any }) => {
                             expiresIn: e.target.value,
                           })
                         }
-                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#ff0099]/40"
+                        className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-firefli/40"
                       >
                         <option value="30days">30 days</option>
                         <option value="90days">90 days</option>
@@ -362,7 +362,7 @@ export const ApiKeys = ({ triggerToast }: { triggerToast: any }) => {
                     <button
                       type="submit"
                       disabled={!newKeyData.name}
-                      className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#ff0099] hover:bg-[#ff0099]/95 text-white font-medium shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-firefli hover:bg-firefli/90 text-white font-medium shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       Create
                     </button>
