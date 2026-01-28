@@ -160,30 +160,19 @@ const BottomBar: NextPage = () => {
       {/* More Menu Modal */}
       <Transition appear show={showMore} as={Fragment}>
         <Dialog as="div" className="relative z-[100]" onClose={() => { setShowMore(false); }}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </Transition.Child>
+          <div className="fixed inset-0 bg-black/25" onClick={() => setShowMore(false)} />
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-full"
-                enterTo="opacity-100 translate-y-0"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0"
-                leaveTo="opacity-0 translate-y-full"
-              >
-                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-t-2xl bg-white dark:bg-zinc-800 shadow-xl transition-all safe-area-bottom">
+          <div className="fixed inset-0 flex items-end justify-center pointer-events-none">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="translate-y-full"
+              enterTo="translate-y-0"
+              leave="ease-in duration-150"
+              leaveFrom="translate-y-0"
+              leaveTo="translate-y-full"
+            >
+                <Dialog.Panel className="w-full max-w-lg overflow-hidden rounded-t-2xl bg-white dark:bg-zinc-800 shadow-xl pointer-events-auto safe-area-bottom">
                   <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700">
                     <Dialog.Title className="text-lg font-medium text-zinc-900 dark:text-white">
                       More
@@ -230,7 +219,6 @@ const BottomBar: NextPage = () => {
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
-            </div>
           </div>
         </Dialog>
       </Transition>
