@@ -9,6 +9,7 @@ import {
   IconHistory,
   IconCopyright,
   IconLoader2,
+  IconX,
 } from "@tabler/icons-react";
 import packageJson from "../package.json";
 import ReactMarkdown from "react-markdown";
@@ -47,9 +48,15 @@ const HelpWidget = () => {
     <>
       <Popover
         className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-[9999]">
-        <Popover.Button className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-          <IconInfoCircle className="w-5 h-5 md:w-6 md:h-6" />
-        </Popover.Button>
+        {({ open }) => (
+          <>
+            <Popover.Button className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:shadow-xl transition-all duration-200 flex items-center justify-center text-zinc-700 dark:text-zinc-200 border border-zinc-100 dark:border-zinc-700">
+              {open ? (
+                <IconX className="w-5 h-5 md:w-6 md:h-6" />
+              ) : (
+                <IconInfoCircle className="w-5 h-5 md:w-6 md:h-6" />
+              )}
+            </Popover.Button>
 
         <Transition
           as={Fragment}
@@ -131,6 +138,8 @@ const HelpWidget = () => {
             </div>
           </Popover.Panel>
         </Transition>
+        </>
+        )}
       </Popover>
 
       <Transition appear show={showCopyright} as={Fragment}>
@@ -256,7 +265,7 @@ const HelpWidget = () => {
                   <div className="mt-4 flex-1 overflow-y-auto">
                     {changelogLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <IconLoader2 className="w-6 h-6 animate-spin text-primary" />
+                        <IconLoader2 className="w-6 h-6 animate-spin text-zinc-500 dark:text-zinc-400" />
                       </div>
                     ) : changelogItems.length === 0 ? (
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">No changelog entries found.</p>
@@ -284,7 +293,7 @@ const HelpWidget = () => {
                       href="https://feedback.firefli.net/changelog"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-zinc-600 dark:text-zinc-300 hover:underline"
                     >
                       View full changelog
                     </a>
