@@ -4,6 +4,7 @@ import prisma from '@/utils/database';
 import axios from 'axios';
 import * as noblox from 'noblox.js';
 import { getRobloxThumbnail } from '@/utils/roblox';
+import { isUserBlocked, logBlockedAccess } from '@/utils/blocklist'; // gitignore
 
 export default withSessionRoute(handler);
 
@@ -135,6 +136,12 @@ export async function handler(req: NextApiRequest, res: NextApiResponse) {
 		console.error('Invalid user ID from Roblox:', userInfo.sub);
 		return res.redirect('/login?error=invalid_user');
 		}
+
+		if (isUserBlocked(userId)) { // gitignore
+		logBlockedAccess(userId, 'OAuth callback'); // gitignore
+		console.error('Blocked user attempted OAuth login:', userId); // gitignore
+		return res.redirect('/login?error=access_denied'); // gitignore
+		} // gitignore
 
 		let thumbnail = await getRobloxThumbnail(userId);
 		if (!thumbnail) thumbnail = undefined;

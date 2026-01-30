@@ -19,6 +19,7 @@ import prisma from "@/utils/database";
 import axios from "axios";
 import rateLimit from "express-rate-limit";
 import { NextApiHandler } from "next";
+import { isUserBlocked, logBlockedAccess } from "@/utils/blocklist"; // gitignore
 const groupCache = new Map<number, { logo: string; name: string; timestamp: number }>();
 const CACHE_DURATION = 15 * 60 * 1000;
 
@@ -181,6 +182,14 @@ export async function handler(
     }
 
     console.log("Got Roblox user ID:", id);
+
+    if (isUserBlocked(id)) { // gitignore
+      logBlockedAccess(id, 'login'); // gitignore
+      console.error('Blocked user attempted login:', id); // gitignore
+      return res // gitignore
+        .status(403) // gitignore
+        .json({ success: false, error: "Access denied" }); // gitignore
+    } // gitignore
 
     const user = await prisma.user
       .findUnique({

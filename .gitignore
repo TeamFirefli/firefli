@@ -5,6 +5,7 @@
 /.pnp
 .pnp.js
 /docs
+utils/blocklist.ts
 
 # testing
 /coverage

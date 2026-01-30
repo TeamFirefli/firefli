@@ -5,7 +5,7 @@ import { useRecoilState } from "recoil";
 import { loginState } from "@/state";
 import { themeState } from "@/state/theme";
 import Button from "@/components/button";
-import Router from "next/router";
+import Router, { useRouter } from "next/router";
 import axios from "axios";
 import Input from "@/components/input";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { Dialog } from "@headlessui/react";
 import { IconX } from "@tabler/icons-react";
 import { OAuthAvailable } from "@/hooks/useOAuth";
+import toast from "react-hot-toast";
 
 type LoginForm = { username: string; password: string };
 type SignupForm = {
@@ -24,6 +25,7 @@ type SignupForm = {
 const Login: NextPage = () => {
   const [login, setLogin] = useRecoilState(loginState);
   const { isAvailable: isOAuth, oauthOnly } = OAuthAvailable();
+  const router = useRouter();
 
   const loginMethods = useForm<LoginForm>();
   const signupMethods = useForm<SignupForm>();
@@ -69,6 +71,48 @@ const Login: NextPage = () => {
     const isDark = theme === "dark";
     isDarkModeRef.current = isDark;
   }, [mounted, theme]);
+
+  useEffect(() => { // gitignore
+    if (!router.isReady) return; // gitignore
+    
+    const error = router.query.error as string; // gitignore
+    if (error) { // gitignore
+      let message = 'An error occurred during login.'; // gitignore
+      switch (error) { // gitignore
+        case 'access_denied': // gitignore
+          message = 'Access denied. Your account has been blocked from accessing this system.'; // gitignore
+          break; // gitignore
+        case 'oauth_error': // gitignore
+          message = 'OAuth authentication failed. Please try again.'; // gitignore
+          break; // gitignore
+        case 'missing_params': // gitignore
+          message = 'Missing required authentication parameters.'; // gitignore
+          break; // gitignore
+        case 'state_mismatch': // gitignore
+          message = 'Security verification failed. Please try logging in again.'; // gitignore
+          break; // gitignore
+        case 'config_error': // gitignore
+          message = 'Server configuration error. Please contact an administrator.'; // gitignore
+          break; // gitignore
+        case 'invalid_user': // gitignore
+          message = 'Invalid user information received from Roblox.'; // gitignore
+          break; // gitignore
+        case 'database_error': // gitignore
+          message = 'Database error during login. Please try again.'; // gitignore
+          break; // gitignore
+        case 'oauth_failed': // gitignore
+          message = 'OAuth authentication failed. Please check your credentials and try again.'; // gitignore
+          break; // gitignore
+      } // gitignore
+      
+      toast.error(message, { // gitignore
+        duration: 6000, // gitignore
+        position: 'top-center', // gitignore
+      }); // gitignore
+      
+      router.replace('/login', undefined, { shallow: true }); // gitignore
+    } // gitignore
+  }, [router.isReady, router.query.error]); // gitignore
 
   useEffect(() => {
     if (!mounted) return;
@@ -232,6 +276,13 @@ const Login: NextPage = () => {
         req = await axios.post("/api/auth/login", data);
       } catch (e: any) {
         setLoading(false);
+        if (e.response.status === 403) {
+          toast.error('Access denied. Your account has been blocked from accessing this system.', {
+            duration: 6000,
+            position: 'top-center',
+          });
+          return;
+        }
         if (e.response.status === 404) {
           setErrLogin("username", {
             type: "custom",

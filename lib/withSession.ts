@@ -8,6 +8,7 @@ import {
   NextApiRequest,
   NextApiResponse,
 } from "next";
+import { isUserBlocked, logBlockedAccess } from "@/utils/blocklist"; // gitignore
 
 if (process.env.NODE_ENV === 'production') {
   const secret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
@@ -42,6 +43,23 @@ export function withSessionRoute(handler: NextApiHandler) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     // @ts-ignore
     req.session = await getIronSession(req, res, sessionOptions);
+    
+    // Check if the user's session should be revoked due to blocklist
+    // @ts-ignore
+    if (req.session.userid && isUserBlocked(req.session.userid)) {
+      // @ts-ignore
+      logBlockedAccess(req.session.userid, 'active session');
+      // Destroy the session immediately
+      req.session.destroy();
+      
+      // Return 401 Unauthorized for API routes
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Access denied',
+        blocked: true
+      });
+    }
+    
     return handler(req, res);
   };
 }
@@ -57,6 +75,24 @@ export function withSessionSsr<
   return async (context: GetServerSidePropsContext) => {
     // @ts-ignore
     context.req.session = await getIronSession(context.req, context.res, sessionOptions);
+    
+    // Check if the user's session should be revoked due to blocklist
+    // @ts-ignore
+    if (context.req.session.userid && isUserBlocked(context.req.session.userid)) {
+      // @ts-ignore
+      logBlockedAccess(context.req.session.userid, 'SSR page access');
+      // Destroy the session
+      context.req.session.destroy();
+      
+      // Redirect to login page
+      return {
+        redirect: {
+          destination: '/login?error=access_denied',
+          permanent: false,
+        },
+      };
+    }
+    
     return handler(context as any);
   };
 }
