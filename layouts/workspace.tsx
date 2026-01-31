@@ -460,9 +460,9 @@ const workspace: LayoutProps = ({ children }) => {
 			<link rel="icon" href={`${workspace.groupThumbnail}`} />
 			</Head>
 
-			<div className="flex flex-col h-screen-safe">
+			<div className="flex flex-col h-screen-safe overflow-hidden">
 				<Topbar />
-				<div className="flex flex-1 overflow-y-hidden">
+				<div className="flex flex-1 min-h-0">
 					<Sidebar />
 					{getSecondarySidebar ? (
 						<div className="hidden md:flex">

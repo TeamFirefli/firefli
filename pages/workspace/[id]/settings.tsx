@@ -44,28 +44,8 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(asy
   const userPermissions = currentUser?.roles?.[0]?.permissions || [];
 
   const grouproles = await noblox.getRoles(Number(params.id))
-  const users = await prisma.user.findMany({
-    where: {
-      roles: {
-        some: {
-          workspaceGroupId: Number.parseInt(params.id as string),
-        },
-      },
-    },
-    include: {
-      roles: {
-        where: {
-          workspaceGroupId: Number.parseInt(params.id as string),
-        }
-      },
-      workspaceMemberships: {
-        where: {
-          workspaceGroupId: Number.parseInt(params.id as string),
-        },
-      },
-    },
-  })
-
+  
+  // Only fetch roles and departments for settings, users are loaded on-demand via API
   const roles = await prisma.role.findMany({
     where: {
       workspaceGroupId: Number.parseInt(params.id as string),
@@ -78,30 +58,8 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(asy
     }
   })
 
-  const usersWithInfo = await Promise.all(
-    users.map(async (user) => {
-      const username = user.username || (await getUsername(user.userid))
-      const thumbnail = user.picture || ""
-      const displayName = user.username || (await getDisplayName(user.userid))
-      return {
-        ...user,
-        userid: Number(user.userid),
-        username,
-        thumbnail,
-        displayName,
-        workspaceMemberships: user.workspaceMemberships?.map(m => ({
-          ...m,
-          userId: Number(m.userId),
-          lineManagerId: m.lineManagerId ? Number(m.lineManagerId) : null,
-          joinDate: m.joinDate ? m.joinDate.toISOString() : null,
-        })),
-      }
-    }),
-  )
-
   return {
     props: {
-      users: usersWithInfo,
       roles,
       departments,
       grouproles,
@@ -113,7 +71,6 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(asy
 
 type Props = {
   roles: []
-  users: []
   departments: []
   grouproles: []
   isAdmin: boolean
@@ -198,7 +155,7 @@ const SECTIONS = {
   },
 }
 
-const Settings: pageWithLayout<Props> = ({ users, roles, departments, grouproles, isAdmin, userPermissions }) => {
+const Settings: pageWithLayout<Props> = ({ roles, departments, grouproles, isAdmin, userPermissions }) => {
   const router = useRouter()
   const [isSidebarExpanded] = useState(true)
   const activeSection = (router.query.section as string) || "general"
@@ -236,7 +193,7 @@ const Settings: pageWithLayout<Props> = ({ users, roles, departments, grouproles
     if (activeSection === "permissions") {
       return (
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-4 sm:p-6">
-          <Permissions users={users} roles={roles} departments={departments} grouproles={grouproles} />
+          <Permissions roles={roles} departments={departments} grouproles={grouproles} />
         </div>
       )
     }

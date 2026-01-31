@@ -1,4 +1,4 @@
-import React, { FC, Fragment, useMemo } from "react";
+import React, { FC, Fragment, useMemo, useEffect } from "react";
 import { Disclosure, Transition, Listbox, Dialog } from "@headlessui/react";
 import {
   IconCheck,
@@ -23,7 +23,6 @@ import axios from "axios";
 import clsx from "clsx";
 
 type Props = {
-  users: any[];
   roles: role[];
 };
 
@@ -35,7 +34,8 @@ const USERS_PER_PAGE = 25;
 
 const Button: FC<Props> = (props) => {
   const [workspace, setWorkspace] = useRecoilState(workspacestate);
-  const [users, setUsers] = React.useState(props.users);
+  const [users, setUsers] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [login, setLogin] = useRecoilState(loginState);
   const [showRemoveModal, setShowRemoveModal] = React.useState(false);
   const [userToRemove, setUserToRemove] = React.useState<number | null>(null);
@@ -44,6 +44,24 @@ const Button: FC<Props> = (props) => {
 
   const userForm = useForm<form>();
   const { roles } = props;
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`/api/workspace/${workspace.groupId}/settings/users`);
+        setUsers(response.data.users || []);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+        const toast = (await import("react-hot-toast")).default;
+        toast.error('Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, [workspace.groupId]);
+
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
     const query = searchQuery.toLowerCase();
@@ -174,12 +192,17 @@ const Button: FC<Props> = (props) => {
             setSearchQuery(e.target.value);
             setCurrentPages({});
           }}
-          className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-700 text-zinc-600 dark:text-white focus:ring-primary focus:border-primary transition focus-visible:outline-none"
+          disabled={loading}
+          className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-700 text-zinc-600 dark:text-white focus:ring-primary focus:border-primary transition focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
-      <div className="space-y-3">
-        {roles.map((role) => {
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="space-y-3">{roles.map((role) => {
           const { users: roleUsers, total, totalPages, currentPage } = getUsersForRole(role.id);
           const allRoleUsers = filteredUsers.filter((user: any) => user.roles[0]?.id === role.id);
           
@@ -385,7 +408,8 @@ const Button: FC<Props> = (props) => {
             </Disclosure>
           );
         })}
-      </div>
+        </div>
+      )}
 
       <Transition appear show={showRemoveModal} as={Fragment}>
         <Dialog

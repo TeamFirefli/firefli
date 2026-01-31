@@ -16,7 +16,6 @@ import { Department } from "@/components/settings/permissions/departments";
 import { useRecoilState } from "recoil";
 import axios from "axios";
 type Props = {
-	users: any[];
 	roles: role[];
 	departments: Department[];
 	grouproles: Role[]
@@ -34,7 +33,7 @@ const Button: FC<Props> = (props) => {
 
 	return (
 		<div>
-			<Users roles={roles} users={props.users} />
+			<Users roles={roles} />
 			<Roles setRoles={setRoles} roles={roles} grouproles={props.grouproles}  />
 			<Departments setDepartments={setDepartments} departments={departments} />
 		</div>
