@@ -396,8 +396,8 @@ const Sidebar: NextPage = () => {
           "w-16 min-w-[4rem]",
         )}
       >
-        <div className="h-full flex flex-col p-2 overflow-y-auto pb-3">
-          <nav className="flex-1 space-y-1 flex flex-col items-center">
+        <div className="h-full flex flex-col p-2 pb-2 gap-1 overflow-hidden">
+          <nav className="flex-1 space-y-1 flex flex-col items-center overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin">
             {sections.map((section) => {
               if (section.accessible === undefined || section.accessible) {
                 const isActive = section.matchPaths
@@ -442,28 +442,30 @@ const Sidebar: NextPage = () => {
               return null;
             })}
           </nav>
-          <SidebarTooltip label="Toggle Theme">
-            <div className="rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105">
-              <ThemeToggle />
-            </div>
-          </SidebarTooltip>
-          {settingsAccessible && (
-            <SidebarTooltip label="Settings">
-              <button
-                onClick={() => {
-                  gotopage(settingsHref);
-                }}
-                className={clsx(
-                  "rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12",
-                  isSettingsActive
-                    ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] scale-105"
-                    : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105",
-                )}
-              >
-                <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5" strokeWidth={1.5} />
-              </button>
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <SidebarTooltip label="Toggle Theme">
+              <div className="rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105">
+                <ThemeToggle />
+              </div>
             </SidebarTooltip>
-          )}
+            {settingsAccessible && (
+              <SidebarTooltip label="Settings">
+                <button
+                  onClick={() => {
+                    gotopage(settingsHref);
+                  }}
+                  className={clsx(
+                    "rounded-lg transition-all duration-200 ease-in-out flex items-center justify-center w-12 h-12",
+                    isSettingsActive
+                      ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))] scale-105"
+                      : "text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:scale-105",
+                  )}
+                >
+                  <HugeiconsIcon icon={Settings01Icon} className="w-5 h-5" strokeWidth={1.5} />
+                </button>
+              </SidebarTooltip>
+            )}
+          </div>
         </div>
       </aside>
 
