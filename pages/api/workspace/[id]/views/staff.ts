@@ -24,6 +24,15 @@ export default withPermissionCheck(
       }
     }
 
+    let visibleColumns: string[] = [];
+    if (req.query.columns && typeof req.query.columns === "string") {
+      try {
+        visibleColumns = JSON.parse(req.query.columns);
+      } catch (e) {
+        console.error("Failed to parse columns:", e);
+      }
+    }
+
     try {
       const lastReset = await prisma.activityReset.findFirst({
         where: {
@@ -71,6 +80,16 @@ export default withPermissionCheck(
       );
       const needsFullComputation = computedFilters.length > 0;
 
+      // Determine what data to fetch based on visible columns and filters
+      const needsBook = visibleColumns.length === 0 || visibleColumns.includes("book") || filters.some(f => f.column === "warnings");
+      const needsWallPosts = visibleColumns.length === 0 || visibleColumns.includes("wallPosts");
+      const needsInactivityNotices = visibleColumns.length === 0 || visibleColumns.includes("inactivityNotices") || filters.some(f => f.column === "notices");
+      const needsSessions = visibleColumns.length === 0 || visibleColumns.includes("hostedSessions") || visibleColumns.includes("sessionsAttended") || filters.some(f => ["sessions", "hosted"].includes(f.column));
+      const needsRanks = visibleColumns.length === 0 || visibleColumns.includes("rankName") || visibleColumns.includes("rankID") || filters.some(f => f.column === "rank");
+      const needsActivity = visibleColumns.length === 0 || visibleColumns.includes("minutes") || visibleColumns.includes("idleMinutes") || visibleColumns.includes("messages") || filters.some(f => ["minutes", "idle", "messages"].includes(f.column));
+      const needsQuota = visibleColumns.length === 0 || visibleColumns.includes("quota") || filters.some(f => f.column === "quota");
+      const needsDepartments = visibleColumns.length === 0 || visibleColumns.includes("departments") || filters.some(f => f.column === "department");
+
       let allUsers: any[] = [];
       let paginatedUsers: any[] = [];
       let totalFilteredUsers = 0;
@@ -79,16 +98,16 @@ export default withPermissionCheck(
         allUsers = await prisma.user.findMany({
           where: whereClause,
           include: {
-            book: true,
-            wallPosts: true,
-            inactivityNotices: true,
-            sessions: true,
-            ranks: {
+            book: needsBook,
+            wallPosts: needsWallPosts,
+            inactivityNotices: needsInactivityNotices,
+            sessions: needsSessions,
+            ranks: needsRanks ? {
               where: {
                 workspaceGroupId,
               },
-            },
-            roles: {
+            } : false,
+            roles: needsQuota ? {
               where: {
                 workspaceGroupId,
               },
@@ -99,8 +118,12 @@ export default withPermissionCheck(
                   },
                 },
               },
+            } : {
+              where: {
+                workspaceGroupId,
+              },
             },
-            workspaceMemberships: {
+            workspaceMemberships: needsDepartments ? {
               where: {
                 workspaceGroupId,
               },
@@ -110,6 +133,10 @@ export default withPermissionCheck(
                     department: true,
                   },
                 },
+              },
+            } : {
+              where: {
+                workspaceGroupId,
               },
             },
           },
@@ -125,16 +152,16 @@ export default withPermissionCheck(
           skip: page * pageSize,
           take: pageSize,
           include: {
-            book: true,
-            wallPosts: true,
-            inactivityNotices: true,
-            sessions: true,
-            ranks: {
+            book: needsBook,
+            wallPosts: needsWallPosts,
+            inactivityNotices: needsInactivityNotices,
+            sessions: needsSessions,
+            ranks: needsRanks ? {
               where: {
                 workspaceGroupId,
               },
-            },
-            roles: {
+            } : false,
+            roles: needsQuota ? {
               where: {
                 workspaceGroupId,
               },
@@ -145,8 +172,12 @@ export default withPermissionCheck(
                   },
                 },
               },
+            } : {
+              where: {
+                workspaceGroupId,
+              },
             },
-            workspaceMemberships: {
+            workspaceMemberships: needsDepartments ? {
               where: {
                 workspaceGroupId,
               },
@@ -156,6 +187,10 @@ export default withPermissionCheck(
                     department: true,
                   },
                 },
+              },
+            } : {
+              where: {
+                workspaceGroupId,
               },
             },
           },
@@ -169,7 +204,9 @@ export default withPermissionCheck(
       });
 
       const userIdsToProcess = allUsers.map((u) => u.userid);
-      const allActivity = await prisma.activitySession.findMany({
+      
+      // Only fetch activity if needed
+      const allActivity = needsActivity ? await prisma.activitySession.findMany({
         where: {
           workspaceGroupId,
           startTime: {
@@ -189,12 +226,12 @@ export default withPermissionCheck(
           idleTime: true,
           messages: true,
         },
-      });
+      }) : [];
 
       const userIds = allUsers.map(u => u.userid);
       
       const [allAdjustments, allOwnedSessions, allParticipations, allAllyVisits, allCurrentWallPosts] = await Promise.all([
-        prisma.activityAdjustment.findMany({
+        needsActivity ? prisma.activityAdjustment.findMany({
           where: {
             userId: { in: userIds },
             workspaceGroupId,
@@ -204,8 +241,8 @@ export default withPermissionCheck(
             },
             archived: { not: true },
           },
-        }),
-        prisma.session.findMany({
+        }) : Promise.resolve([]),
+        needsSessions ? prisma.session.findMany({
           where: {
             ownerId: { in: userIds },
             sessionType: { workspaceGroupId },
@@ -215,8 +252,8 @@ export default withPermissionCheck(
             },
             archived: { not: true },
           },
-        }),
-        prisma.sessionUser.findMany({
+        }) : Promise.resolve([]),
+        needsSessions ? prisma.sessionUser.findMany({
           where: {
             userid: { in: userIds },
             session: {
@@ -241,8 +278,8 @@ export default withPermissionCheck(
               },
             },
           },
-        }),
-        prisma.allyVisit.findMany({
+        }) : Promise.resolve([]),
+        (visibleColumns.length === 0 || visibleColumns.includes("allianceVisits")) ? prisma.allyVisit.findMany({
           where: {
             ally: {
               workspaceGroupId: workspaceGroupId,
@@ -260,8 +297,8 @@ export default withPermissionCheck(
             hostId: true,
             participants: true,
           },
-        }),
-        prisma.wallPost.findMany({
+        }) : Promise.resolve([]),
+        needsWallPosts ? prisma.wallPost.findMany({
           where: {
             authorId: { in: userIds },
             workspaceGroupId,
@@ -270,7 +307,7 @@ export default withPermissionCheck(
               lte: currentDate,
             },
           },
-        }),
+        }) : Promise.resolve([]),
       ]);
 
       const adjustmentsByUser = new Map<string, any[]>();
@@ -398,8 +435,9 @@ export default withPermissionCheck(
         const currentWallPosts = wallPostsByUser.get(userKey) || [];
 
         const userQuotas = user.roles
-          .flatMap((role: any) => role.quotaRoles)
-          .map((qr: any) => qr.quota);
+          .flatMap((role: any) => role.quotaRoles || [])
+          .map((qr: any) => qr.quota)
+          .filter((q: any) => q !== undefined);
 
         let quota = true;
         if (userQuotas.length > 0) {

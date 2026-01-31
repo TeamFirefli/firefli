@@ -69,6 +69,8 @@ import {
   IconSpeakerphone,
   IconPencil,
   IconDeviceFloppy,
+  IconExternalLink,
+  IconLoader2,
 } from "@tabler/icons-react";
 
 type User = {
@@ -201,6 +203,8 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [externalSearchResults, setExternalSearchResults] = useState<any[]>([]);
+  const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [colFilters, setColFilters] = useState<
     {
       id: string;
@@ -505,6 +509,10 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       
       setIsLoading(true);
       try {
+        const visibleColumnKeys = Object.entries(columnVisibility)
+          .filter(([_, visible]) => visible)
+          .map(([key]) => key);
+
         const res = await axios.get(
           `/api/workspace/${router.query.id}/views/staff`,
           {
@@ -512,6 +520,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               page: pagination.pageIndex,
               pageSize: pagination.pageSize,
               filters: JSON.stringify(colFilters),
+              columns: JSON.stringify(visibleColumnKeys),
             },
           }
         );
@@ -530,7 +539,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     };
 
     fetchStaffData();
-  }, [router.query.id, pagination.pageIndex, pagination.pageSize, colFilters]);
+  }, [router.query.id, pagination.pageIndex, pagination.pageSize, colFilters, columnVisibility]);
 
   const applySavedView = (view: any) => {
     if (!view) return;
@@ -805,9 +814,46 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   const updateSearchFilter = async (username: string) => {
     setSearchQuery(username);
     setSearchOpen(false);
+    setExternalSearchResults([]);
     setColFilters([
       { id: uuidv4(), column: "username", filter: "equal", value: username },
     ]);
+  };
+
+  const searchExternally = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearchingExternal(true);
+    try {
+      const response = await axios.post('/api/roblox/id', {
+        keyword: searchQuery.trim()
+      });
+      
+      if (response.data && response.data.data && response.data.data.length > 0) {
+        const users = response.data.data.map((user: any) => ({
+          userId: user.id,
+          username: user.name,
+          displayName: user.displayName,
+          thumbnail: `/api/workspace/${router.query.id}/avatar/${user.id}`
+        }));
+        setExternalSearchResults(users);
+      } else {
+        setExternalSearchResults([]);
+        toast.error("No Roblox users found with that username");
+      }
+    } catch (error) {
+      console.error("External search failed:", error);
+      toast.error("Failed to search Roblox");
+      setExternalSearchResults([]);
+    } finally {
+      setIsSearchingExternal(false);
+    }
+  };
+
+  const openExternalProfile = (userId: number) => {
+    setSearchOpen(false);
+    setExternalSearchResults([]);
+    router.push(`/workspace/${router.query.id}/profile/${userId}`);
   };
 
   const getSelectionName = (columnId: string) => {
@@ -1178,10 +1224,51 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                   {searchOpen && (
                     <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl">
                       <div className="py-1 max-h-48 overflow-y-auto">
-                        {searchResults.length === 0 && (
+                        {searchResults.length === 0 && !isSearchingExternal && externalSearchResults.length === 0 && (
                           <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 text-center">
-                            No results found
+                            <p>No results found in workspace</p>
+                            {searchQuery.trim().length >= 3 && (
+                              <button
+                                onClick={searchExternally}
+                                className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-[color:rgb(var(--group-theme))] text-white hover:opacity-90 transition-opacity"
+                              >
+                                <IconSearch className="w-3 h-3" />
+                                Search on Roblox
+                              </button>
+                            )}
                           </div>
+                        )}
+                        {isSearchingExternal && (
+                          <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 text-center">
+                            <IconLoader2 className="w-4 h-4 animate-spin inline-block mr-2" />
+                            Searching Roblox...
+                          </div>
+                        )}
+                        {externalSearchResults.length > 0 && searchResults.length === 0 && (
+                          <>
+                            <div className="px-4 py-1 text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                              Roblox Results
+                            </div>
+                            {externalSearchResults.map((u: any) => (
+                              <button
+                                key={u.userId}
+                                onClick={() => openExternalProfile(u.userId)}
+                                className="w-full text-left px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between transition-colors group"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <img
+                                    src={u.thumbnail}
+                                    alt={u.username}
+                                    className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-600"
+                                  />
+                                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors">
+                                    {u.username}
+                                  </span>
+                                </div>
+                                <IconExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />
+                              </button>
+                            ))}
+                          </>
                         )}
                         {searchResults.map((u: any) => (
                           <button

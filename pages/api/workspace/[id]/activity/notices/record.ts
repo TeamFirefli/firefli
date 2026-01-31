@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withSessionRoute } from "@/lib/withSession";
 import prisma from "@/utils/database";
+import { getUsername, getThumbnail } from "@/utils/userinfoEngine";
 
 export default withSessionRoute(async function handler(
   req: NextApiRequest,
@@ -75,7 +76,7 @@ export default withSessionRoute(async function handler(
       });
     }
 
-    const targetUser = await prisma.user.findFirst({
+    let targetUser = await prisma.user.findFirst({
       where: {
         userid: BigInt(userId),
       },
@@ -88,11 +89,33 @@ export default withSessionRoute(async function handler(
       },
     });
 
-    if (!targetUser || !targetUser.roles.length) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found in workspace",
-      });
+    if (!targetUser) {
+      try {
+        const username = await getUsername(BigInt(userId));
+        const thumbnail = await getThumbnail(BigInt(userId));
+
+        targetUser = await prisma.user.create({
+          data: {
+            userid: BigInt(userId),
+            username: username,
+            picture: thumbnail,
+            registered: false,
+          },
+          include: {
+            roles: {
+              where: {
+                workspaceGroupId,
+              },
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching/creating user:", error);
+        return res.status(404).json({
+          success: false,
+          error: "User not found or unable to fetch from Roblox",
+        });
+      }
     }
 
     const notice = await prisma.inactivityNotice.create({

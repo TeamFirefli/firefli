@@ -125,7 +125,7 @@ export const getServerSideProps = withPermissionCheckSsr(
       return { notFound: true };
     }
 
-    const userTakingAction = await prisma.user.findFirst({
+    let userTakingAction = await prisma.user.findFirst({
       where: {
         userid: BigInt(query.uid as string),
       },
@@ -165,7 +165,60 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
-    if (!userTakingAction) return { notFound: true };
+    if (!userTakingAction) {
+      try {
+        const userId = BigInt(query.uid as string);
+        const username = await getUsername(userId);
+        const thumbnail = await getThumbnail(userId);
+        const displayName = await getDisplayName(userId);
+
+        userTakingAction = await prisma.user.create({
+          data: {
+            userid: userId,
+            username: username,
+            picture: thumbnail,
+            registered: false,
+          },
+          include: {
+            roles: {
+              where: {
+                workspaceGroupId: parseInt(query.id as string),
+              },
+              include: {
+                quotaRoles: {
+                  include: {
+                    quota: true,
+                  },
+                },
+              },
+            },
+            workspaceMemberships: {
+              where: {
+                workspaceGroupId: parseInt(query.id as string),
+              },
+              include: {
+                departmentMembers: {
+                  include: {
+                    department: {
+                      include: {
+                        quotaDepartments: {
+                          include: {
+                            quota: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (error) {
+        console.error('Failed to fetch user from Roblox:', error);
+        return { notFound: true };
+      }
+    }
 
     const currentDate = new Date();
     const lastReset = await prisma.activityReset.findFirst({
