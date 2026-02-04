@@ -128,7 +128,7 @@ const Docs: React.FC = () => {
                     {document.name}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${getRandomBg(document.owner?.userid?.toString() || "", document.owner?.username || "")}`}>
+                    <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${getRandomBg(document.owner?.userid?.toString())}`}>
                       <img
                         src={document.owner?.picture || '/default-avatar.jpg'}
                         alt={`${document.owner?.username}'s avatar`}
