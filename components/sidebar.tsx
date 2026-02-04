@@ -409,7 +409,7 @@ const Sidebar: NextPage = () => {
         )}
       >
         <div className="h-full flex flex-col p-2 pb-2 gap-1 overflow-visible">
-          <nav className="flex-1 space-y-1 flex flex-col items-center overflow-y-auto overflow-x-visible min-h-0 scrollbar-thin px-1">
+          <nav className="flex-1 space-y-1 flex flex-col items-center overflow-y-auto overflow-x-visible min-h-0 px-1 scrollbar-hide">
             {sections.map((section) => {
               if (section.accessible === undefined || section.accessible) {
                 const isActive = section.matchPaths
