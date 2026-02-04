@@ -135,30 +135,56 @@ const Login: NextPage = () => {
 
 	async function createAccount() {
 		setIsLoading(true);
-		let request: { data: { success: boolean; user: any } } | undefined;
+		let request: { data: { success: boolean; workspaceGroupId?: number; user?: any } } | undefined;
+		
+		const isSecondWorkspace = login?.workspaces && login.workspaces.length > 0;
 		
 		try {
-			// Add timeout to the request
-			request = await Promise.race([
-				axios.post('/api/setupworkspace', {
-					groupid: methods.getValues("groupid"),
-					username: signupform.getValues("username"),
-					password: signupform.getValues("password"),
-					color: selectedColor,
-				}),
-				new Promise((_, reject) => 
-					setTimeout(() => reject(new Error('Request timeout')), 30000)
-				)
-			]) as { data: { success: boolean; user: any } };
+			if (isSecondWorkspace) {
+				request = await Promise.race([
+					axios.post('/api/createws', {
+						groupId: Number(methods.getValues("groupid"))
+					}),
+					new Promise((_, reject) => 
+						setTimeout(() => reject(new Error('Request timeout')), 30000)
+					)
+				]) as { data: { success: boolean; workspaceGroupId?: number } };
 
-			if (request?.data.success) {
-				toast.success('Workspace created successfully!');
-				setLogin(prev => ({
-					...prev,
-					...request?.data.user,
-					isOwner: true
-				}));
-				Router.push("/");
+				if (request?.data.success && request.data.workspaceGroupId) {
+					toast.success('Workspace created successfully!');
+					const userReq = await axios.get('/api/@me');
+					if (userReq.data) {
+						setLogin({
+							...userReq.data.user,
+							workspaces: userReq.data.workspaces,
+						});
+					}
+					Router.push(`/workspace/${request.data.workspaceGroupId}?new=true`);
+					return;
+				}
+			} else {
+				request = await Promise.race([
+					axios.post('/api/setupworkspace', {
+						groupid: methods.getValues("groupid"),
+						username: signupform.getValues("username"),
+						password: signupform.getValues("password"),
+						color: selectedColor,
+					}),
+					new Promise((_, reject) => 
+						setTimeout(() => reject(new Error('Request timeout')), 30000)
+					)
+				]) as { data: { success: boolean; user?: any } };
+
+				if (request?.data.success) {
+					toast.success('Workspace created successfully!');
+					setLogin(prev => ({
+						...prev,
+						...request?.data.user,
+						isOwner: true
+					}));
+					Router.push("/");
+					return;
+				}
 			}
 		} catch (e: any) {
 			if (e?.response?.status === 404) {
@@ -167,8 +193,14 @@ const Login: NextPage = () => {
 					message: e.response.data.error 
 				});
 				toast.error('Username not found');
-			} else if (e?.response?.status === 403) {
-				toast.error('Workspace already exists');
+			} else if (e?.response?.status === 403 || e?.response?.status === 409) {
+				toast.error(e.response.data.error || 'Workspace already exists');
+			} else if (e?.response?.status === 400 && e?.response?.data?.error?.includes('rank')) {
+				methods.setError("groupid", { 
+					type: "custom", 
+					message: "You must be at least rank 10 in this group" 
+				});
+				toast.error('You must be at least rank 10 in this group');
 			} else if (e?.message === 'Request timeout') {
 				toast.error('Request timed out. Please try again.');
 			} else {
@@ -178,13 +210,6 @@ const Login: NextPage = () => {
 			return;
 		} finally {
 			setIsLoading(false);
-			if (!request) return;
-			
-			// Add a small delay before redirecting
-			setTimeout(() => {
-				Router.push("/");
-				Router.reload();
-			}, 1000);
 		}
 	}
 
@@ -290,10 +315,18 @@ const Login: NextPage = () => {
 						</button>
 						<button
 							type="button"
-							onClick={handleSubmit(nextSlide)}
+							onClick={() => {
+								const isSecondWorkspace = login?.workspaces && login.workspaces.length > 0;
+								if (isSecondWorkspace) {
+									handleSubmit(createAccount)();
+								} else {
+									handleSubmit(nextSlide)();
+								}
+							}}
 							className="ml-auto bg-firefli py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-firefli/80 transition"
+							disabled={isLoading}
 						>
-							Continue
+							{isLoading ? 'Creating...' : (login?.workspaces && login.workspaces.length > 0 ? 'Create Workspace' : 'Continue')}
 						</button>
 					</div>
 				</div>
