@@ -1,145 +1,180 @@
-"use client"
+"use client";
 
-import type { NextPage } from "next"
-import Head from "next/head"
-import Topbar from "@/components/topbar"
-import { useRouter } from "next/router"
-import { loginState } from "@/state"
-import { Transition, Dialog } from "@headlessui/react"
-import { useState, useEffect, Fragment } from "react"
-import Button from "@/components/button"
-import axios from "axios"
-import Input from "@/components/input"
-import { useForm, FormProvider } from "react-hook-form"
-import { useRecoilState } from "recoil"
-import { toast } from "react-hot-toast"
-import { IconPlus, IconRefresh, IconChevronRight, IconBuildingSkyscraper } from "@tabler/icons-react"
-import { createWorkspaceModalState } from "@/state"
+import type { NextPage } from "next";
+import Head from "next/head";
+import Topbar from "@/components/topbar";
+import { useRouter } from "next/router";
+import { loginState } from "@/state";
+import { Transition, Dialog } from "@headlessui/react";
+import { useState, useEffect, Fragment } from "react";
+import Button from "@/components/button";
+import axios from "axios";
+import Input from "@/components/input";
+import { useForm, FormProvider } from "react-hook-form";
+import { useRecoilState } from "recoil";
+import { toast } from "react-hot-toast";
+import {
+  IconPlus,
+  IconRefresh,
+  IconChevronRight,
+  IconBuildingSkyscraper,
+} from "@tabler/icons-react";
+import { createWorkspaceModalState } from "@/state";
 
 const Home: NextPage = () => {
-  const [login, setLogin] = useRecoilState(loginState)
-  const [loading, setLoading] = useState(false)
-  const methods = useForm()
-  const router = useRouter()
-  const [isOpen, setIsOpen] = useRecoilState(createWorkspaceModalState)
-  const [isOwner, setIsOwner] = useState(false)
-  const canCreateWorkspace = process.env.NEXT_PUBLIC_FIREFLI_LIMIT === 'true' || (!process.env.NEXT_PUBLIC_FIREFLI_LIMIT && isOwner)
+  const [login, setLogin] = useRecoilState(loginState);
+  const [loading, setLoading] = useState(false);
+  const methods = useForm();
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useRecoilState(createWorkspaceModalState);
+  const [isOwner, setIsOwner] = useState(false);
+  const canCreateWorkspace =
+    process.env.NEXT_PUBLIC_FIREFLI_LIMIT === "true" ||
+    (!process.env.NEXT_PUBLIC_FIREFLI_LIMIT && isOwner);
 
   const gotoWorkspace = (id: number) => {
-    router.push(`/workspace/${id}`)
-  }
+    localStorage.setItem("lastWorkspace", id.toString());
+    router.push(`/workspace/${id}`);
+  };
 
   const createWorkspace = async () => {
-    setLoading(true)
-    const t = toast.loading("Creating workspace...")
+    setLoading(true);
+    const t = toast.loading("Creating workspace...");
 
     const request = await axios
       .post("/api/createws", {
         groupId: Number(methods.getValues("groupID")),
       })
       .catch((err) => {
-        console.log(err)
-        setLoading(false)
+        console.log(err);
+        setLoading(false);
 
         if (err.response?.data?.error === "You are not a high enough rank") {
           methods.setError("groupID", {
             type: "custom",
             message: "You need to be a rank 10 or higher to create a workspace",
-          })
+          });
         }
         if (err.response?.data?.error === "Workspace already exists") {
           methods.setError("groupID", {
             type: "custom",
             message: "This group already has a workspace",
-          })
+          });
         }
-      })
+      });
 
     if (request) {
-      toast.success("Workspace created!", { id: t })
-      setIsOpen(false)
-      router.push(`/workspace/${methods.getValues("groupID")}?new=true`)
+      toast.success("Workspace created!", { id: t });
+      setIsOpen(false);
+      router.push(`/workspace/${methods.getValues("groupID")}?new=true`);
     }
-  }
+  };
   useEffect(() => {
     const checkLogin = async () => {
-      let req
+      let req;
       try {
-        req = await axios.get("/api/@me")
+        req = await axios.get("/api/@me");
       } catch (err: any) {
         if (err.response?.data.error === "Workspace not setup") {
-          const currentPath = router.pathname
+          const currentPath = router.pathname;
           // Only redirect if we are not already on the /welcome page
           if (currentPath !== "/welcome") {
-            router.push("/welcome")
+            router.push("/welcome");
           }
 
-          setLoading(false)
-          return
+          setLoading(false);
+          return;
         }
         if (err.response?.data.error === "Not logged in") {
-          router.push("/login")
-          setLoading(false)
-          return
+          router.push("/login");
+          setLoading(false);
+          return;
         }
       } finally {
         if (req?.data) {
           setLogin({
             ...req.data.user,
             workspaces: req.data.workspaces,
-          })
+          });
+          const manualNav = router.query.home === "true";
+
+          if (!manualNav) {
+            if (req.data.workspaces?.length === 1) {
+              router.push(`/workspace/${req.data.workspaces[0].groupId}`);
+              return;
+            }
+
+            const lastWorkspace = localStorage.getItem("lastWorkspace");
+            if (
+              lastWorkspace &&
+              req.data.workspaces?.some(
+                (ws: any) => ws.groupId.toString() === lastWorkspace,
+              )
+            ) {
+              router.push(`/workspace/${lastWorkspace}`);
+              return;
+            }
+          }
         }
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-	const checkOwnerStatus = async () => {
-	  try {
-		const response = await axios.get("/api/auth/checkOwner")
-		if (response.data.success) {
-		  setIsOwner(response.data.isOwner)
-		}
-	  } catch (error: any) {
-		if (error.response?.status !== 401) {
-		  console.error("Failed to check owner status:", error)
-		}
-	  }
-	}
+    const checkOwnerStatus = async () => {
+      try {
+        const response = await axios.get("/api/auth/checkOwner");
+        if (response.data.success) {
+          setIsOwner(response.data.isOwner);
+        }
+      } catch (error: any) {
+        if (error.response?.status !== 401) {
+          console.error("Failed to check owner status:", error);
+        }
+      }
+    };
 
-	checkLogin()
-	checkOwnerStatus()
-  }, [])
+    checkLogin();
+    checkOwnerStatus();
+  }, []);
 
   const checkRoles = async () => {
     const request = axios
       .post("/api/auth/checkRoles", {})
       .then(() => {
-        router.reload()
+        router.reload();
       })
-      .catch(console.error)
+      .catch(console.error);
 
     toast.promise(request, {
       loading: "Checking roles...",
       success: "Roles checked!",
       error: "An error occurred",
-    })
-  }
+    });
+  };
 
   return (
     <div>
       <Head>
         <title>Firefli - Workspaces</title>
-        <meta name="description" content="Manage your Roblox workspaces with Firefli" />
+        <meta
+          name="description"
+          content="Manage your Roblox workspaces with Firefli"
+        />
       </Head>
 
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <Topbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-4 sm:mb-0">Your Workspaces</h1>
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-4 sm:mb-0">
+              Your Workspaces
+            </h1>
             <div className="flex space-x-3">
               {canCreateWorkspace && (
-                <Button onClick={() => setIsOpen(true)} classoverride="flex items-center">
+                <Button
+                  onClick={() => router.push('/welcome')}
+                  classoverride="flex items-center"
+                >
                   <IconPlus className="mr-2 h-5 w-5" />
                   New Workspace
                 </Button>
@@ -155,22 +190,31 @@ const Home: NextPage = () => {
           </div>
 
           {login.workspaces?.length ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {login.workspaces.map((workspace, i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-zinc-700 rounded-xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-pointer aspect-square flex flex-col"
+                  className="group relative bg-white dark:bg-zinc-800 rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] cursor-pointer"
                   onClick={() => gotoWorkspace(workspace.groupId)}
                 >
-                  <div
-                    className="flex-1 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${workspace.groupThumbnail})` }}
-                  />
-                  <div className="p-4 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-white truncate">
-                      {workspace.groupName}
-                    </h3>
-                    <IconChevronRight className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                  <div className="aspect-square relative overflow-hidden">
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
+                      style={{
+                        backgroundImage: `url(${workspace.groupThumbnail})`,
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-white drop-shadow-lg">
+                          {workspace.groupName}
+                        </h3>
+                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 transition-all duration-300 group-hover:bg-white/30 group-hover:scale-110">
+                          <IconChevronRight className="h-5 w-5 text-white" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -180,12 +224,19 @@ const Home: NextPage = () => {
               <div className="bg-zinc-100 dark:bg-zinc-600 rounded-full p-4 mb-4">
                 <IconBuildingSkyscraper className="h-12 w-12 text-zinc-400 dark:text-zinc-500" />
               </div>
-              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">No workspaces available</h3>
+              <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+                No workspaces available
+              </h3>
               <p className="text-zinc-500 dark:text-zinc-400 mb-6">
-                {canCreateWorkspace ? "Create a new workspace to get started" : "You don't have permission to create workspaces"}
+                {canCreateWorkspace
+                  ? "Create a new workspace to get started"
+                  : "You don't have permission to create workspaces"}
               </p>
               {canCreateWorkspace ? (
-                <Button onClick={() => setIsOpen(true)} classoverride="flex items-center">
+                <Button
+                  onClick={() => router.push('/welcome')}
+                  classoverride="flex items-center"
+                >
                   <IconPlus className="mr-2 h-5 w-5" />
                   Create Workspace
                 </Button>
@@ -198,7 +249,11 @@ const Home: NextPage = () => {
           )}
 
           <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
+            <Dialog
+              as="div"
+              className="relative z-10"
+              onClose={() => setIsOpen(false)}
+            >
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -223,7 +278,10 @@ const Home: NextPage = () => {
                     leaveTo="opacity-0 scale-95"
                   >
                     <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
-                      <Dialog.Title as="h3" className="text-2xl font-bold text-zinc-900 dark:text-white">
+                      <Dialog.Title
+                        as="h3"
+                        className="text-2xl font-bold text-zinc-900 dark:text-white"
+                      >
                         Create New Workspace
                       </Dialog.Title>
 
@@ -235,8 +293,14 @@ const Home: NextPage = () => {
                               placeholder="Enter your Roblox group ID"
                               {...methods.register("groupID", {
                                 required: "This field is required",
-                                pattern: { value: /^[a-zA-Z0-9-.]*$/, message: "No spaces or special characters" },
-                                maxLength: { value: 10, message: "Length must be below 10 characters" },
+                                pattern: {
+                                  value: /^[a-zA-Z0-9-.]*$/,
+                                  message: "No spaces or special characters",
+                                },
+                                maxLength: {
+                                  value: 10,
+                                  message: "Length must be below 10 characters",
+                                },
                               })}
                             />
                           </form>
@@ -250,7 +314,10 @@ const Home: NextPage = () => {
                         >
                           Cancel
                         </Button>
-                        <Button onClick={methods.handleSubmit(createWorkspace)} loading={loading}>
+                        <Button
+                          onClick={methods.handleSubmit(createWorkspace)}
+                          loading={loading}
+                        >
                           Create
                         </Button>
                       </div>
@@ -263,7 +330,7 @@ const Home: NextPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
