@@ -140,7 +140,7 @@ const Topbar: NextPage = () => {
 													onClick={(e) => {
 														e.preventDefault();
 														e.stopPropagation();
-														router.push('/');
+														router.push('/?home=true');
 													}}
 												>
 													<div className="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-600 flex items-center justify-center">
@@ -161,8 +161,7 @@ const Topbar: NextPage = () => {
 														onClick={(e) => {
 															e.preventDefault();
 															e.stopPropagation();
-															router.push('/');
-															setCreateWorkspaceModal(true);
+														router.push('/welcome');
 														}}
 													>
 														<div className="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-600 flex items-center justify-center">
