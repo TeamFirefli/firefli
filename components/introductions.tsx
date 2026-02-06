@@ -113,16 +113,7 @@ export default function MemberIntroEditor() {
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <IconMusic className="w-5 h-5 text-primary" />
-        </div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-          Your introduction
-        </h2>
-      </div>
-
+    <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6">
       {message && (
         <div className={`mb-4 p-3 rounded-lg ${
           message.type === 'success' 
