@@ -22,27 +22,22 @@ interface Announcement {
 
 const defaultAnnouncement: Announcement = {
   title: "Firefli",
-  subtitle: "Update: v1.0.2 is now live!",
+  subtitle: "Aloha and welcome to your Firefli workspace!",
   sections: [
     {
-      title: "",
+      title: "👋 Getting started",
       content:
-        "We're starting off strong with some well needed changes.",
+        "We're excited to have you here! Your workspace is ready to use and fully customisable to fit your team's needs.",
     },
     {
-      title: "💼 Permissions",
+      title: "❓ Need help?",
       content:
-        "We now have over 50 permissions available to assign to roles!",
+        "Click the Help icon in your sidebar for documentation, helpful links, guides, and more resources to get the most out of Firefli.",
     },
     {
-      title: "🧹 Bug Cleanup",
+      title: "✏️ Customise this message",
       content:
-        "Tidied up Orbits bugs making way for the future.",
-    },
-    {
-      title: "",
-      content:
-        "That's a wrap for this week — we'll see you soon for more updates from Team Firefli.",
+        "This announcement can be edited by workspace administrators. Click the pencil icon above to personalise this welcome message for your team!",
     },
   ],
   editorUsername: null,
@@ -303,36 +298,6 @@ export default function StickyNoteAnnouncement() {
                     </p>
                   </div>
                 </div>
-              )}
-
-              {announcement.isDefault && (
-                <>
-                  <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                    That's a wrap for this week — we'll see you next Saturday
-                    for more updates from Team Firefli.
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Read the full changelog
-                    <a
-                      href="https://feedback.firefli.net/changelog"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="ml-1 text-primary underline"
-                    >
-                      here
-                    </a>
-                    . Submit suggestions in
-                    <a
-                      href="https://discord.gg/WtEkchUKqe"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="ml-1 text-primary underline"
-                    >
-                      .gg/firefli
-                    </a>
-                    .
-                  </p>
-                </>
               )}
             </div>
           </>
