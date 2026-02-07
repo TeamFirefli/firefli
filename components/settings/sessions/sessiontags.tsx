@@ -12,6 +12,8 @@ const SessionTags = () => {
   const [editingTag, setEditingTag] = useState<any>(null);
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("bg-blue-500");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null);
 
   const colorOptions = [
     { value: "bg-blue-500", label: "Blue" },
@@ -103,20 +105,19 @@ const SessionTags = () => {
     }
   };
 
-  const handleDeleteTag = async (tagId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this tag? This will remove it from all sessions using it.",
-      )
-    ) {
-      return;
-    }
+  const handleDeleteTag = (tagId: string) => {
+    setTagToDelete(tagId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!tagToDelete) return;
 
     try {
       const res = await axios.delete(
         `/api/workspace/${router.query.id}/settings/activity/session-tags`,
         {
-          data: { id: tagId },
+          data: { id: tagToDelete },
         },
       );
       if (res.data.success) {
@@ -126,6 +127,9 @@ const SessionTags = () => {
     } catch (error) {
       console.error("Failed to delete tag:", error);
       toast.error("Failed to delete session tag");
+    } finally {
+      setShowDeleteModal(false);
+      setTagToDelete(null);
     }
   };
 
@@ -153,7 +157,7 @@ const SessionTags = () => {
           </h3>
         </div>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Create custom tags for sessions to categorize training types (e.g.,
+          Create custom tags for sessions to categorise training types (e.g.,
           Store Colleague, Security, Management)
         </p>
       </div>
@@ -266,6 +270,35 @@ const SessionTags = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+              Confirm Deletion
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+              Are you sure you want to delete this tag?
+            </p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-6">
+              This will remove it from all sessions using it.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 rounded-md bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

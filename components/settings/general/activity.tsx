@@ -727,17 +727,6 @@ const Activity: FC<props> = (props) => {
           </div>
         )}
 
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-          <div className="flex items-start gap-3">
-            <IconAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
-                Warning: This action cannot be undone
-              </h4>
-            </div>
-          </div>
-        </div>
-
         <div className={`mb-6 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700 relative ${isCloudUser ? "opacity-50 pointer-events-none" : ""}`}>
           {isCloudUser && (
             <div className="absolute inset-0 flex items-center justify-center z-10 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-xl">
