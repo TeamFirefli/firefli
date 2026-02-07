@@ -94,7 +94,7 @@ const SessionColors = () => {
     {
       key: "recurring" as keyof SessionColors,
       label: "Recurring Sessions",
-      description: 'Color for "Recurring" tag',
+      description: 'Colour for "Recurring" tag',
     },
     {
       key: "shift" as keyof SessionColors,
@@ -104,17 +104,17 @@ const SessionColors = () => {
     {
       key: "training" as keyof SessionColors,
       label: "Training Sessions",
-      description: 'Color for "Training" sessions',
+      description: 'Colour for "Training" sessions',
     },
     {
       key: "event" as keyof SessionColors,
       label: "Event Sessions",
-      description: 'Color for "Event" sessions',
+      description: 'Colour for "Event" sessions',
     },
     {
       key: "other" as keyof SessionColors,
       label: "Other Sessions",
-      description: 'Color for "Other" sessions',
+      description: 'Colour for "Other" sessions',
     },
   ];
 
@@ -124,17 +124,17 @@ const SessionColors = () => {
         <div className="flex items-center gap-2 mb-2">
           <IconPalette size={20} className="text-primary" />
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-            Session Type Colors
+            Session Type Colours
           </h3>
         </div>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Customize the colors used for different session types in your workspace
+          Customise the colours used for different session types in your workspace
         </p>
       </div>
 
       {isLoading ? (
         <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
-          Loading colors...
+          Loading colours...
         </div>
       ) : (
         <div className="space-y-4">
