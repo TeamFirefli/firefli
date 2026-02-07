@@ -244,11 +244,12 @@ const Settings: pageWithLayout<Props> = ({ roles, departments, grouproles, isAdm
         componentProps.isSidebarExpanded = isSidebarExpanded;
         componentProps.hasResetActivityOnly = activeSection === 'activity' && !isAdmin && !userPermissions.includes('workspace_customisation');
       }
+      const renderTitle = activeSection !== 'sessions';
       
       return (
         <div key={index} className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-4 sm:p-6 mb-4 last:mb-0">
           <div className="mb-4">
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-2">{title}</h3>
+            {renderTitle && <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-2">{title}</h3>}
             <Component {...componentProps} />
           </div>
         </div>

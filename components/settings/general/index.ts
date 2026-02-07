@@ -1,4 +1,3 @@
-import Color from './color';
 import Guide from './guides'
 import Alliances from './allies'
 import Activity from './activity'
@@ -9,4 +8,4 @@ import Notices from './notices'
 import Policies from './policies'
 import AuditLogs from './logs'
 import Admin from './admin'
-export { home, Color, Guide, Alliances, Sessions, Activity, Leaderboard, AuditLogs, Policies, Notices, Admin };
+export { home, Guide, Alliances, Sessions, Activity, Leaderboard, AuditLogs, Policies, Notices, Admin };
