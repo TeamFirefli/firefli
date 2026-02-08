@@ -263,7 +263,7 @@ export const getServerSideProps = withPermissionCheckSsr(
     });
 
     const sessionsAttended = attendedParticipations.length;
-
+      
     const sessionsLogged = [
       ...ownedSessions,
       ...sessionParticipations.map((sp) => sp.session),
@@ -386,6 +386,13 @@ export const getServerSideProps = withPermissionCheckSsr(
     });
 
     const myQuotasWithProgress = myQuotas.map((quota: any) => {
+      if (quota.type === "custom") {
+        return {
+          ...quota,
+          currentValue: null,
+          percentage: 0,
+        };
+      }
       let currentValue = 0;
       let percentage = 0;
 
@@ -548,6 +555,7 @@ const Quotas: pageWithLayout<pageProps> = ({
     sessions_attended: "Sessions attended",
     sessions_logged: "Sessions logged",
     alliance_visits: "Alliance visits",
+    custom: "Custom quota",
   };
 
   const typeDescriptions: { [key: string]: string } = {
@@ -558,6 +566,7 @@ const Quotas: pageWithLayout<pageProps> = ({
     sessions_logged:
       "Total unique sessions participated in any role (host, co-host, or participant)",
     alliance_visits: "Number of alliance visits where the user was host or participant",
+    custom: "Custom quota, doesn't track automatically",
   };
 
   const sessionTypeOptions = [
@@ -593,15 +602,17 @@ const Quotas: pageWithLayout<pageProps> = ({
     description,
   }) => {
     const payload: any = {
-      value: Number(requirement),
       type,
       roles: selectedRoles,
       departments: selectedDepartments,
       name,
       description: description || null,
     };
+    if (type !== "custom") {
+        payload.value: Number(requirement),
+    }
 
-    if (
+    if ( type !== "custom" && 
       ["sessions_hosted", "sessions_attended", "sessions_logged"].includes(type)
     ) {
       payload.sessionType = sessionTypeFilter === "all" ? null : sessionTypeFilter;
@@ -718,9 +729,10 @@ const Quotas: pageWithLayout<pageProps> = ({
                           <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-1">
                             {quota.name}
                           </h3>
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          {quota.type !== "custom" ? ( <p className="text-sm text-zinc-600 dark:text-zinc-400">
                             {quota.value} {types[quota.type]}
-                          </p>
+                          </p>) : (
+                          <p className="text-sm text-zinc-500 italic">Custom Quota</p>)}
                           {quota.description && (
                             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 italic">
                               {quota.description}
@@ -756,9 +768,11 @@ const Quotas: pageWithLayout<pageProps> = ({
                           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Progress
                           </span>
-                          <span className="text-sm font-bold text-zinc-900 dark:text-white">
+                          {quota.type !== "custom" ? ( <span className="text-sm font-bold text-zinc-900 dark:text-white">
                             {quota.currentValue} / {quota.value}
-                          </span>
+                          </span>) : ( <div className="text-xs text-zinc-500 italic mt-2">
+                                          Quota tracked manually.
+                                       </div>)}
                         </div>
                         <div className="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-3">
                           <div
@@ -860,9 +874,11 @@ const Quotas: pageWithLayout<pageProps> = ({
                           <h3 className="text-sm font-medium text-zinc-900 dark:text-white">
                             {quota.name}
                           </h3>
-                          <p className="text-xs text-zinc-500 mt-1 dark:text-zinc-400">
+                          {quota.type !== "custom" ? ( <p className="text-xs text-zinc-500 mt-1 dark:text-zinc-400">
                             {quota.value} {types[quota.type]} per timeframe
-                          </p>
+                          </p>) : ( <p className="text-xs text-zinc-500 mt-1 dark:text-zinc-400 italic">
+                                      Manually tracked
+                                    </p>)}
                           {quota.description && (
                             <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-1 italic">
                               {quota.description}
@@ -1036,6 +1052,9 @@ const Quotas: pageWithLayout<pageProps> = ({
                               </option>
                               <option value="alliance_visits">
                                 Alliance Visits
+                              </option>
+                              <option value="custom">
+                                Custom
                               </option>
                             </select>
                             {watchedType && typeDescriptions[watchedType] && (
