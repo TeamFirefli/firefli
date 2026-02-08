@@ -88,6 +88,7 @@ export async function handler(
 			},
 		});
 		await prisma.sessionType.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.sessionTag.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.policyAcknowledgment.deleteMany({
 			where: {
 				document: {
@@ -144,6 +145,7 @@ export async function handler(
 		await prisma.savedView.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.workspaceExternalServices.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.config.deleteMany({ where: { workspaceGroupId: workspaceId } });
+		await prisma.auditLog.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.workspaceMember.deleteMany({ where: { workspaceGroupId: workspaceId } });
 		await prisma.workspace.delete({
 			where: { groupId: workspaceId },
