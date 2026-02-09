@@ -609,7 +609,7 @@ const Quotas: pageWithLayout<pageProps> = ({
       description: description || null,
     };
     if (type !== "custom") {
-        payload.value: Number(requirement),
+        payload.value = Number(requirement),
     }
 
     if ( type !== "custom" && 
