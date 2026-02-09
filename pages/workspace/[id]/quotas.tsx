@@ -774,7 +774,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                                           Quota tracked manually.
                                        </div>)}
                         </div>
-                        <div className="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-3">
+                        {quota.type !== "custom" && (<div className="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-3">
                           <div
                             className={`h-3 rounded-full transition-all ${
                               quota.percentage >= 100
@@ -786,7 +786,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                         </div>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                           {Math.min(quota.percentage, 100).toFixed(0)}% complete
-                        </p>
+                        </p>)}
                       </div>
                       <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-600">
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
