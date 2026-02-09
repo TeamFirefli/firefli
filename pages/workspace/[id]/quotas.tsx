@@ -1088,7 +1088,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                             </div>
                           )}
 
-                          <Input
+                          {quota.type !== "custom" && (<Input
                             label="Requirement"
                             type="number"
                             append={
@@ -1100,7 +1100,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                             }
                             classoverride="dark:text-white"
                             {...register("requirement", { required: true })}
-                          />
+                          />)}
                           <Input
                             label="Name"
                             placeholder="Enter a name for this quota..."
