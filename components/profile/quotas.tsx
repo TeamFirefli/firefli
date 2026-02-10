@@ -161,7 +161,7 @@ export function QuotasProgress({
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Progress
                 </span></div></div>
-                ){quota.type !== "custom" && (<><span className="text-sm font-bold text-zinc-900 dark:text-white">
+                ),{quota.type !== "custom" && (<><span className="text-sm font-bold text-zinc-900 dark:text-white">
                   {getQuotaProgress(quota)}
                 </span>
               
