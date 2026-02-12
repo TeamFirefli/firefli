@@ -353,7 +353,7 @@ export function InformationTab({
           </div>
         </div>
         <div className="space-y-3">
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 relative z-50">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-purple-500/10 rounded-lg">
                 <IconClock className="w-5 h-5 text-purple-500" />
@@ -376,7 +376,7 @@ export function InformationTab({
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                       >
-                        <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-zinc-800 py-1 text-sm shadow-lg border border-zinc-200 dark:border-zinc-700">
+                        <Listbox.Options className="absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white dark:bg-zinc-900 py-1 text-sm shadow-lg border border-zinc-200 dark:border-zinc-700">
                           <Listbox.Option
                             value=""
                             className={({ active }) =>
