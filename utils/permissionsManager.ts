@@ -9,7 +9,7 @@ import { withSessionRoute, withSessionSsr } from "@/lib/withSession";
 import * as noblox from "noblox.js";
 import { getConfig } from "./configEngine";
 import { validateCsrf } from "./csrf";
-import { getThumbnail } from "./userinfoEngine";
+import { getThumbnail, getUsername } from "./userinfoEngine";
 
 const permissionsCache = new Map<string, { data: any; timestamp: number }>();
 const PERMISSIONS_CACHE_DURATION = 30000;
@@ -1034,6 +1034,14 @@ export async function checkSpecificUser(userID: number) {
     const rankId = await retryNobloxRequest(() =>
       noblox.getRankInGroup(w.groupId, userID)
     ).catch(() => null);
+    const username = await getUsername(userID);
+    const picture = getThumbnail(userID);
+    await prisma.user.upsert({
+      where: { userid: BigInt(userID) },
+      update: { username, picture },
+      create: { userid: BigInt(userID), username, picture },
+    });
+    
     await prisma.rank.upsert({
       where: {
         userId_workspaceGroupId: {
