@@ -93,6 +93,7 @@
     <li><code>SESSION_SECRET</code> – A strong secret string (e.g. generated via <code>openssl rand -base64 32</code>)</li>
     <li><code>DATABASE_URL</code> – Your connection string (e.g. hosted on Supabase, Railway, Neon, etc.)</li>
     <li><code>NEXTAUTH_URL</code> – Your Domain/Connection URL (e.g. https://domain.domain.com - no / at end.)</li>
+    <li><code>ENCRYPTION_KEY</code> - Encrypt your Data (e.g. generated via <code>openssl rand -base64 64</code>)</li>
   </ul>
   <p><strong>Optional environment variables:</strong></p>
   <ul>
