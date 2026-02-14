@@ -93,7 +93,7 @@
     <li><code>SESSION_SECRET</code> – A strong secret string (e.g. generated via <code>openssl rand -base64 32</code>)</li>
     <li><code>DATABASE_URL</code> – Your connection string (e.g. hosted on Supabase, Railway, Neon, etc.)</li>
     <li><code>NEXTAUTH_URL</code> – Your Domain/Connection URL (e.g. https://domain.domain.com - no / at end.)</li>
-    <li><code>ENCRYPTION_KEY</code> - Encrypt your Data (e.g. generated via <code>openssl rand -base64 64</code>)</li>
+    <li><code>ENCRYPTION_KEY</code> - Encrypt your Discord intergration (e.g. generated via <code>openssl rand -base64 64</code>)</li>
   </ul>
   <p><strong>Optional environment variables:</strong></p>
   <ul>
@@ -101,7 +101,7 @@
     <li><code>ROBLOX_CLIENT_SECRET</code> – Your client secret (e.g. RBX-GLEmbz3yrU...)</li>
     <li><code>ROBLOX_REDIRECT_URI</code> – Your Domain Callback URI (e.g. https://domain.domain.com/api/auth/roblox/callback .)</li>
     <li><code>ROBLOX_OAUTH_ONLY</code> – Force oAuth as only login method (e.g. true/false)</li>
-    <li><code>NEXT_MULTI</code> – Having trouble being rate limited syncing your group? Set this to true to increase the ratelimit retries (e.g. true .)</li>
+    <li><code>NEXT_MULTI</code> – Having trouble being rate limited syncing your group? Set this to true to optimise your group sync (e.g. true .)</li>
   </ul>
 
   <h2>License</h2>
