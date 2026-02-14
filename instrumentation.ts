@@ -17,7 +17,7 @@ export async function register() {
       } else {
         const shuffled = [...workspaces].sort(() => Math.random() - 0.5);
         const batchUpdates = shuffled.map((workspace, index) => {
-          const batchId = (index % 4) + 1;
+          const batchId = (index % 8) + 1;
           return prisma.workspace.update({
             where: { groupId: workspace.groupId },
             data: { batchId }

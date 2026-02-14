@@ -1,26 +1,12 @@
-// Multi Container schedule
+// Multi Container batch schedule
 export function getCurrentBatch(): number | null {
   const now = new Date();
   const hours = now.getUTCHours();
   const minutes = now.getUTCMinutes();
   const currentMinutes = hours * 60 + minutes;
   const cyclePosition = currentMinutes % 120;
-  const isOddHour = Math.floor(currentMinutes / 60) % 2 === 1;
-  const minuteInHour = currentMinutes % 60;
-  
-  if (isOddHour) {
-    if (minuteInHour < 30) {
-      return 1; // Batch 1
-    } else {
-      return 2; // Batch 2
-    }
-  } else {
-    if (minuteInHour < 30) {
-      return 3; // Batch 3
-    } else {
-      return 4; // Batch 4
-    }
-  }
+  const batchId = Math.floor(cyclePosition / 15) + 1;
+  return batchId;
 }
 
 export function getActiveBatch(): number | null {
