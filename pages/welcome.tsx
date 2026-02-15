@@ -401,8 +401,12 @@ const Login: NextPage = () => {
 							>
 								create.roblox.com/credentials
 							</a>
-							{" "}with <strong>Group</strong> API system and <strong>Read</strong> access for your group.
+							{" "}with the following permissions:
 						</p>
+						<ul className="text-xs text-zinc-400 dark:text-zinc-400 list-disc list-inside space-y-1 mb-2">
+							<li><strong>Groups</strong> - <strong>group:read</strong> for rank changes.</li>
+							<li><strong>Users</strong> - <strong>user.social:read</strong> for rank changes.</li>
+						</ul>
 						<div className="flex gap-2">
 							<input
 								type="password"
@@ -412,7 +416,7 @@ const Login: NextPage = () => {
 									setApiKeyStatus("idle");
 									setApiKeyMessage("");
 								}}
-								placeholder="Enter your Open Cloud API key"
+								placeholder="E.g. DAWUht4ui5hn438ahduehsurezhesz..."
 								className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-firefli"
 							/>
 							<button

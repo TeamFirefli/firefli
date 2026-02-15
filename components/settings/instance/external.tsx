@@ -214,10 +214,12 @@ const ExternalServices: React.FC<ExternalServicesProps> & { title: string } = ({
 
           {rankingProvider === "roblox_cloud" && (
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-700 dark:text-blue-400">
-                Roblox Open Cloud ranking uses the API key configured below. Make sure your API key has both{" "}
-                <strong>Group read</strong> and <strong>write</strong> permissions to allow promotions, demotions, and rank changes.
+              <p className="text-sm text-blue-700 dark:text-blue-400 mb-1">
+                Roblox Open Cloud ranking uses the API key configured below. Make sure your API key has:
               </p>
+              <ul className="text-sm text-blue-700 dark:text-blue-400 list-disc list-inside space-y-1">
+                <li><strong>Groups</strong> — <strong>group:read</strong> & <strong>group:write</strong> permissions for promotions, demotions, and rank changes.</li>
+              </ul>
             </div>
           )}
         </div>
@@ -304,8 +306,7 @@ const ExternalServices: React.FC<ExternalServicesProps> & { title: string } = ({
               </button>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-              Your API key needs the <strong>group-membership:read</strong> permission for your group.
-              Go to{" "}
+              Your API key needs the following permissions. Go to{" "}
               <a
                 href="https://create.roblox.com/dashboard/credentials"
                 target="_blank"
@@ -314,9 +315,12 @@ const ExternalServices: React.FC<ExternalServicesProps> & { title: string } = ({
               >
                 Creator Hub → Credentials
               </a>
-              , create an API key, add the <strong>Group</strong> API system, select your group,
-              and enable <strong>Read</strong> access.
+              {" "}to create or update your API key.
             </p>
+            <ul className="text-xs text-zinc-500 dark:text-zinc-400 list-disc list-inside space-y-1 mt-1">
+              <li><strong>Groups</strong> - <strong>group:read</strong> &amp; <strong>group:write</strong> for promotions, demotions, and rank changes.</li>
+              <li><strong>Users</strong> - <strong>user.social:read</strong> required for usernames/displaynames.</li>
+            </ul>
           </div>
 
           {robloxApiKey && robloxApiKeyStatus === "valid" && (

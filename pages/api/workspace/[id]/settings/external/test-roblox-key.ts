@@ -21,6 +21,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     const result = await fetchOpenCloudGroupMembers(parsedGroupId, apiKey, 1);
+    let userApiValid = false;
+    try {
+      const userRes = await fetch("https://apis.roblox.com/cloud/v2/users/1", {
+        headers: { "x-api-key": apiKey },
+      });
+      userApiValid = userRes.ok;
+    } catch {}
+
+    if (!userApiValid) {
+      return res.status(200).json({
+        valid: false,
+        message:
+          "User API with user.social:read scope required.",
+      });
+    }
+
     return res.status(200).json({
       valid: true,
       memberCount: result.members.length,
