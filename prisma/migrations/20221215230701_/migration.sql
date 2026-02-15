@@ -3,7 +3,7 @@ CREATE TABLE "Quota" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "value" INTEGER,
+    "value" INTEGER NOT NULL,
     "workspaceGroupId" INTEGER NOT NULL,
 
     CONSTRAINT "Quota_pkey" PRIMARY KEY ("id")
