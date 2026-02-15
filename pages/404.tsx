@@ -7,7 +7,7 @@ export default function Error() {
   return (
     <>
       <Head>
-        <title>404 — Page Not Found</title>
+        <title>404 - Page Not Found</title>
         <meta name="robots" content="noindex" />
       </Head>
 
@@ -24,7 +24,7 @@ export default function Error() {
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="text-7xl font-extrabold text-[#ff0099]"
+                className="text-7xl font-extrabold text-firefli"
                 aria-hidden
               >
                 404
@@ -44,7 +44,7 @@ export default function Error() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => Router.push('/')}
-                  className="inline-flex items-center justify-center px-5 py-2 rounded-lg bg-[#ff0099] text-white font-medium shadow-sm hover:brightness-105 transition"
+                  className="inline-flex items-center justify-center px-5 py-2 rounded-lg bg-firefli text-white font-medium shadow-sm hover:bg-orange-600 transition"
                   aria-label="Return to home"
                 >
                   Return to home
