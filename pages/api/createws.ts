@@ -37,7 +37,7 @@ export async function handler(
 ) {
 	if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' })
 	// Accept groupId as number or numeric string; optional color (currently unused beyond default)
-	let { groupId } = req.body || {}
+	let { groupId, robloxApiKey } = req.body || {}
 	if (!req.session.userid) return res.status(401).json({ success: false, error: 'Not logged in' });
 	const dbuser = await prisma.user.findUnique({
 		where: {
@@ -190,14 +190,18 @@ export async function handler(
 		return ws
 	})
 
-	// Run initial role sync synchronously to populate cache before returning
-	//try {
-	//	const { checkGroupRoles } = await import('@/utils/permissionsManager');
-	//	await checkGroupRoles(groupId);
-	//	console.log(`[createws] Completed initial sync for workspace ${groupId}`);
-	//} catch (err) {
-	//	console.error(`[createws] Failed to complete initial sync:`, err);
-	//}
+	// Save the Roblox Open Cloud API key if provided
+	if (robloxApiKey && typeof robloxApiKey === 'string') {
+		try {
+			await prisma.workspaceExternalServices.upsert({
+				where: { workspaceGroupId: groupId },
+				update: { robloxApiKey },
+				create: { workspaceGroupId: groupId, robloxApiKey },
+			});
+		} catch (err) {
+			console.error('[createws] Failed to save Roblox API key:', err);
+		}
+	}
 
 	return res.status(200).json({ success: true, workspaceGroupId: workspace.groupId })
 }

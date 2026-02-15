@@ -9,6 +9,7 @@ import Slider from "@/components/slider";
 import Input from "@/components/input";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { IconCheck, IconX, IconLoader2 } from "@tabler/icons-react";
 
 type FormData = {
 	username: string;
@@ -26,6 +27,9 @@ const Login: NextPage = () => {
 	const [selectedSlide, setSelectedSlide] = useState(0);
 	const [ready, setReady] = useState(false);
 	const [useCreateWs, setUseCreateWs] = useState(false);
+	const [robloxApiKey, setRobloxApiKey] = useState("");
+	const [apiKeyStatus, setApiKeyStatus] = useState<"idle" | "testing" | "valid" | "invalid">("idle");
+	const [apiKeyMessage, setApiKeyMessage] = useState("");
 	const canCreateAdditional = useCreateWs
 		? login?.canMakeWorkspace
 		: true;
@@ -166,7 +170,45 @@ const Login: NextPage = () => {
 		};
 	}, [mounted, ready]);
 
+	const testApiKey = async () => {
+		const groupId = methods.getValues("groupid");
+		if (!groupId || !robloxApiKey) {
+			toast.error("Please enter both a Group ID and API key.");
+			return;
+		}
+		setApiKeyStatus("testing");
+		setApiKeyMessage("");
+		try {
+			const res = await axios.post("/api/test-roblox-key", {
+				apiKey: robloxApiKey,
+				groupId: Number(groupId),
+			});
+			if (res.data.valid) {
+				setApiKeyStatus("valid");
+				setApiKeyMessage(res.data.message);
+			} else {
+				setApiKeyStatus("invalid");
+				setApiKeyMessage(res.data.message);
+			}
+		} catch (e: any) {
+			setApiKeyStatus("invalid");
+			setApiKeyMessage(
+				e?.response?.data?.message || "Failed to test API key."
+			);
+		}
+	};
+
+	const watchedGroupId = methods.watch("groupid");
+	useEffect(() => {
+		setApiKeyStatus("idle");
+		setApiKeyMessage("");
+	}, [watchedGroupId]);
+
 	async function createAccount() {
+		if (apiKeyStatus !== "valid") {
+			toast.error("Please test and validate your Roblox Open Cloud API key before continuing.");
+			return;
+		}
 		setIsLoading(true);
 		let request: { data: { success: boolean; workspaceGroupId?: number; user?: any } } | undefined;
 		
@@ -174,7 +216,8 @@ const Login: NextPage = () => {
 			if (useCreateWs) {
 				request = await Promise.race([
 					axios.post('/api/createws', {
-						groupId: Number(methods.getValues("groupid"))
+						groupId: Number(methods.getValues("groupid")),
+						robloxApiKey,
 					}),
 					new Promise((_, reject) => 
 						setTimeout(() => reject(new Error('Request timeout')), 30000)
@@ -200,6 +243,7 @@ const Login: NextPage = () => {
 						username: signupform.getValues("username"),
 						password: signupform.getValues("password"),
 						color: selectedColor,
+						robloxApiKey,
 					}),
 					new Promise((_, reject) => 
 						setTimeout(() => reject(new Error('Request timeout')), 30000)
@@ -343,6 +387,61 @@ const Login: NextPage = () => {
 							))}
 						</div>
 					</div>
+					<div className="mb-6">
+						<label className="text-zinc-500 text-sm dark:text-zinc-200 font-medium">
+							Roblox Open Cloud API Key <span className="text-red-500">*</span>
+						</label>
+						<p className="text-xs text-zinc-400 dark:text-zinc-400 mt-1 mb-2">
+							Required for group member sync. Create one at{" "}
+							<a
+								href="https://create.roblox.com/credentials"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-blue-500 hover:underline"
+							>
+								create.roblox.com/credentials
+							</a>
+							{" "}with <strong>Group</strong> API system and <strong>Read</strong> access for your group.
+						</p>
+						<div className="flex gap-2">
+							<input
+								type="password"
+								value={robloxApiKey}
+								onChange={(e) => {
+									setRobloxApiKey(e.target.value);
+									setApiKeyStatus("idle");
+									setApiKeyMessage("");
+								}}
+								placeholder="Enter your Open Cloud API key"
+								className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-firefli"
+							/>
+							<button
+								type="button"
+								onClick={testApiKey}
+								disabled={!robloxApiKey || !methods.getValues("groupid") || apiKeyStatus === "testing"}
+								className="px-4 py-2 text-sm font-medium rounded-lg bg-firefli text-white hover:bg-firefli/80 disabled:opacity-50 disabled:cursor-not-allowed transition"
+							>
+								{apiKeyStatus === "testing" ? (
+									<IconLoader2 size={16} className="animate-spin" />
+								) : (
+									"Test Key"
+								)}
+							</button>
+						</div>
+						{apiKeyStatus === "valid" && (
+							<div className="flex items-center gap-1.5 mt-2 text-sm text-green-600 dark:text-green-400">
+								<IconCheck size={16} />
+								<span>{apiKeyMessage}</span>
+							</div>
+						)}
+						{apiKeyStatus === "invalid" && (
+							<div className="flex items-center gap-1.5 mt-2 text-sm text-red-500">
+								<IconX size={16} />
+								<span>{apiKeyMessage}</span>
+							</div>
+						)}
+					</div>
+
 					<div className="flex">
 						<button 
 							type="button"
@@ -354,6 +453,10 @@ const Login: NextPage = () => {
 						<button
 							type="button"
 							onClick={() => {
+								if (apiKeyStatus !== "valid") {
+									toast.error("Please test and validate your Roblox Open Cloud API key first.");
+									return;
+								}
 								if (useCreateWs) {
 									if (!canCreateAdditional) {
 										toast.error('You do not have permission to create additional workspaces.');
@@ -367,8 +470,12 @@ const Login: NextPage = () => {
 									handleSubmit(nextSlide)();
 								}
 							}}
-							className="ml-auto bg-firefli py-3 text-sm rounded-xl px-6 text-white font-bold hover:bg-firefli/80 transition"
-							disabled={isLoading || (useCreateWs && !canCreateAdditional)}
+							className={`ml-auto py-3 text-sm rounded-xl px-6 text-white font-bold transition ${
+								apiKeyStatus === "valid"
+									? "bg-firefli hover:bg-firefli/80"
+									: "bg-zinc-400 dark:bg-zinc-600 cursor-not-allowed"
+							}`}
+							disabled={isLoading || apiKeyStatus !== "valid" || (useCreateWs && !canCreateAdditional)}
 						>
 							{isLoading ? 'Creating...' : (useCreateWs ? 'Create Workspace' : 'Continue')}
 						</button>

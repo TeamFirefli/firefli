@@ -20,6 +20,7 @@ model workspace {
   allies              Ally[]
   policyLinks         PolicyShareableLink[]
   quotas              Quota[]
+  quotaCompletions    UserQuotaCompletion[]
   savedViews          SavedView[]
   sessionTypes        SessionType[]
   sessionTags         SessionTag[]
@@ -92,6 +93,8 @@ model user {
   Ally                  Ally[]                 @relation("AllyTouser")
   roles                 role[]                 @relation("roleTouser")
   localViews            SavedView[]            @relation("UserLocalViews")
+  quotaCompletions      UserQuotaCompletion[]  @relation("UserQuotaCompletions")
+  completedQuotas       UserQuotaCompletion[]  @relation("CompletedByUser")
 
   @@index([birthdayMonth, birthdayDay])
 }
@@ -437,9 +440,30 @@ model Quota {
   name             String
   description      String?
   sessionType      String?
+  completionType   String?           @default("auto") // "auto", "user_complete", "manager_signoff"
   workspace        workspace         @relation(fields: [workspaceGroupId], references: [groupId])
   quotaDepartments QuotaDepartment[]
   quotaRoles       QuotaRole[]
+  userQuotaCompletions UserQuotaCompletion[]
+}
+
+model UserQuotaCompletion {
+  id               String    @id @default(uuid()) @db.Uuid
+  quotaId          String    @db.Uuid
+  userId           BigInt
+  workspaceGroupId Int
+  completed        Boolean   @default(false)
+  completedAt      DateTime?
+  completedBy      BigInt?   // The user who marked it complete (for manager signoff)
+  notes            String?
+  quota            Quota     @relation(fields: [quotaId], references: [id], onDelete: Cascade)
+  user             user      @relation("UserQuotaCompletions", fields: [userId], references: [userid], onDelete: Cascade)
+  completedByUser  user?     @relation("CompletedByUser", fields: [completedBy], references: [userid])
+  workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
+
+  @@unique([quotaId, userId, workspaceGroupId])
+  @@index([userId, workspaceGroupId])
+  @@index([quotaId])
 }
 
 model Ally {
@@ -558,6 +582,7 @@ model workspaceExternalServices {
   rankingProvider    String?
   rankingToken       String?
   rankingWorkspaceId String?
+  robloxApiKey       String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   workspace          workspace @relation(fields: [workspaceGroupId], references: [groupId])

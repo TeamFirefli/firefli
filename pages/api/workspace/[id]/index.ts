@@ -18,6 +18,8 @@ type Data = {
 		roles: role[],
 		yourRole: string | null,
 		yourPermission: string[]
+		isAdmin: boolean
+		ownerId: number | null
 		groupTheme: string,
 		settings: {
 			guidesEnabled: boolean
@@ -149,6 +151,8 @@ export async function handler(
 		groupThumbnail: groupLogo,
 		groupName: groupName,
 		yourPermission: isAdmin ? Object.values(permissions) : user.roles[0].permissions,
+		isAdmin,
+		ownerId: workspace.ownerId ? Number(workspace.ownerId) : null,
 		groupTheme: themeconfig,
 		roles: workspace.roles,
 		yourRole: user.roles[0].id,

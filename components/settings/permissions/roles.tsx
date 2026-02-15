@@ -1,10 +1,11 @@
-import React, { FC } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Disclosure, Transition } from "@headlessui/react";
 import {
   IconChevronDown,
   IconPlus,
   IconRefresh,
   IconTrash,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import Btn from "@/components/button";
 import { workspacestate } from "@/state";
@@ -25,9 +26,24 @@ type Props = {
 const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
   const [workspace] = useRecoilState(workspacestate);
   const router = useRouter();
+  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(
     new Set()
   );
+
+  useEffect(() => {
+    const checkApiKey = async () => {
+      try {
+        const res = await axios.get(
+          `/api/workspace/${workspace.groupId}/settings/external`
+        );
+        setHasApiKey(!!res.data?.robloxApiKey && res.data.robloxApiKey !== "");
+      } catch {
+        setHasApiKey(false);
+      }
+    };
+    if (workspace?.groupId) checkApiKey();
+  }, [workspace?.groupId]);
   const [expandedSubcategories, setExpandedSubcategories] = React.useState<Set<string>>(
     new Set()
   );
@@ -334,13 +350,33 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
             <IconPlus size={16} className="mr-1.5" />
             Add Role
           </button>
-          <button
-            onClick={checkRoles}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
-          >
-            <IconRefresh size={16} className="mr-1.5" />
-            Sync Group
-          </button>
+          {hasApiKey === false ? (
+            <button
+              onClick={() =>
+                router.push(
+                  `/workspace/${workspace.groupId}/settings?section=instance`
+                )
+              }
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 transition-colors"
+            >
+              <IconAlertTriangle size={16} className="mr-1.5" />
+              Setup API Key
+            </button>
+          ) : (
+            <button
+              onClick={checkRoles}
+              disabled={hasApiKey === null}
+              className={clsx(
+                "inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                hasApiKey === null
+                  ? "text-zinc-400 bg-zinc-100 dark:text-zinc-500 dark:bg-zinc-800 cursor-wait"
+                  : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+              )}
+            >
+              <IconRefresh size={16} className="mr-1.5" />
+              Sync Group
+            </button>
+          )}
         </div>
       </div>
 

@@ -134,3 +134,90 @@ export async function getRankGun(
     return null;
   }
 }
+
+export interface RankingProvider {
+  type: "rankgun" | "roblox_cloud";
+  promoteUser(userId: number): Promise<RankGunResponse>;
+  demoteUser(userId: number): Promise<RankGunResponse>;
+  terminateUser(userId: number): Promise<RankGunResponse>;
+  setUserRank(userId: number, rankOrRoleId: number): Promise<RankGunResponse>;
+}
+
+class RankGunProvider implements RankingProvider {
+  type = "rankgun" as const;
+  private api: RankGunAPI;
+  private workspaceId: string;
+
+  constructor(config: RankGun) {
+    this.api = new RankGunAPI(config);
+    this.workspaceId = config.workspaceId;
+  }
+
+  async promoteUser(userId: number) {
+    return this.api.promoteUser(userId, this.workspaceId);
+  }
+  async demoteUser(userId: number) {
+    return this.api.demoteUser(userId, this.workspaceId);
+  }
+  async terminateUser(userId: number) {
+    return this.api.terminateUser(userId, this.workspaceId);
+  }
+  async setUserRank(userId: number, rank: number) {
+    return this.api.setUserRank(userId, this.workspaceId, rank);
+  }
+}
+
+class RobloxCloudProvider implements RankingProvider {
+  type = "roblox_cloud" as const;
+  private api: any;
+
+  constructor(api: any) {
+    this.api = api;
+  }
+
+  async promoteUser(userId: number) {
+    return this.api.promoteUser(userId);
+  }
+  async demoteUser(userId: number) {
+    return this.api.demoteUser(userId);
+  }
+  async terminateUser(userId: number) {
+    return this.api.terminateUser(userId);
+  }
+  async setUserRank(userId: number, roleId: number) {
+    return this.api.setUserRank(userId, roleId);
+  }
+}
+
+export async function getRankingProvider(
+  workspaceGroupId: number
+): Promise<RankingProvider | null> {
+  try {
+    const { default: prisma } = await import("@/utils/database");
+
+    const settings = await prisma.workspaceExternalServices.findFirst({
+      where: { workspaceGroupId },
+    });
+
+    if (!settings?.rankingProvider) return null;
+
+    if (settings.rankingProvider === "rankgun") {
+      if (!settings.rankingToken || !settings.rankingWorkspaceId) return null;
+      return new RankGunProvider({
+        apiKey: settings.rankingToken,
+        workspaceId: String(settings.rankingWorkspaceId),
+      });
+    }
+
+    if (settings.rankingProvider === "roblox_cloud") {
+      if (!settings.robloxApiKey) return null;
+      const { RobloxCloudRankingAPI } = await import("@/utils/openCloud");
+      const api = new RobloxCloudRankingAPI(settings.robloxApiKey, workspaceGroupId);
+      return new RobloxCloudProvider(api);
+    }
+
+    return null;
+  } catch (error) {
+    return null;
+  }
+}

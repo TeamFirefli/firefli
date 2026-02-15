@@ -40,6 +40,7 @@ const workspacestate = atom({
 		groupName: '',
 		yourPermission: [] as string[],
 		isAdmin: false,
+		ownerId: null as number | null,
 		groupTheme: '',
 		roles: [] as role[],
 		yourRole: '',

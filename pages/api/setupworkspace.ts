@@ -63,7 +63,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   // Validate required fields
-  const { groupid, username, password, color } = req.body;
+  const { groupid, username, password, color, robloxApiKey } = req.body;
   if (!groupid || !username || !password || !color) {
     console.error("Missing required fields:", {
       groupid,
@@ -324,6 +324,19 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
     // Set registry last
     await setRegistry(req.headers.host as string);
+
+    // Save the Roblox Open Cloud API key if provided
+    if (robloxApiKey && typeof robloxApiKey === 'string') {
+      try {
+        await prisma.workspaceExternalServices.upsert({
+          where: { workspaceGroupId: groupIdNumber },
+          update: { robloxApiKey },
+          create: { workspaceGroupId: groupIdNumber, robloxApiKey },
+        });
+      } catch (err) {
+        console.error('[setupworkspace] Failed to save Roblox API key:', err);
+      }
+    }
 
     return res.status(200).json({ success: true, user: userInfo });
   } catch (error) {

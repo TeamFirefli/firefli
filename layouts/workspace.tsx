@@ -9,6 +9,7 @@ import type { LayoutProps } from "@/layoutTypes";
 import axios from "axios";
 import { useRecoilState } from "recoil";
 import { workspacestate } from "@/state";
+import { loginState } from "@/state";
 import { useRouter } from "next/router";
 import hexRgb from "hex-rgb";
 import * as colors from "tailwindcss/colors";
@@ -93,12 +94,14 @@ const SAVED_VIEW_ICONS: { [key: string]: any } = {
 
 const workspace: LayoutProps = ({ children }) => {
 	const [workspace, setWorkspace] = useRecoilState(workspacestate);
+	const [login] = useRecoilState(loginState);
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 	const [savedViews, setSavedViews] = useState<Array<{id: string; name: string; color?: string; icon?: string}>>([]);
 	const [localViews, setLocalViews] = useState<Array<{id: string; name: string; color?: string; icon?: string}>>([]);
 	const [savedViewsLoaded, setSavedViewsLoaded] = useState(false);
 	const [pendingPolicyCount, setPendingPolicyCount] = useState(0);
+	const [apiKeyAlertType, setApiKeyAlertType] = useState<"none" | "missing" | "invalid">("none");
 
 	const useTheme = (groupTheme: string) => {
 		// Handle custom colors
@@ -251,6 +254,35 @@ const workspace: LayoutProps = ({ children }) => {
 			document.documentElement.style.setProperty("--group-theme", theme);
 		}
 	}, [workspace]);
+
+	// Check if workspace owner has Open Cloud API key configured
+	useEffect(() => {
+		if (!workspace?.groupId || !login?.userId) return;
+		// Only show to the workspace owner or admins
+		const isOwner = workspace.ownerId && Number(login.userId) === Number(workspace.ownerId);
+		const isAdmin = workspace.isAdmin;
+		if (!isOwner && !isAdmin) {
+			setApiKeyAlertType("none");
+			return;
+		}
+		const checkApiKey = async () => {
+			try {
+				const res = await axios.get(`/api/workspace/${workspace.groupId}/settings/external?validate=true`);
+				const hasKey = !!res.data?.robloxApiKey && res.data.robloxApiKey !== "";
+				const keyValid = res.data?.robloxApiKeyValid;
+				if (!hasKey) {
+					setApiKeyAlertType("missing");
+				} else if (keyValid === false) {
+					setApiKeyAlertType("invalid");
+				} else {
+					setApiKeyAlertType("none");
+				}
+			} catch {
+				setApiKeyAlertType("none");
+			}
+		};
+		checkApiKey();
+	}, [workspace?.groupId, workspace?.ownerId, workspace?.isAdmin, login?.userId]);
 
 	const getSecondarySidebar = useMemo(() => {
 		const path = router.asPath;
@@ -584,8 +616,36 @@ const workspace: LayoutProps = ({ children }) => {
 					<main
 						className={clsx(
 						"flex-1 transition-all duration-300 overflow-y-auto",
-						"pb-20 md:pb-0"
+						"pb-20 md:pb-0",
+						"bg-zinc-50 dark:bg-zinc-900"
 						)}>
+						{apiKeyAlertType !== "none" && (
+							<div className="mx-4 mt-4 mb-0 flex items-center gap-3 rounded-lg border border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/30 px-4 py-3">
+								<IconAlertTriangle size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+								<div className="flex-1 text-sm text-amber-800 dark:text-amber-200">
+									{apiKeyAlertType === "missing" ? (
+										<><strong>Roblox Open Cloud API key not configured.</strong>{" "}
+										Group member syncing and ranking actions require an API key to function.</>
+									) : (
+										<><strong>Roblox Open Cloud API key is invalid or expired.</strong>{" "}
+										Group member syncing and ranking actions will not work until the key is updated.</>
+									)}
+								</div>
+								<button
+									onClick={() => router.push(`/workspace/${workspace.groupId}/settings?section=instance`)}
+									className="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+								>
+									{apiKeyAlertType === "missing" ? "Configure Now" : "Update Key"}
+								</button>
+								<button
+									onClick={() => setApiKeyAlertType("none")}
+									className="flex-shrink-0 p-1 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+									title="Dismiss"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+								</button>
+							</div>
+						)}
 						{children}
 						{router.query.id && (
 							<WorkspaceBirthdayPrompt workspaceId={router.query.id as string} />

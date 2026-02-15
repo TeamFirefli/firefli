@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withPermissionCheck } from "@/utils/permissionsManager";
-import { getRankGun } from "@/utils/rankgun";
+import { getRankGun, getRankingProvider } from "@/utils/rankgun";
 
 export default withPermissionCheck(handler, "rank_users");
 
@@ -20,15 +20,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     const workspaceGroupId = parseInt(id as string);
+    const provider = await getRankingProvider(workspaceGroupId);
     const rankGun = await getRankGun(workspaceGroupId);
     return res.status(200).json({
       success: true,
-      rankGunEnabled: !!rankGun,
+      rankGunEnabled: !!rankGun || !!provider,
+      rankingEnabled: !!provider,
+      rankingProvider: provider?.type || null,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Failed to check RankGun configuration",
+      error: "Failed to check ranking configuration",
     });
   }
 }

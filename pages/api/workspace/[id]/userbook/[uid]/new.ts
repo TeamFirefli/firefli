@@ -5,7 +5,7 @@ import prisma, { SessionType, document } from "@/utils/database";
 import { logAudit } from "@/utils/logs";
 import { withSessionRoute } from "@/lib/withSession";
 import { withPermissionCheck } from "@/utils/permissionsManager";
-import { RankGunAPI, getRankGun } from "@/utils/rankgun";
+import { RankGunAPI, getRankGun, getRankingProvider } from "@/utils/rankgun";
 import { sendBloxlinkNotification } from "@/utils/bloxlink-notification";
 
 import {
@@ -107,15 +107,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     });
   }
 
-  const rankGun = await getRankGun(workspaceGroupId);
-  const canUseRankGun = await hasRankUsersPermission(req, workspaceGroupId);
+  const rankingProvider = await getRankingProvider(workspaceGroupId);
+  const canUseRanking = await hasRankUsersPermission(req, workspaceGroupId);
   let rankBefore: number | null = null;
   let rankAfter: number | null = null;
   let rankNameBefore: string | null = null;
   let rankNameAfter: string | null = null;
 
   if (
-    (rankGun && canUseRankGun) &&
+    (rankingProvider && canUseRanking) &&
     (type === "promotion" ||
       type === "demotion" ||
       type === "rank_change" ||
@@ -131,11 +131,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
       if (targetUserRank) {
         rankBefore = Number(targetUserRank.rankId);
-        const currentRankInfo = await noblox.getRole(
-          workspaceGroupId,
-          rankBefore
-        );
-        rankNameBefore = currentRankInfo?.name || null;
+        
+        if (rankingProvider?.type === "roblox_cloud") {
+          try {
+            const { RobloxCloudRankingAPI } = await import("@/utils/openCloud");
+            const { getWorkspaceRobloxApiKey } = await import("@/utils/openCloud");
+            const apiKey = await getWorkspaceRobloxApiKey(workspaceGroupId);
+            if (apiKey) {
+              const cloudApi = new RobloxCloudRankingAPI(apiKey, workspaceGroupId);
+              const roles = await cloudApi.getGroupRoles();
+              const roleInfo = roles.find(r => r.rank === rankBefore);
+              rankNameBefore = roleInfo?.name || null;
+            }
+          } catch {
+            const currentRankInfo = await noblox.getRole(workspaceGroupId, rankBefore);
+            rankNameBefore = currentRankInfo?.name || null;
+          }
+        } else {
+          const currentRankInfo = await noblox.getRole(
+            workspaceGroupId,
+            rankBefore
+          );
+          rankNameBefore = currentRankInfo?.name || null;
+        }
       }
 
       const adminUserRank = await prisma.rank.findFirst({
@@ -178,32 +196,25 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   if (
-    rankGun &&
-    canUseRankGun &&
+    rankingProvider &&
+    canUseRanking &&
     (type === "promotion" ||
       type === "demotion" ||
       type === "rank_change" ||
       type === "termination")
   ) {
-    const rankGunAPI = rankGun ? new RankGunAPI(rankGun) : null;
     let result;
 
     try {
       switch (type) {
         case "promotion":
-          if (rankGunAPI) {
-            result = await rankGunAPI.promoteUser(userId, rankGun.workspaceId);
-          }
+          result = await rankingProvider.promoteUser(userId);
           break;
         case "demotion":
-          if (rankGunAPI) {
-            result = await rankGunAPI.demoteUser(userId, rankGun.workspaceId);
-          }
+          result = await rankingProvider.demoteUser(userId);
           break;
         case "termination":
-          if (rankGunAPI) {
-            result = await rankGunAPI.terminateUser(userId, rankGun.workspaceId);
-          }
+          result = await rankingProvider.terminateUser(userId);
           break;
         case "rank_change":
           if (!targetRank || isNaN(targetRank)) {
@@ -255,19 +266,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             );
           }
 
-          if (rankGunAPI) {
-            result = await rankGunAPI.setUserRank(
-              userId,
-              rankGun.workspaceId,
-              parseInt(targetRank)
-            );
-          }
+          result = await rankingProvider.setUserRank(
+            userId,
+            parseInt(targetRank)
+          );
           break;
       }
 
       if (result && !result.success) {
-        // Log the full result for debugging so we can see RankGun's response shape
-        console.error("RankGun returned an error result:", result);
+        console.error("Ranking provider returned an error:", result);
         let errorMessage = result.error || "Ranking operation failed.";
         if (typeof errorMessage === "object") {
           try {
@@ -402,10 +409,41 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
 
       try {
-        const newRank = await noblox.getRankInGroup(workspaceGroupId, userId);
+        let newRank: number;
+        let newRankName: string | null = null;
+        let newRolesetId: number | null = null;
+
+        if (rankingProvider.type === "roblox_cloud") {
+          const { RobloxCloudRankingAPI } = await import("@/utils/openCloud");
+          const { getWorkspaceRobloxApiKey } = await import("@/utils/openCloud");
+          const apiKey = await getWorkspaceRobloxApiKey(workspaceGroupId);
+          if (apiKey) {
+            const cloudApi = new RobloxCloudRankingAPI(apiKey, workspaceGroupId);
+            const membership = await cloudApi.getUserMembership(userId);
+            if (membership) {
+              newRank = membership.rank;
+              const roles = await cloudApi.getGroupRoles();
+              const roleInfo = roles.find(r => r.rank === membership.rank);
+              newRankName = roleInfo?.name || null;
+              newRolesetId = roleInfo?.id || null;
+            } else {
+              newRank = 0;
+            }
+          } else {
+            newRank = await noblox.getRankInGroup(workspaceGroupId, userId);
+            const newRankInfo = await noblox.getRole(workspaceGroupId, newRank);
+            newRankName = newRankInfo?.name || null;
+            newRolesetId = newRankInfo?.id || null;
+          }
+        } else {
+          newRank = await noblox.getRankInGroup(workspaceGroupId, userId);
+          const newRankInfo = await noblox.getRole(workspaceGroupId, newRank);
+          newRankName = newRankInfo?.name || null;
+          newRolesetId = newRankInfo?.id || null;
+        }
+
         rankAfter = newRank;
-        const newRankInfo = await noblox.getRole(workspaceGroupId, newRank);
-        rankNameAfter = newRankInfo?.name || null;
+        rankNameAfter = newRankName;
 
         await prisma.rank.upsert({
           where: {
@@ -424,13 +462,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           },
         });
 
-        const rankInfo = await noblox.getRole(workspaceGroupId, newRank);
-        if (rankInfo) {
+        // Sync Firefli workspace role based on the new Roblox group role
+        let rolesetIdForSync = newRolesetId;
+        if (!rolesetIdForSync) {
+          // Fallback: fetch via noblox if we don't have it yet
+          try {
+            const fallbackInfo = await noblox.getRole(workspaceGroupId, newRank);
+            rolesetIdForSync = fallbackInfo?.id || null;
+          } catch {}
+        }
+        if (rolesetIdForSync) {
           const role = await prisma.role.findFirst({
             where: {
               workspaceGroupId: workspaceGroupId,
               groupRoles: {
-                hasSome: [rankInfo.id],
+                hasSome: [rolesetIdForSync],
               },
             },
           });
@@ -487,7 +533,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       let errorMessage =
         error?.response?.data?.error ||
         error?.message ||
-        "RankGun operation failed";
+        "Ranking operation failed";
       if (typeof errorMessage === "object") {
         try {
           errorMessage = JSON.stringify(errorMessage);
