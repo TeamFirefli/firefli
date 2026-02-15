@@ -53,6 +53,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     }
 
     const periodEnd = new Date();
+    
+    console.log(`[RESET] Period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`);
+    
     const workspaceMembers = await prisma.workspaceMember.findMany({
       where: { workspaceGroupId },
       include: {
@@ -79,6 +82,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         },
       },
     });
+    
+    console.log(`[RESET] Found ${workspaceMembers.length} workspace members`);
+    
     const quotas = await prisma.quota.findMany({
       where: { workspaceGroupId },
     });
@@ -269,12 +275,51 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         }
       });
       const userQuotas = Array.from(quotaMap.values());
+      const quotaIds = userQuotas.map(q => q.id);
+      const customQuotaCompletions = quotaIds.length > 0 ? await prisma.userQuotaCompletion.findMany({
+        where: {
+          quotaId: { in: quotaIds },
+          userId,
+          workspaceGroupId,
+          archived: { not: true },
+        },
+        include: {
+          completedByUser: {
+            select: {
+              userid: true,
+              username: true,
+            },
+          },
+        },
+      }) : [];
+
+      const completionMap = new Map();
+      customQuotaCompletions.forEach(completion => {
+        completionMap.set(completion.quotaId, completion);
+      });
 
       for (const quota of userQuotas) {
         let currentValue = 0;
         let percentage = 0;
+        let completed = false;
+        let completedAt = null;
+        let completedBy = null;
+        let completedByUsername = null;
+        let completionNotes = null;
 
         switch (quota.type) {
+          case "custom":
+            const completion = completionMap.get(quota.id);
+            if (completion) {
+              completed = completion.completed || false;
+              completedAt = completion.completedAt;
+              completedBy = completion.completedBy ? completion.completedBy.toString() : null;
+              completedByUsername = completion.completedByUser?.username || null;
+              completionNotes = completion.notes;
+              percentage = completed ? 100 : 0;
+              currentValue = completed ? 1 : 0;
+            }
+            break;
           case "mins":
             currentValue = totalMinutes;
             percentage = (totalMinutes / quota.value) * 100;
@@ -312,15 +357,26 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           type: quota.type,
           requirement: quota.value,
         };
+
+        if (quota.type === "custom") {
+          quotaProgress[quota.id].completed = completed;
+          if (completedAt) quotaProgress[quota.id].completedAt = completedAt;
+          if (completedBy) quotaProgress[quota.id].completedBy = completedBy;
+          if (completedByUsername) quotaProgress[quota.id].completedByUsername = completedByUsername;
+          if (completionNotes) quotaProgress[quota.id].completionNotes = completionNotes;
+        }
       }
 
-      if (
+      const hasQuotas = userQuotas.length > 0;
+      const hasActivity = 
         totalMinutes > 0 ||
         totalMessages > 0 ||
         sessionsHosted > 0 ||
         sessionsAttended > 0 ||
-        totalWallPosts > 0
-      ) {
+        totalWallPosts > 0;
+
+      if (hasActivity || hasQuotas) {
+        console.log(`[RESET] Saving history for user ${userId}: activity=${hasActivity}, quotas=${hasQuotas} (${userQuotas.length} quotas)`);
         historyRecords.push({
           userId,
           workspaceGroupId,
@@ -334,13 +390,22 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           wallPosts: totalWallPosts,
           quotaProgress,
         });
+      } else {
+        console.log(`[RESET] Skipping user ${userId}: no activity and no quotas`);
       }
     }
+    
+    console.log(`[RESET] Total history records to save: ${historyRecords.length}`);
+    
     await prisma.$transaction(async (tx) => {
       if (historyRecords.length > 0) {
+        console.log(`[RESET] Creating ${historyRecords.length} ActivityHistory records`);
         await tx.activityHistory.createMany({
           data: historyRecords,
         });
+        console.log(`[RESET] History records created successfully`);
+      } else {
+        console.log(`[RESET] No history records to create`);
       }
       await tx.activityReset.create({
         data: {
@@ -401,10 +466,25 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           archiveEndDate: periodEnd,
         },
       });
+
+      await tx.userQuotaCompletion.updateMany({
+        where: {
+          workspaceGroupId,
+          archived: { not: true },
+        },
+        data: {
+          archived: true,
+          archiveStartDate: periodStart,
+          archiveEndDate: periodEnd,
+        },
+      });
     });
+
+    console.log(`[RESET] Manual reset completed successfully for workspace ${workspaceGroupId}`);
 
     return res.status(200).json({ success: true });
   } catch (error) {
+    console.error(`[RESET] Error during manual reset for workspace ${workspaceGroupId}:`, error);
     return res
       .status(500)
       .json({ success: false, error: "Something went wrong" });

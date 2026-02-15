@@ -280,14 +280,17 @@ async function performReset(workspaceGroupId: number) {
 
     const quotaProgress: any = {};
     const userRoles = member.user.roles;
+    const allQuotas: any[] = [];
     
     for (const role of userRoles) {
       for (const quotaRole of role.quotaRoles) {
         const quota = quotaRole.quota;
         if (!quotaProgress[quota.id]) {
+          allQuotas.push(quota);
           quotaProgress[quota.id] = {
             quotaId: quota.id,
             quotaName: quota.name,
+            quotaType: quota.type,
             targetMinutes: quota.value,
             currentMinutes: 0,
             completed: false,
@@ -300,9 +303,11 @@ async function performReset(workspaceGroupId: number) {
       for (const quotaDepartment of departmentMember.department.quotaDepartments) {
         const quota = quotaDepartment.quota;
         if (!quotaProgress[quota.id]) {
+          allQuotas.push(quota);
           quotaProgress[quota.id] = {
             quotaId: quota.id,
             quotaName: quota.name,
+            quotaType: quota.type,
             targetMinutes: quota.value,
             currentMinutes: 0,
             completed: false,
@@ -311,25 +316,71 @@ async function performReset(workspaceGroupId: number) {
       }
     }
 
+    const quotaIds = allQuotas.map(q => q.id);
+    const customQuotaCompletions = quotaIds.length > 0 ? await prisma.userQuotaCompletion.findMany({
+      where: {
+        quotaId: { in: quotaIds },
+        userId,
+        workspaceGroupId,
+        archived: { not: true },
+      },
+      include: {
+        completedByUser: {
+          select: {
+            userid: true,
+            username: true,
+          },
+        },
+      },
+    }) : [];
+
+    const completionMap = new Map();
+    customQuotaCompletions.forEach(completion => {
+      completionMap.set(completion.quotaId, completion);
+    });
+
     for (const quotaId in quotaProgress) {
-      quotaProgress[quotaId].currentMinutes = totalMinutes;
-      quotaProgress[quotaId].completed =
-        totalMinutes >= quotaProgress[quotaId].targetMinutes;
+      const quota = allQuotas.find(q => q.id === quotaId);
+      
+      if (quota?.type === 'custom') {
+        const completion = completionMap.get(quotaId);
+        if (completion) {
+          quotaProgress[quotaId].completed = completion.completed || false;
+          quotaProgress[quotaId].completedAt = completion.completedAt;
+          quotaProgress[quotaId].completedBy = completion.completedBy ? completion.completedBy.toString() : null;
+          quotaProgress[quotaId].completedByUsername = completion.completedByUser?.username || null;
+          quotaProgress[quotaId].completionNotes = completion.notes;
+        }
+      } else {
+        quotaProgress[quotaId].currentMinutes = totalMinutes;
+        quotaProgress[quotaId].completed =
+          totalMinutes >= quotaProgress[quotaId].targetMinutes;
+      }
     }
 
-    historyRecords.push({
-      userId,
-      workspaceGroupId,
-      periodStart,
-      periodEnd,
-      minutes: totalMinutes,
-      messages: totalMessages,
-      sessionsHosted: ownedSessions.length,
-      sessionsAttended: allSessionParticipations.length,
-      idleTime: totalIdleTime,
-      wallPosts: wallPosts.length,
-      quotaProgress,
-    });
+    const hasQuotas = Object.keys(quotaProgress).length > 0;
+    const hasActivity = 
+      totalMinutes > 0 ||
+      totalMessages > 0 ||
+      ownedSessions.length > 0 ||
+      allSessionParticipations.length > 0 ||
+      wallPosts.length > 0;
+
+    if (hasActivity || hasQuotas) {
+      historyRecords.push({
+        userId,
+        workspaceGroupId,
+        periodStart,
+        periodEnd,
+        minutes: totalMinutes,
+        messages: totalMessages,
+        sessionsHosted: ownedSessions.length,
+        sessionsAttended: allSessionParticipations.length,
+        idleTime: totalIdleTime,
+        wallPosts: wallPosts.length,
+        quotaProgress,
+      });
+    }
   }
 
   await prisma.activityHistory.createMany({
@@ -346,11 +397,67 @@ async function performReset(workspaceGroupId: number) {
     },
   });
 
-  await prisma.activitySession.deleteMany({
-    where: { workspaceGroupId },
+  await prisma.activitySession.updateMany({
+    where: { 
+      workspaceGroupId,
+      archived: { not: true },
+    },
+    data: {
+      archived: true,
+      archiveStartDate: periodStart,
+      archiveEndDate: periodEnd,
+    },
   });
 
-  await prisma.activityAdjustment.deleteMany({
-    where: { workspaceGroupId },
+  await prisma.activityAdjustment.updateMany({
+    where: { 
+      workspaceGroupId,
+      archived: { not: true },
+    },
+    data: {
+      archived: true,
+      archiveStartDate: periodStart,
+      archiveEndDate: periodEnd,
+    },
+  });
+
+  await prisma.sessionUser.updateMany({
+    where: {
+      session: {
+        sessionType: { workspaceGroupId },
+        date: { lte: new Date() },
+      },
+      archived: { not: true },
+    },
+    data: {
+      archived: true,
+      archiveStartDate: periodStart,
+      archiveEndDate: periodEnd,
+    },
+  });
+
+  await prisma.session.updateMany({
+    where: {
+      sessionType: { workspaceGroupId },
+      date: { lte: new Date() },
+      archived: { not: true },
+    },
+    data: {
+      archived: true,
+      archiveStartDate: periodStart,
+      archiveEndDate: periodEnd,
+    },
+  });
+
+  await prisma.userQuotaCompletion.updateMany({
+    where: {
+      workspaceGroupId,
+      archived: { not: true },
+    },
+    data: {
+      archived: true,
+      archiveStartDate: periodStart,
+      archiveEndDate: periodEnd,
+    },
   });
 }
