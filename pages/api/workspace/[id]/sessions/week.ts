@@ -55,6 +55,7 @@ export default withPermissionCheck(
         include: {
           owner: true,
           sessionType: true,
+          sessionTag: true,
           users: {
             include: {
               user: true,

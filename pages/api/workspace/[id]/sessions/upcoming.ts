@@ -53,6 +53,7 @@ export default withPermissionCheck(
               schedule: true,
             },
           },
+          sessionTag: true,
           users: {
             include: {
               user: true,

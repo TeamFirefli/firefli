@@ -102,6 +102,7 @@ export default withPermissionCheck(
           data: sessionUpdateData,
           include: {
             sessionType: true,
+            sessionTag: true,
             owner: true,
             users: {
               include: {
@@ -154,6 +155,7 @@ export default withPermissionCheck(
           where: { id: sid as string },
           include: {
             sessionType: true,
+            sessionTag: true,
             owner: true,
             users: {
               include: {
