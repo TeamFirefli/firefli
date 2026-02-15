@@ -367,6 +367,12 @@ export function withPermissionCheckSsr(
 export async function checkGroupRoles(groupID: number) {
   try {
     console.log(`[Refresh] Starting sync for group ${groupID}`);
+    const openCloudApiKey = await getWorkspaceRobloxApiKey(groupID);
+    if (!openCloudApiKey) {
+      console.warn(`[Refresh] No Open Cloud API key configured for group ${groupID} — skipping workspace sync`);
+      return;
+    }
+    
     try {
       const [logo, group] = await Promise.all([
         noblox.getLogo(groupID).catch(() => null),
@@ -545,15 +551,16 @@ export async function checkGroupRoles(groupID: number) {
       );
     }
 
-    const rss = await retryNobloxRequest(() => noblox.getRoles(groupID)).catch(
-      (error) => {
+    const rss = await fetch(`https://groups.roblox.com/v1/groups/${groupID}/roles`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data?.roles || null)
+      .catch((error) => {
         console.error(
           `[Refresh] Failed to get roles for group ${groupID}:`,
           error
         );
         return null;
-      }
-    );
+      });
     if (!rss) {
       console.log(`[Refresh] No roles found for group ${groupID}`);
       return;
@@ -595,101 +602,55 @@ export async function checkGroupRoles(groupID: number) {
     
     if (ranks && ranks.length) {
       console.log(`[Refresh] Fetching members for ${ranks.length} tracked ranks...`);
+      console.log(`[Refresh] Using Open Cloud API key for group ${groupID}`);
       
-      const openCloudApiKey = await getWorkspaceRobloxApiKey(groupID);
-      if (openCloudApiKey) {
-        console.log(`[Refresh] Using Open Cloud API key for group ${groupID}`);
-        try {
-          const { members: allMembers } = await fetchOpenCloudGroupMembers(groupID, openCloudApiKey);
-          console.log(`[Refresh] Open Cloud returned ${allMembers.length} total group members`);
-          
-          const trackedRoleIds = new Set(ranks.filter(r => r.rank > 0).map(r => r.id));
-          
-          for (const member of allMembers) {
-            if (trackedRoleIds.has(member.roleId)) {
-              userRoleMap.set(member.userId, {
-                roleId: member.roleId,
-                username: "",
-              });
-            }
-          }
-          
-          if (userRoleMap.size > 0) {
-            console.log(`[Refresh] Resolving usernames for ${userRoleMap.size} members...`);
-            const userIds = Array.from(userRoleMap.keys());
-            for (let i = 0; i < userIds.length; i += 100) {
-              const batch = userIds.slice(i, i + 100);
-              try {
-                const usernameRes = await fetch("https://users.roblox.com/v1/users", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ userIds: batch, excludeBannedUsers: false }),
-                });
-                if (usernameRes.ok) {
-                  const usernameData = await usernameRes.json();
-                  for (const user of usernameData.data || []) {
-                    const existing = userRoleMap.get(user.id);
-                    if (existing) {
-                      existing.username = user.name;
-                    }
-                  }
-                }
-              } catch (err) {
-                console.error(`[Refresh] Failed to resolve usernames for batch:`, err);
-              }
-              if (i + 100 < userIds.length) await delay(200);
-            }
-          }
-          
-          console.log(`[Refresh] Cached ${userRoleMap.size} unique users across tracked ranks (via Open Cloud)`);
-        } catch (error) {
-          console.error(`[Refresh] Open Cloud API failed for group ${groupID}:`, error);
-          console.log(`[Refresh] Falling back to noblox.js...`);
-        }
-      }
-      
-      if (userRoleMap.size === 0 && nobloxInitialized) {
-        console.log(`[Refresh] Using noblox.js (cookie auth) for group ${groupID}`);
-        for (const rank of ranks) {
-          if (rank.rank === 0) continue;
-          
-          console.log(
-            `[Refresh] Fetching members from rank ${rank.name} (Role ID: ${rank.id}, Rank: ${rank.rank})...`
-          );
-          
-          await delay(500);
-          const members = await retryNobloxRequest(() =>
-            noblox.getPlayers(groupID, rank.id)
-          ).catch((error) => {
-            console.error(
-              `[Refresh] Failed to get players for rank ${rank.name}:`,
-              error
-            );
-            return null;
-          });
-          
-          if (!members) {
-            console.log(`[Refresh] No members found for rank ${rank.name}`);
-            continue;
-          }
-          
-          console.log(
-            `[Refresh] Fetched ${members.length} members from rank ${rank.name}`
-          );
-
-          for (const member of members) {
-            userRoleMap.set(member.userId, { 
-              roleId: rank.id, 
-              username: member.username 
+      try {
+        const { members: allMembers } = await fetchOpenCloudGroupMembers(groupID, openCloudApiKey);
+        console.log(`[Refresh] Open Cloud returned ${allMembers.length} total group members`);
+        
+        const trackedRoleIds = new Set(ranks.filter(r => r.rank > 0).map(r => r.id));
+        
+        for (const member of allMembers) {
+          if (trackedRoleIds.has(member.roleId)) {
+            userRoleMap.set(member.userId, {
+              roleId: member.roleId,
+              username: "",
             });
           }
         }
         
-        console.log(
-          `[Refresh] Cached ${userRoleMap.size} unique users across all tracked ranks`
-        );
-      } else if (userRoleMap.size === 0) {
-        console.warn(`[Refresh] No Open Cloud API key configured for group ${groupID} — cannot sync members`);
+        if (userRoleMap.size > 0) {
+          console.log(`[Refresh] Resolving usernames for ${userRoleMap.size} members...`);
+          const userIds = Array.from(userRoleMap.keys());
+          for (let i = 0; i < userIds.length; i += 100) {
+            const batch = userIds.slice(i, i + 100);
+            try {
+              const usernameRes = await fetch("https://users.roblox.com/v1/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userIds: batch, excludeBannedUsers: false }),
+              });
+              if (usernameRes.ok) {
+                const usernameData = await usernameRes.json();
+                for (const user of usernameData.data || []) {
+                  const existing = userRoleMap.get(user.id);
+                  if (existing) {
+                    existing.username = user.name;
+                  }
+                }
+              }
+            } catch (err) {
+              console.error(`[Refresh] Failed to resolve usernames for batch:`, err);
+            }
+            if (i + 100 < userIds.length) await delay(200);
+          }
+        }
+        
+        console.log(`[Refresh] Cached ${userRoleMap.size} unique users across tracked ranks (via Open Cloud)`);
+      } catch (error) {
+        console.error(`[Refresh] Open Cloud API failed for group ${groupID}:`, error);
+        console.warn(`[Refresh] Cannot sync workspace ${groupID} without Open Cloud — skipping`);
+        return;
       }
     }
     
