@@ -180,7 +180,6 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
                   value={customColor}
                   onChange={(e) => handleCustomColorChange(e.target.value)}
                   className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
-                  title="Custom Color"
                 />
                 <div 
                   className="absolute inset-0 pointer-events-none"
