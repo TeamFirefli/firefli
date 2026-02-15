@@ -148,6 +148,7 @@ export async function handler(
 		"Manage notices": "manage_notices",
 		"Create quotas": "create_quotas",
 		"Delete quotas": "delete_quotas",
+		"Signoff custom quotas": "signoff_custom_quotas",
 		"View member profiles": "view_member_profiles",
 		"Edit member details": "edit_member_details",
 		"Record notices": "record_notices",

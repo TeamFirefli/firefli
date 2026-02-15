@@ -24,7 +24,7 @@ async function handler(
 		return res.status(401).json({ success: false, error: 'Not logged in' });
 	}
 
-	const { name, type, value, roles, departments, description, sessionType } = req.body;
+	const { name, type, value, roles, departments, description, sessionType, completionType } = req.body;
  const isCustom = type == "custom";
 	const hasRoles = Array.isArray(roles) && roles.length > 0;
 	const hasDepartments = Array.isArray(departments) && departments.length > 0;
@@ -47,6 +47,9 @@ const parsedValue = value != undefined ? Number(value): null;
 		}
 		if (sessionType && !isCustom) {
 			quotaData.sessionType = sessionType;
+		}
+		if (isCustom && completionType) {
+			quotaData.completionType = completionType;
 		}
 
 		const quota = await prisma.quota.create({

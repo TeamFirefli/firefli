@@ -87,6 +87,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
     Quotas: {
       "Create quotas": "create_quotas",
       "Delete quotas": "delete_quotas",
+      "Signoff custom quotas": "signoff_custom_quotas",
     },
     Members: {
       "Profiles - View": "view_member_profiles",

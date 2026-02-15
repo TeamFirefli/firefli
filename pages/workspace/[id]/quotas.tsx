@@ -72,6 +72,7 @@ type Form = {
   name: string;
   description?: string;
   sessionType?: string;
+  completionType?: string;
 };
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -382,15 +383,36 @@ export const getServerSideProps = withPermissionCheckSsr(
             department: true,
           },
         },
+        userQuotaCompletions: {
+          where: {
+            userId: BigInt(userId),
+            workspaceGroupId: workspaceId,
+          },
+          include: {
+            completedByUser: {
+              select: {
+                userid: true,
+                username: true,
+                picture: true,
+              },
+            },
+          },
+        },
       },
-    });
+    } as any);
 
     const myQuotasWithProgress = myQuotas.map((quota: any) => {
       if (quota.type === "custom") {
+        const completion = quota.userQuotaCompletions?.[0];
         return {
           ...quota,
           currentValue: null,
-          percentage: 0,
+          percentage: completion?.completed ? 100 : 0,
+          completed: completion?.completed || false,
+          completedAt: completion?.completedAt,
+          completedBy: completion?.completedBy,
+          completedByUser: completion?.completedByUser,
+          completionNotes: completion?.notes,
         };
       }
       let currentValue = 0;
@@ -444,6 +466,10 @@ export const getServerSideProps = withPermissionCheckSsr(
     const hasDeletePermission = isAdmin || profileData?.roles.some(
       (role: any) =>
         role.permissions.includes("delete_quotas")
+    );
+    const hasSignoffPermission = isAdmin || profileData?.roles.some(
+      (role: any) =>
+        role.permissions.includes("signoff_custom_quotas")
     );
 
     let allQuotas: any[] = [];
@@ -508,6 +534,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         ),
         canManageQuotas: hasManagePermission,
         canDeleteQuotas: hasDeletePermission,
+        canSignoffQuotas: hasSignoffPermission,
       },
     };
   }
@@ -522,6 +549,7 @@ const Quotas: pageWithLayout<pageProps> = ({
   departments: initialDepartments,
   canManageQuotas: canManageQuotasProp,
   canDeleteQuotas,
+  canSignoffQuotas,
 }) => {
   const router = useRouter();
   const { id } = router.query;
@@ -544,6 +572,7 @@ const Quotas: pageWithLayout<pageProps> = ({
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [sessionTypeFilter, setSessionTypeFilter] = useState<string>("all");
+  const [completionType, setCompletionType] = useState<string>("user_complete");
 
   const form = useForm<Form>();
   const { register, handleSubmit, watch } = form;
@@ -612,6 +641,11 @@ const Quotas: pageWithLayout<pageProps> = ({
         payload.value = Number(requirement);
     }
 
+    // Add completion type for custom quotas
+    if (type === "custom") {
+      payload.completionType = completionType;
+    }
+
     if ( type !== "custom" && 
       ["sessions_hosted", "sessions_attended", "sessions_logged"].includes(type)
     ) {
@@ -625,6 +659,7 @@ const Quotas: pageWithLayout<pageProps> = ({
         setSelectedRoles([]);
         setSelectedDepartments([]);
         setSessionTypeFilter("all");
+        setCompletionType("user_complete");
       });
     toast.promise(axiosPromise, {
       loading: "Creating your quota...",
@@ -815,6 +850,113 @@ const Quotas: pageWithLayout<pageProps> = ({
                           ))}
                         </div>
                       </div>
+                      {quota.type === "custom" && (
+                        <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-600">
+                          {quota.completed ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                <IconCheck className="w-5 h-5" />
+                                <span className="text-sm font-medium">Completed</span>
+                              </div>
+                              {quota.completedAt && (
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                  Completed on {new Date(quota.completedAt).toLocaleDateString()}
+                                </p>
+                              )}
+                              {quota.completedByUser && quota.completedBy?.toString() !== login.userId.toString() && (
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                  Signed off by @{quota.completedByUser.username}
+                                </p>
+                              )}
+                              {quota.completionNotes && (
+                                <p className="text-xs text-zinc-600 dark:text-zinc-300 italic">
+                                  "{quota.completionNotes}"
+                                </p>
+                              )}
+                              {(quota.completionType === "user_complete" || (quota.completionType === "manager_signoff" && canSignoffQuotas)) && (
+                                <button
+                                  onClick={() => {
+                                    const promise = axios.post(
+                                      `/api/workspace/${id}/activity/quotas/${quota.id}/uncomplete`,
+                                      { targetUserId: login.userId }
+                                    ).then(() => {
+                                      setMyQuotas(myQuotas.map((q: any) => 
+                                        q.id === quota.id 
+                                          ? { ...q, completed: false, completedAt: null, completedBy: null, completedByUser: null, completionNotes: null, percentage: 0 }
+                                          : q
+                                      ));
+                                    });
+                                    toast.promise(promise, {
+                                      loading: "Marking as incomplete...",
+                                      success: "Quota marked as incomplete!",
+                                      error: "Failed to mark as incomplete"
+                                    });
+                                  }}
+                                  className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-primary transition-colors"
+                                >
+                                  Mark as incomplete
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              {quota.completionType === "user_complete" ? (
+                                <button
+                                  onClick={() => {
+                                    const promise = axios.post(
+                                      `/api/workspace/${id}/activity/quotas/${quota.id}/complete`,
+                                      { targetUserId: login.userId }
+                                    ).then(() => {
+                                      setMyQuotas(myQuotas.map((q: any) => 
+                                        q.id === quota.id 
+                                          ? { ...q, completed: true, completedAt: new Date(), completedBy: login.userId, percentage: 100 }
+                                          : q
+                                      ));
+                                    });
+                                    toast.promise(promise, {
+                                      loading: "Marking as complete...",
+                                      success: "Quota completed!",
+                                      error: "Failed to complete quota"
+                                    });
+                                  }}
+                                  className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <IconCheck className="w-4 h-4" />
+                                  Mark as Complete
+                                </button>
+                              ) : canSignoffQuotas ? (
+                                <button
+                                  onClick={() => {
+                                    const promise = axios.post(
+                                      `/api/workspace/${id}/activity/quotas/${quota.id}/signoff`,
+                                      { targetUserId: login.userId }
+                                    ).then(() => {
+                                      setMyQuotas(myQuotas.map((q: any) => 
+                                        q.id === quota.id 
+                                          ? { ...q, completed: true, completedAt: new Date(), completedBy: login.userId, percentage: 100 }
+                                          : q
+                                      ));
+                                    });
+                                    toast.promise(promise, {
+                                      loading: "Signing off quota...",
+                                      success: "Quota signed off!",
+                                      error: "Failed to sign off quota"
+                                    });
+                                  }}
+                                  className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <IconCheck className="w-4 h-4" />
+                                  Manager Signoff
+                                </button>
+                              ) : (
+                                <div className="text-center py-2 text-xs text-zinc-500 dark:text-zinc-400 italic">
+                                  Requires manager signoff
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1084,6 +1226,27 @@ const Quotas: pageWithLayout<pageProps> = ({
                               </select>
                               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                                 Filter to count only specific session types
+                              </p>
+                            </div>
+                          )}
+
+                          {watchedType === "custom" && (
+                            <div>
+                              <label className="block text-sm font-medium text-zinc-700 mb-2 dark:text-white">
+                                Completion Method
+                              </label>
+                              <select
+                                value={completionType}
+                                onChange={(e) => setCompletionType(e.target.value)}
+                                className="w-full rounded-lg border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-600 text-zinc-900 dark:text-white focus:border-primary focus:ring-primary"
+                              >
+                                <option value="user_complete">User Complete (Self-service)</option>
+                                <option value="manager_signoff">Manager Signoff (Authorisation required)</option>
+                              </select>
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                {completionType === "user_complete" 
+                                  ? "Users can mark this quota as complete themselves"
+                                  : "Requires a manager with 'Signoff custom quotas' permission to approve"}
                               </p>
                             </div>
                           )}

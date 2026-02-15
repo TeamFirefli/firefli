@@ -1,6 +1,6 @@
 import React from "react";
 import type { Quota } from "@prisma/client";
-import { IconChartBar, IconUsers, IconBriefcase } from "@tabler/icons-react";
+import { IconChartBar, IconUsers, IconBriefcase, IconCheck } from "@tabler/icons-react";
 import Tooltip from "@/components/tooltip";
 
 type QuotaWithLinkage = Quota & {
@@ -9,6 +9,10 @@ type QuotaWithLinkage = Quota & {
   linkedVia?: 'role' | 'department';
   linkedName?: string;
   linkedColor?: string | null;
+  completed?: boolean;
+  completedAt?: Date | null;
+  completedByUser?: { username: string } | null;
+  completionType?: string | null;
 };
 
 type Props = {
@@ -161,25 +165,64 @@ export function QuotasProgress({
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Progress
                 </span>
-                <span className="text-sm font-bold text-zinc-900 dark:text-white">
-                  {getQuotaProgress(quota)}
-                </span></div>
-              
-              <div className="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all ${
-                    (getQuotaPercentage(quota) || 0) >= 100
-                      ? "bg-green-500"
-                      : "bg-primary"
-                  }`}
-                  style={{
-                    width: `${Math.min(getQuotaPercentage(quota) || 0, 100)}%`,
-                  }}
-                />
+                {quota.type !== "custom" ? (
+                  <span className="text-sm font-bold text-zinc-900 dark:text-white">
+                    {getQuotaProgress(quota)}
+                  </span>
+                ) : quota.completed ? (
+                  <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                    <IconCheck className="w-4 h-4" />
+                    <span className="text-sm font-medium">Completed</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+                    Not completed
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                {Math.min((getQuotaPercentage(quota) || 0), 100).toFixed(0)}% complete
-              </p>
+              
+              {quota.type !== "custom" && (
+                <>
+                  <div className="w-full bg-zinc-200 dark:bg-zinc-600 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        (getQuotaPercentage(quota) || 0) >= 100
+                          ? "bg-green-500"
+                          : "bg-primary"
+                      }`}
+                      style={{
+                        width: `${Math.min(getQuotaPercentage(quota) || 0, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    {Math.min((getQuotaPercentage(quota) || 0), 100).toFixed(0)}% complete
+                  </p>
+                </>
+              )}
+              
+              {quota.type === "custom" && quota.completed && (
+                <div className="mt-2 space-y-1">
+                  {quota.completedAt && (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Completed on {new Date(quota.completedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                  {quota.completedByUser && (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Signed off by @{quota.completedByUser.username}
+                    </p>
+                  )}
+                </div>
+              )}
+              
+              {quota.type === "custom" && !quota.completed && quota.completionType && (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 italic">
+                  {quota.completionType === "user_complete" 
+                    ? "Can be self-completed" 
+                    : "Requires manager signoff"}
+                </p>
+              )}
             </div>
           ))}
         </div>

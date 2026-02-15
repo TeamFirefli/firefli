@@ -83,6 +83,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   'manage_notices': 'Manage notices',
   'create_quotas': 'Create quotas',
   'delete_quotas': 'Delete quotas',
+  'signoff_custom_quotas': 'Signoff custom quotas',
   'view_member_profiles': 'Profiles - View',
   'edit_member_details': 'Info - Edit details',
   'record_notices': 'Notices - Record approved',

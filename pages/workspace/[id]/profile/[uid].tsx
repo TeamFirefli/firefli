@@ -981,6 +981,7 @@ const Profile: pageWithLayout<pageProps> = ({
                   workspaceGroupId: parseInt(router.query.id as string),
                   description: null,
                   sessionType: null,
+                  completionType: null,
                   sessionRole: null,
                   currentValue: qp.value || 0,
                   percentage: qp.percentage || 0,
