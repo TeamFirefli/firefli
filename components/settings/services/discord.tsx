@@ -1165,6 +1165,10 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     if (integration && !editMode) {
       enterEditMode();
     }
+    // Fetch session channels if a session channel is configured
+    if (integration && (integration.sessionChannelId || integration.sessionNotifyOnCreate || integration.sessionNotifyOnClaim || integration.sessionNotifyOnStart)) {
+      fetchSessionChannels();
+    }
   }, [integration]);
 
   useEffect(() => {
