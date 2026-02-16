@@ -156,7 +156,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     date: dateTime,
     sessionTypeId: schedule.sessionTypeId,
     ownerId: req.session.userid,
-    startedAt: dateTime,
   };
   
   if (sessionTagId) {
