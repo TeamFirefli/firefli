@@ -78,7 +78,7 @@
   <h2>Quicklinks</h2>
   <ul>
     <li>
-      Don't know how to install? –– <a href="https://docs.firefli.net">Visit our documentation!</a>
+      📄 Don't know how to install? –– <a href="https://docs.firefli.net">Visit our documentation!</a>
     </li>
     <li>
       🐛 Bugs? Have ideas? –– <a href="https://feedback.firefli.net/bugs">Get support and let us know here!</a>
@@ -106,4 +106,5 @@
 
   <h2>License</h2>
   Firefli is licensed under the <a href="./LICENSE">GNU General Public License v3.0.</a>
+  <p>Consider supporting the project by buying the Developers a coffee https://buymeacoffee.com/teamfirefli.</p>
 </div>
