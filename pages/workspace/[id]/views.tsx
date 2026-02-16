@@ -72,6 +72,8 @@ import {
   IconDeviceFloppy,
   IconExternalLink,
   IconLoader2,
+  IconLayoutList,
+  IconLayoutGrid,
 } from "@tabler/icons-react";
 import { UserGroupIcon, UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -239,6 +241,19 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   const [kickFromDiscord, setKickFromDiscord] = useState(false);
   const [banFromDiscord, setBanFromDiscord] = useState(false);
   const [banDeleteDays, setBanDeleteDays] = useState(0);
+  const [viewLayout, setViewLayout] = useState<'list' | 'card'>('list');
+
+  useEffect(() => {
+    const savedLayout = localStorage.getItem('viewsLayout');
+    if (savedLayout === 'card' || savedLayout === 'list') {
+      setViewLayout(savedLayout);
+    }
+  }, []);
+
+  const handleLayoutChange = (layout: 'list' | 'card') => {
+    setViewLayout(layout);
+    localStorage.setItem('viewsLayout', layout);
+  };
 
   const ICON_OPTIONS: { key: string; Icon: any; title?: string }[] = [
     { key: "star", Icon: IconStar, title: "Star" },
@@ -1341,6 +1356,31 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                       </>
                     )}
                   </Popover>
+
+                  <div className="hidden md:flex gap-1 border border-zinc-200 dark:border-zinc-600 rounded-lg p-0.5 bg-zinc-50 dark:bg-zinc-700/50">
+                    <button
+                      onClick={() => handleLayoutChange('list')}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        viewLayout === 'list'
+                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm"
+                          : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                      }`}
+                      title="List view"
+                    >
+                      <IconLayoutList className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleLayoutChange('card')}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        viewLayout === 'card'
+                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm"
+                          : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                      }`}
+                      title="Card view"
+                    >
+                      <IconLayoutGrid className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="relative flex-1 md:flex-none md:w-56">
@@ -1495,7 +1535,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               </div>
             ) : (
             <>
-            <div className="md:hidden space-y-4">
+            <div className={`block space-y-4 ${viewLayout === 'card' ? 'md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4 md:space-y-0' : 'md:hidden'}`}>
               {table.getRowModel().rows.map((row) => {
                 const user = row.original;
                 const warnings = Array.isArray(user.book)
@@ -1617,33 +1657,34 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                   </div>
                 );
               })}
+            </div>
 
-              <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3">
-                <div className="flex items-center justify-between gap-3">
+            <div className={`${viewLayout === 'card' ? 'block' : 'hidden md:hidden'} bg-white dark:bg-zinc-800 md:dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg md:rounded-none p-3 md:px-4 md:py-3 md:border-0 md:border-t mt-4 md:mt-0`}>
+              <div className="flex items-center justify-between md:justify-center gap-3 md:gap-2">
                   <button
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-700/50 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
                   >
                     Previous
                   </button>
-                  <div className="flex items-center px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                    <span className="text-zinc-900 dark:text-white font-semibold">{table.getState().pagination.pageIndex + 1}</span>
-                    <span className="mx-1">/</span>
-                    <span>{table.getPageCount()}</span>
+                  <div className="flex md:inline-flex items-center px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-400 md:text-zinc-700 md:dark:text-zinc-300 whitespace-nowrap md:bg-zinc-100 md:dark:bg-zinc-700/50 md:border md:border-zinc-300 md:dark:border-zinc-600 md:rounded-lg">
+                    <span className="md:hidden text-zinc-900 dark:text-white font-semibold">{table.getState().pagination.pageIndex + 1}</span>
+                    <span className="md:hidden mx-1">/</span>
+                    <span className="md:hidden">{table.getPageCount()}</span>
+                    <span className="hidden md:inline">Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
                   </div>
                   <button
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-700/50 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
                   >
                     Next
                   </button>
                 </div>
               </div>
-            </div>
 
-            <div className="hidden md:block bg-white dark:bg-zinc-800/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/50 rounded-lg overflow-hidden">
+            <div className={`hidden ${viewLayout === 'list' ? 'md:block' : 'md:hidden'} bg-white dark:bg-zinc-800/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/50 rounded-lg overflow-hidden`}>
               <div className="overflow-x-auto">
                 <table className="w-full table-auto md:table-fixed divide-y divide-zinc-200 dark:divide-zinc-700">
                   <thead className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700">
