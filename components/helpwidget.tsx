@@ -10,6 +10,7 @@ import {
   IconCopyright,
   IconLoader2,
   IconX,
+  IconCoffee,
 } from "@tabler/icons-react";
 import packageJson from "../package.json";
 import ReactMarkdown from "react-markdown";
@@ -71,13 +72,24 @@ const HelpWidget = () => {
             <div className="p-4">
               <div className="flex items-center gap-3 mb-4 pb-3 border-b border-zinc-200 dark:border-zinc-700">
                 <img src="/logo.png" alt="Firefli" className="h-8 w-auto" />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                     Firefli
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    v{packageJson.version}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      v{packageJson.version}
+                    </p>
+                    <a
+                      href="https://buymeacoffee.com/teamfirefli"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                      title="Buy us a coffee"
+                    >
+                      <IconCoffee className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+                    </a>
+                  </div>
                 </div>
               </div>
               <div className="space-y-1">
