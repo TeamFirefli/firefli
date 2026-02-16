@@ -7,6 +7,7 @@ import { withSessionRoute } from '@/lib/withSession'
 import { getUsername, getThumbnail, getDisplayName } from '@/utils/userinfoEngine'
 import { getRegistry } from '@/utils/registryManager';
 import { getCurrentBatch } from '@/utils/batchScheduler';
+import { sendWebhookEmbed } from '@/utils/discord';
 import * as noblox from 'noblox.js'
 
 type User = {
@@ -200,6 +201,28 @@ export async function handler(
 			});
 		} catch (err) {
 			console.error('[createws] Failed to save Roblox API key:', err);
+		}
+	}
+
+	if (process.env.DISCORD_WELCOME) {
+		try {
+			const ownerUsername = await getUsername(req.session.userid).catch(() => `User ${req.session.userid}`);
+
+			await sendWebhookEmbed(process.env.DISCORD_WELCOME, {
+				title: '🎉 New Workspace Created',
+				description: `A new workspace has been created on Firefli!`,
+				color: 0x00ff88,
+				fields: [
+					{ name: '👤 Owner', value: ownerUsername, inline: true },
+					{ name: '🆔 Owner ID', value: String(req.session.userid), inline: true },
+					{ name: '🏢 Group ID', value: String(groupId), inline: true },
+					{ name: '📝 Workspace Name', value: groupName, inline: true },
+				],
+				thumbnail: groupLogo ? { url: groupLogo } : undefined,
+				footer: { text: 'Firefli Workspace' },
+			});
+		} catch (err) {
+			console.error('[createws] Failed to send Discord webhook notification:', err);
 		}
 	}
 

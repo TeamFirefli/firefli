@@ -371,4 +371,35 @@ function getActionDescription(action: string): string {
   return descriptions[action] || 'performed an action';
 }
 
+export async function sendWebhookEmbed(
+  webhookUrl: string,
+  embed: {
+    title?: string;
+    description?: string;
+    color?: number;
+    fields?: Array<{ name: string; value: string; inline?: boolean }>;
+    thumbnail?: { url: string };
+    footer?: { text: string };
+    timestamp?: string;
+  }
+): Promise<boolean> {
+  try {
+    await axios.post(webhookUrl, {
+      embeds: [{
+        ...embed,
+        timestamp: embed.timestamp || new Date().toISOString(),
+      }],
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 5000,
+    });
+    return true;
+  } catch (error: any) {
+    console.error('Failed to send Discord webhook:', error.message);
+    return false;
+  }
+}
+
 export default DiscordAPI;
