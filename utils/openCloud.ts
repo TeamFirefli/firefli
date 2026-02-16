@@ -1,5 +1,74 @@
 const OPENCLOUD = "https://apis.roblox.com/cloud/v2";
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+interface CloudV2UserInfo {
+  username: string;
+  displayName: string;
+}
+
+interface CloudV2BatchResult {
+  resolved: Map<number, CloudV2UserInfo>;
+  notFound: number[];
+}
+
+export async function fetchCloudV2UserInfoBatch(
+  userIds: number[],
+  apiKey: string
+): Promise<CloudV2BatchResult> {
+  const resolved = new Map<number, CloudV2UserInfo>();
+  const notFound: number[] = [];
+  if (userIds.length === 0) return { resolved, notFound };
+
+  const BATCH_DELAY = 100;
+  const MAX_RETRIES = 6;
+
+  for (let i = 0; i < userIds.length; i++) {
+    const userId = userIds[i];
+    let retries = 0;
+
+    while (retries <= MAX_RETRIES) {
+      try {
+        const res = await fetch(`${OPENCLOUD}/users/${userId}`, {
+          headers: { "x-api-key": apiKey },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.name && data.displayName) {
+            resolved.set(userId, {
+              username: data.name,
+              displayName: data.displayName,
+            });
+          }
+          break;
+        } else if (res.status === 429) {
+          retries++;
+          const backoff = 5000 * retries;
+          console.warn(`[CloudV2] Rate limited on user ${userId}, retry ${retries}/${MAX_RETRIES} after ${backoff / 1000}s`);
+          await delay(backoff);
+          continue;
+        } else if (res.status === 404) {
+          notFound.push(userId);
+          break;
+        } else {
+          console.warn(`[CloudV2] Failed to fetch user ${userId}: ${res.status}`);
+          break;
+        }
+      } catch (err) {
+        console.error(`[CloudV2] Error fetching user ${userId}:`, err);
+        break;
+      }
+    }
+
+    if (i < userIds.length - 1) {
+      await delay(BATCH_DELAY);
+    }
+  }
+
+  return { resolved, notFound };
+}
+
 interface OpenCloudMember {
   path: string;
   user: string;

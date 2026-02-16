@@ -10,7 +10,7 @@ import * as noblox from "noblox.js";
 import { getConfig } from "./configEngine";
 import { validateCsrf } from "./csrf";
 import { getThumbnail, getUsername } from "./userinfoEngine";
-import { getWorkspaceRobloxApiKey, fetchOpenCloudGroupMembers } from "./openCloud";
+import { getWorkspaceRobloxApiKey, fetchOpenCloudRoleMembers, fetchCloudV2UserInfoBatch } from "./openCloud";
 
 let nobloxInitialized = false;
 async function ensureNobloxAuth() {
@@ -474,15 +474,9 @@ export async function checkGroupRoles(groupID: number) {
 
           if (userRank) {
             const rankId = Number(userRank.rankId);
-            const roleWithRank = await retryNobloxRequest(() =>
-              noblox.getRole(groupID, rankId)
-            )
-              .then((roleInfo) => {
-                return availableRoles.find((r) =>
-                  r.groupRoles?.includes(roleInfo.id)
-                );
-              })
-              .catch(() => null);
+            const roleWithRank = availableRoles.find((r) =>
+              r.groupRoles?.includes(rankId)
+            );
 
             if (roleWithRank) {
               targetRole = roleWithRank;
@@ -598,52 +592,37 @@ export async function checkGroupRoles(groupID: number) {
     console.log(
       `[Refresh] Processing ${ranks.length} tracked ranks for group ${groupID}`
     );
-    const userRoleMap = new Map<number, { roleId: number; username: string }>();
-    
-    if (ranks && ranks.length) {
-      console.log(`[Refresh] Fetching members for ${ranks.length} tracked ranks...`);
-      console.log(`[Refresh] Using Open Cloud API key for group ${groupID}`);
-      
-      try {
-        const { members: allMembers } = await fetchOpenCloudGroupMembers(groupID, openCloudApiKey);
-        console.log(`[Refresh] Open Cloud returned ${allMembers.length} total group members`);
-        
-        const trackedRoleIds = new Set(ranks.filter(r => r.rank > 0).map(r => r.id));
-        
-        for (const member of allMembers) {
-          if (trackedRoleIds.has(member.roleId)) {
-            userRoleMap.set(member.userId, {
-              roleId: member.roleId,
-              username: "",
-            });
-          }
+    const userRoleMap = new Map<number, { roleId: number; username: string; displayName: string }>();
+    const assignedGroupRoleIds = new Set<number>();
+    for (const workspaceRole of rs) {
+      if (workspaceRole.groupRoles && workspaceRole.groupRoles.length > 0) {
+        for (const grId of workspaceRole.groupRoles) {
+          assignedGroupRoleIds.add(Number(grId));
         }
-        
-        if (userRoleMap.size > 0) {
-          console.log(`[Refresh] Resolving usernames for ${userRoleMap.size} members...`);
-          const userIds = Array.from(userRoleMap.keys());
-          for (let i = 0; i < userIds.length; i += 100) {
-            const batch = userIds.slice(i, i + 100);
-            try {
-              const usernameRes = await fetch("https://users.roblox.com/v1/users", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userIds: batch, excludeBannedUsers: false }),
+      }
+    }
+    
+    const trackedRanks = ranks.filter(r => r.rank > 0 && assignedGroupRoleIds.has(r.id));
+    
+    if (trackedRanks.length > 0) {
+      console.log(`[Refresh] Fetching members for ${trackedRanks.length} assigned ranks via Open Cloud (${assignedGroupRoleIds.size} group role IDs mapped)...`);
+      try {
+        for (const rank of trackedRanks) {
+          console.log(`[Refresh] Fetching members for role "${rank.name}" (ID: ${rank.id}) in group ${groupID}...`);
+          try {
+            const roleMembers = await fetchOpenCloudRoleMembers(groupID, rank.id, openCloudApiKey);
+            console.log(`[Refresh] Role "${rank.name}": ${roleMembers.length} members`);
+            for (const member of roleMembers) {
+              userRoleMap.set(member.userId, {
+                roleId: member.roleId,
+                username: "",
+                displayName: "",
               });
-              if (usernameRes.ok) {
-                const usernameData = await usernameRes.json();
-                for (const user of usernameData.data || []) {
-                  const existing = userRoleMap.get(user.id);
-                  if (existing) {
-                    existing.username = user.name;
-                  }
-                }
-              }
-            } catch (err) {
-              console.error(`[Refresh] Failed to resolve usernames for batch:`, err);
             }
-            if (i + 100 < userIds.length) await delay(200);
+          } catch (err) {
+            console.error(`[Refresh] Failed to fetch members for role "${rank.name}":`, err);
           }
+          await delay(500);
         }
         
         console.log(`[Refresh] Cached ${userRoleMap.size} unique users across tracked ranks (via Open Cloud)`);
@@ -680,9 +659,56 @@ export async function checkGroupRoles(groupID: number) {
     
     console.log(`[Refresh] Fetched ${users.length} users from database`);
 
+    const deletedUserIds = new Set<number>();
+    {
+      const newUserIds = [...userRoleMap.keys()].filter((uid) => {
+        const userInDb = users.find((u) => Number(u.userid) === uid);
+        return !userInDb?.username || userInDb.username === '' || !userInDb?.displayName;
+      });
+
+      if (newUserIds.length > 0) {
+        console.log(`[Refresh] Resolving username/displayName for ${newUserIds.length} users...`);
+        const { resolved: userInfoMap, notFound } = await fetchCloudV2UserInfoBatch(newUserIds, openCloudApiKey);
+
+        let updatedCount = 0;
+        for (const [userId, info] of userInfoMap.entries()) {
+          try {
+            await prisma.user.upsert({
+              where: { userid: BigInt(userId) },
+              create: {
+                userid: BigInt(userId),
+                username: info.username,
+                displayName: info.displayName,
+              },
+              update: {
+                username: info.username,
+                displayName: info.displayName,
+              },
+            });
+            updatedCount++;
+          } catch (err) {
+            console.error(`[Refresh] Failed to update user info for ${userId}:`, err);
+          }
+        }
+
+        for (const userId of notFound) {
+          deletedUserIds.add(userId);
+        }
+        if (notFound.length > 0) {
+          console.log(`[Refresh] Skipping ${notFound.length} deleted/banned users from role sync`);
+        }
+
+        console.log(`[Refresh] Resolved ${updatedCount}/${newUserIds.length} usernames before role sync`);
+      } else {
+        console.log(`[Refresh] All users already have username/displayName cached`);
+      }
+    }
+
     for (const [userId, userData] of userRoleMap.entries()) {
+      if (deletedUserIds.has(userId)) continue;
+
       try {
-        const { roleId, username } = userData;
+        const { roleId, username, displayName } = userData;
         const workspaceRole = rs.find((r) => r.groupRoles?.includes(roleId));
         
         if (!workspaceRole) {
@@ -696,19 +722,7 @@ export async function checkGroupRoles(groupID: number) {
         const userInDb = users.find((u) => Number(u.userid) === userId);
         const hasRole = userInDb?.roles.some((r) => r.id === workspaceRole.id);
         
-        if (hasRole) {
-          await prisma.user
-            .update({
-              where: { userid: BigInt(userId) },
-              data: { username },
-            })
-            .catch((error) => {
-              console.error(
-                `[Refresh] Failed to update username for user ${userId}:`,
-                error
-              );
-            });
-        } else {
+        if (!hasRole) {
           console.log(
             `[Refresh] Adding role "${workspaceRole.name}" to user ${userId} (RID: ${roleId})`
           );
@@ -718,14 +732,20 @@ export async function checkGroupRoles(groupID: number) {
               where: { userid: BigInt(userId) },
               create: {
                 userid: BigInt(userId),
-                username,
-                picture: getThumbnail(userId),
-                roles: {
-                  connect: { id: workspaceRole.id },
-                },
               },
-              update: {
-                username,
+              update: {},
+            })
+            .catch((error) => {
+              console.error(
+                `[Refresh] Failed to ensure user ${userId} exists:`,
+                error
+              );
+            });
+
+          await prisma.user
+            .update({
+              where: { userid: BigInt(userId) },
+              data: {
                 roles: {
                   connect: { id: workspaceRole.id },
                 },
@@ -1053,19 +1073,41 @@ export async function checkGroupRoles(groupID: number) {
 
 export async function checkSpecificUser(userID: number) {
   const ws = await prisma.workspace.findMany({});
-  for (const w of ws) {
-    await delay(500); // Delay between workspace checks
+  let userGroupMemberships = new Map<number, { roleId: number; rank: number }>();
+  
+  try {
+    const userGroupsRes = await fetch(
+      `https://groups.roblox.com/v2/users/${userID}/groups/roles`
+    );
+    if (userGroupsRes.ok) {
+      const groupsData = await userGroupsRes.json();
+      if (groupsData.data) {
+        for (const groupData of groupsData.data) {
+          if (groupData.group && groupData.role) {
+            userGroupMemberships.set(groupData.group.id, {
+              roleId: groupData.role.id,
+              rank: groupData.role.rank,
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error(`[Refresh] Failed to fetch user ${userID} group memberships:`, error);
+  }
 
-    const rankId = await retryNobloxRequest(() =>
-      noblox.getRankInGroup(w.groupId, userID)
-    ).catch(() => null);
-    const username = await getUsername(userID);
-    const picture = getThumbnail(userID);
-    await prisma.user.upsert({
-      where: { userid: BigInt(userID) },
-      update: { username, picture },
-      create: { userid: BigInt(userID), username, picture },
-    });
+  const username = await getUsername(userID);
+  await prisma.user.upsert({
+    where: { userid: BigInt(userID) },
+    update: { username },
+    create: { userid: BigInt(userID), username },
+  });
+
+  for (const w of ws) {
+    await delay(100);
+    
+    const membership = userGroupMemberships.get(w.groupId);
+    const userRoleId = membership?.roleId || null;
     
     await prisma.rank.upsert({
       where: {
@@ -1075,23 +1117,18 @@ export async function checkSpecificUser(userID: number) {
         },
       },
       update: {
-        rankId: BigInt(rankId || 0),
+        rankId: BigInt(userRoleId || 0),
       },
       create: {
         userId: BigInt(userID),
         workspaceGroupId: w.groupId,
-        rankId: BigInt(rankId || 0),
+        rankId: BigInt(userRoleId || 0),
       },
     });
 
-    if (!rankId) continue;
+    if (!userRoleId) continue;
 
-    await delay(300);
-    const rankInfo = await retryNobloxRequest(() =>
-      noblox.getRole(w.groupId, rankId)
-    ).catch(() => null);
-    if (!rankInfo) continue;
-    const rank = rankInfo.id;
+    const rank = userRoleId;
 
     if (!rank) continue;
     const role = await prisma.role.findFirst({

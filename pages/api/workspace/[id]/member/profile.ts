@@ -36,6 +36,7 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
           user: {
             select: {
               username: true,
+              displayName: true,
               picture: true,
             },
           },
@@ -51,6 +52,7 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
         profile: {
           userId: member.userId.toString(),
           username: member.user.username,
+          displayName: member.user.displayName,
           picture: member.user.picture,
           introMessage: member.introMessage,
           trackId: member.trackId,
@@ -113,6 +115,7 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
           user: {
             select: {
               username: true,
+              displayName: true,
               picture: true,
             },
           },
@@ -124,6 +127,7 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
         profile: {
           userId: updated.userId.toString(),
           username: updated.user.username,
+          displayName: updated.user.displayName,
           picture: updated.user.picture,
           introMessage: updated.introMessage,
           trackId: updated.trackId,
