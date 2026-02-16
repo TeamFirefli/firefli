@@ -91,6 +91,36 @@ const SAVED_VIEW_ICONS: { [key: string]: any } = {
   school: IconSchool,
 };
 
+const createDarkIcon = (IconComponent: any) => {
+  return (props: any) => (
+    <IconComponent 
+      {...props} 
+      style={{ stroke: '#18181b', color: '#18181b', fill: 'none' }} 
+    />
+  );
+};
+
+const DARK_SAVED_VIEW_ICONS: { [key: string]: any } = {
+  star: createDarkIcon(IconStar),
+  sparkles: createDarkIcon(IconSparkles),
+  briefcase: createDarkIcon(IconBriefcase),
+  target: createDarkIcon(IconTarget),
+  alert: createDarkIcon(IconAlertTriangle),
+  calendar: createDarkIcon(IconCalendarWeekFilled),
+  speakerphone: createDarkIcon(IconSpeakerphone),
+  file: createDarkIcon(IconFile),
+  folder: createDarkIcon(IconFolder),
+  box: createDarkIcon(IconBox),
+  id: createDarkIcon(IconId),
+  tools: createDarkIcon(IconTools),
+  tag: createDarkIcon(IconTag),
+  pin: createDarkIcon(IconPin),
+  bell: createDarkIcon(IconBell),
+  lock: createDarkIcon(IconLock),
+  coffee: createDarkIcon(IconCoffee),
+  school: createDarkIcon(IconSchool),
+};
+
 
 const workspace: LayoutProps = ({ children }) => {
 	const [workspace, setWorkspace] = useRecoilState(workspacestate);
@@ -344,7 +374,7 @@ const workspace: LayoutProps = ({ children }) => {
 					? `/workspace/${id}/views` 
 					: `/workspace/${id}/views?view=${view.id}`,
 				color: view.color || undefined,
-				icon: view.icon && SAVED_VIEW_ICONS[view.icon] ? SAVED_VIEW_ICONS[view.icon] : undefined,
+				icon: view.icon && DARK_SAVED_VIEW_ICONS[view.icon] ? DARK_SAVED_VIEW_ICONS[view.icon] : undefined,
 				active: currentViewId === view.id,
 				canDelete: true,
 				onDelete: deleteSavedView,
@@ -357,7 +387,7 @@ const workspace: LayoutProps = ({ children }) => {
 					? `/workspace/${id}/views` 
 					: `/workspace/${id}/views?view=${view.id}`,
 				color: view.color || undefined,
-				icon: view.icon && SAVED_VIEW_ICONS[view.icon] ? SAVED_VIEW_ICONS[view.icon] : undefined,
+				icon: view.icon && DARK_SAVED_VIEW_ICONS[view.icon] ? DARK_SAVED_VIEW_ICONS[view.icon] : undefined,
 				active: currentViewId === view.id,
 				canDelete: true,
 				onDelete: deleteSavedView,

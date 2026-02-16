@@ -280,7 +280,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     const found = ICON_OPTIONS.find((i) => i.key === key);
     if (!found) return null;
     const C = found.Icon;
-    return <C className={className} />;
+    return <C className={className} style={{ stroke: '#18181b', color: '#18181b' }} />;
   };
 
   const hasManageViews = () => {
@@ -1055,10 +1055,10 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                             {v.icon ? (
                               renderIcon(
                                 v.icon,
-                                "w-4 h-4 text-zinc-900 dark:text-white"
+                                "w-4 h-4 !text-zinc-900"
                               )
                             ) : (
-                              <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                              <span className="text-sm font-medium text-zinc-900">
                                 {(v.name || "").charAt(0).toUpperCase()}
                               </span>
                             )}
@@ -1144,10 +1144,10 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                         {v.icon ? (
                           renderIcon(
                             v.icon,
-                            "w-3 h-3 text-zinc-900 dark:text-white"
+                            "w-3 h-3 !text-zinc-900"
                           )
                         ) : (
-                          <span className="text-xs font-medium text-zinc-900 dark:text-white">
+                          <span className="text-xs font-medium text-zinc-900">
                             {(v.name || "").charAt(0).toUpperCase()}
                           </span>
                         )}
@@ -1204,10 +1204,10 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                         {v.icon ? (
                           renderIcon(
                             v.icon,
-                            "w-3 h-3 text-zinc-900 dark:text-white"
+                            "w-3 h-3 !text-zinc-900"
                           )
                         ) : (
-                          <span className="text-xs font-medium text-zinc-900 dark:text-white">
+                          <span className="text-xs font-medium text-zinc-900">
                             {(v.name || "").charAt(0).toUpperCase()}
                           </span>
                         )}
