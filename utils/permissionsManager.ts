@@ -721,8 +721,16 @@ export async function checkGroupRoles(groupID: number) {
         
         const userInDb = users.find((u) => Number(u.userid) === userId);
         const hasRole = userInDb?.roles.some((r) => r.id === workspaceRole.id);
+        const hasAnyWorkspaceRole = userInDb?.roles.some((r) => r.workspaceGroupId === groupID);
         
         if (!hasRole) {
+          if (hasAnyWorkspaceRole) {
+            console.log(
+              `[Refresh] Skipping auto-sync for user ${userId} - already has a role assigned for this workspace`
+            );
+            continue;
+          }
+          
           console.log(
             `[Refresh] Adding role "${workspaceRole.name}" to user ${userId} (RID: ${roleId})`
           );
