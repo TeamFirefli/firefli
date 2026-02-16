@@ -55,6 +55,7 @@ function buildSessionEmbed(
   hostName: string,
   workspaceName: string,
   status?: string | null,
+  trigger?: 'create' | 'claim' | 'start',
 ): DiscordMessage {
   const dateStr = sessionDetails.date.toLocaleDateString('en-US', {
     weekday: 'short',
@@ -78,38 +79,99 @@ function buildSessionEmbed(
   const concluded = status === 'Concluded';
   const defaultColor = 0x3b82f6;
   const concludedColor = 0x71717a;
+  
+  let embedTitle: string | null = null;
+  let embedColor: string | null = null;
+  let embedDescription: string | null = null;
+  let embedFooter: string | null = null;
+  let triggerColor = defaultColor;
+  let triggerPrefix = '';
+  
+  if (trigger === 'create') {
+    embedTitle = integration.sessionCreateEmbedTitle;
+    embedColor = integration.sessionCreateEmbedColor;
+    embedDescription = integration.sessionCreateEmbedDescription;
+    embedFooter = integration.sessionCreateEmbedFooter;
+    triggerColor = 0x10b981;
+    triggerPrefix = '📝 ';
+  } else if (trigger === 'claim') {
+    embedTitle = integration.sessionClaimEmbedTitle;
+    embedColor = integration.sessionClaimEmbedColor;
+    embedDescription = integration.sessionClaimEmbedDescription;
+    embedFooter = integration.sessionClaimEmbedFooter;
+    triggerColor = 0xf59e0b;
+    triggerPrefix = '✋ ';
+  } else if (trigger === 'start') {
+    embedTitle = integration.sessionStartEmbedTitle;
+    embedColor = integration.sessionStartEmbedColor;
+    embedDescription = integration.sessionStartEmbedDescription;
+    embedFooter = integration.sessionStartEmbedFooter;
+    triggerColor = 0x3b82f6;
+    triggerPrefix = '🎯 ';
+  }
+  
+  if (!embedTitle) embedTitle = integration.sessionEmbedTitle;
+  if (!embedColor) embedColor = integration.sessionEmbedColor;
+  if (!embedDescription) embedDescription = integration.sessionEmbedDescription;
+  if (!embedFooter) embedFooter = integration.sessionEmbedFooter;
 
-  const title = integration.sessionEmbedTitle
-    ? replaceVariables(integration.sessionEmbedTitle)
+  const title = embedTitle
+    ? replaceVariables(embedTitle)
     : sessionDetails.name || 'Session';
 
-  const description = integration.sessionEmbedDescription
-    ? replaceVariables(integration.sessionEmbedDescription)
+  const description = embedDescription
+    ? replaceVariables(embedDescription)
     : '';
 
   const color = concluded
     ? concludedColor
-    : integration.sessionEmbedColor
-      ? parseInt(integration.sessionEmbedColor.replace('#', ''), 16)
-      : defaultColor;
+    : embedColor
+      ? parseInt(embedColor.replace('#', ''), 16)
+      : triggerColor;
 
-  const footer = integration.sessionEmbedFooter
-    ? replaceVariables(integration.sessionEmbedFooter)
+  const footer = embedFooter
+    ? replaceVariables(embedFooter)
     : `${workspaceName} \u2022 Session Notifications`;
 
   const fields: Array<{ name: string; value: string; inline?: boolean }> = [];
-  if (!integration.sessionEmbedDescription) {
+  if (!embedDescription) {
     const typeLabel = (sessionDetails.type || 'other').charAt(0).toUpperCase() + (sessionDetails.type || 'other').slice(1);
-    fields.push({ name: 'Type', value: typeLabel, inline: true });
-    fields.push({ name: 'Date', value: dateStr, inline: true });
-    fields.push({ name: 'Duration', value: `${sessionDetails.duration || 30} minutes`, inline: true });
-    fields.push({ name: 'Host', value: hostName, inline: true });
-    if (status) {
-      fields.push({ name: 'Status', value: status, inline: true });
+    
+    if (trigger === 'create') {
+      fields.push({ name: 'Type', value: typeLabel, inline: true });
+      fields.push({ name: 'Scheduled For', value: dateStr, inline: true });
+      fields.push({ name: 'Duration', value: `${sessionDetails.duration || 30} minutes`, inline: true });
+      fields.push({ name: 'Host', value: hostName, inline: true });
+    } else if (trigger === 'claim') {
+      fields.push({ name: 'Type', value: typeLabel, inline: true });
+      fields.push({ name: 'Claimed By', value: hostName, inline: true });
+      fields.push({ name: 'Scheduled For', value: dateStr, inline: true });
+      fields.push({ name: 'Duration', value: `${sessionDetails.duration || 30} minutes`, inline: true });
+    } else if (trigger === 'start') {
+      fields.push({ name: 'Type', value: typeLabel, inline: true });
+      fields.push({ name: 'Started At', value: dateStr, inline: true });
+      fields.push({ name: 'Duration', value: `${sessionDetails.duration || 30} minutes`, inline: true });
+      fields.push({ name: 'Host', value: hostName, inline: true });
+    } else {
+      fields.push({ name: 'Type', value: typeLabel, inline: true });
+      fields.push({ name: 'Date', value: dateStr, inline: true });
+      fields.push({ name: 'Duration', value: `${sessionDetails.duration || 30} minutes`, inline: true });
+      fields.push({ name: 'Host', value: hostName, inline: true });
+      if (status) {
+        fields.push({ name: 'Status', value: status, inline: true });
+      }
     }
   }
 
-  const displayTitle = concluded ? `${title} — Concluded` : status ? `${title} — ${status}` : title;
+  let displayTitle = concluded 
+    ? `${title} - Concluded` 
+    : status 
+      ? `${title} - ${status}` 
+      : title;
+  
+  if (trigger && !concluded && !status) {
+    displayTitle = `${triggerPrefix}${displayTitle}`;
+  }
 
   return { title: displayTitle, description: description || undefined, color, fields, footer: { text: footer } };
 }
@@ -139,7 +201,7 @@ export async function sendSessionNotification(
     });
     const workspaceName = workspace?.groupName || 'Workspace';
 
-    const embed = buildSessionEmbed(integration, sessionDetails, hostName, workspaceName);
+    const embed = buildSessionEmbed(integration, sessionDetails, hostName, workspaceName, undefined, trigger);
 
     const discordBotToken = decryptToken(integration.botToken);
     const discord = new DiscordAPI(discordBotToken);

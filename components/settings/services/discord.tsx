@@ -79,6 +79,18 @@ type DiscordIntegration = {
   sessionEmbedColor?: string | null;
   sessionEmbedDescription?: string | null;
   sessionEmbedFooter?: string | null;
+  sessionCreateEmbedTitle?: string | null;
+  sessionCreateEmbedColor?: string | null;
+  sessionCreateEmbedDescription?: string | null;
+  sessionCreateEmbedFooter?: string | null;
+  sessionClaimEmbedTitle?: string | null;
+  sessionClaimEmbedColor?: string | null;
+  sessionClaimEmbedDescription?: string | null;
+  sessionClaimEmbedFooter?: string | null;
+  sessionStartEmbedTitle?: string | null;
+  sessionStartEmbedColor?: string | null;
+  sessionStartEmbedDescription?: string | null;
+  sessionStartEmbedFooter?: string | null;
   sessionPingRoleId?: string | null;
   sessionPingRoleName?: string | null;
   pingRoles?: Record<string, string> | null;
@@ -182,6 +194,24 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
   const [editSessionEmbedColor, setEditSessionEmbedColor] = useState<string>('');
   const [editSessionEmbedDescription, setEditSessionEmbedDescription] = useState<string>('');
   const [editSessionEmbedFooter, setEditSessionEmbedFooter] = useState<string>('');
+
+  // Session Create embed states
+  const [editSessionCreateEmbedTitle, setEditSessionCreateEmbedTitle] = useState<string>('');
+  const [editSessionCreateEmbedColor, setEditSessionCreateEmbedColor] = useState<string>('');
+  const [editSessionCreateEmbedDescription, setEditSessionCreateEmbedDescription] = useState<string>('');
+  const [editSessionCreateEmbedFooter, setEditSessionCreateEmbedFooter] = useState<string>('');
+
+  // Session Claim embed states
+  const [editSessionClaimEmbedTitle, setEditSessionClaimEmbedTitle] = useState<string>('');
+  const [editSessionClaimEmbedColor, setEditSessionClaimEmbedColor] = useState<string>('');
+  const [editSessionClaimEmbedDescription, setEditSessionClaimEmbedDescription] = useState<string>('');
+  const [editSessionClaimEmbedFooter, setEditSessionClaimEmbedFooter] = useState<string>('');
+
+  // Session Start embed states
+  const [editSessionStartEmbedTitle, setEditSessionStartEmbedTitle] = useState<string>('');
+  const [editSessionStartEmbedColor, setEditSessionStartEmbedColor] = useState<string>('');
+  const [editSessionStartEmbedDescription, setEditSessionStartEmbedDescription] = useState<string>('');
+  const [editSessionStartEmbedFooter, setEditSessionStartEmbedFooter] = useState<string>('');
 
   // Role mention autocomplete
   const [showRoleMention, setShowRoleMention] = useState(false);
@@ -431,6 +461,18 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     const sessionColorChanged = editSessionEmbedColor !== (integration.sessionEmbedColor || '');
     const sessionDescChanged = editSessionEmbedDescription !== (integration.sessionEmbedDescription || '');
     const sessionFooterChanged = editSessionEmbedFooter !== (integration.sessionEmbedFooter || '');
+    const sessionCreateTitleChanged = editSessionCreateEmbedTitle !== (integration.sessionCreateEmbedTitle || '');
+    const sessionCreateColorChanged = editSessionCreateEmbedColor !== (integration.sessionCreateEmbedColor || '');
+    const sessionCreateDescChanged = editSessionCreateEmbedDescription !== (integration.sessionCreateEmbedDescription || '');
+    const sessionCreateFooterChanged = editSessionCreateEmbedFooter !== (integration.sessionCreateEmbedFooter || '');
+    const sessionClaimTitleChanged = editSessionClaimEmbedTitle !== (integration.sessionClaimEmbedTitle || '');
+    const sessionClaimColorChanged = editSessionClaimEmbedColor !== (integration.sessionClaimEmbedColor || '');
+    const sessionClaimDescChanged = editSessionClaimEmbedDescription !== (integration.sessionClaimEmbedDescription || '');
+    const sessionClaimFooterChanged = editSessionClaimEmbedFooter !== (integration.sessionClaimEmbedFooter || '');
+    const sessionStartTitleChanged = editSessionStartEmbedTitle !== (integration.sessionStartEmbedTitle || '');
+    const sessionStartColorChanged = editSessionStartEmbedColor !== (integration.sessionStartEmbedColor || '');
+    const sessionStartDescChanged = editSessionStartEmbedDescription !== (integration.sessionStartEmbedDescription || '');
+    const sessionStartFooterChanged = editSessionStartEmbedFooter !== (integration.sessionStartEmbedFooter || '');
     const pingRolesChanged = JSON.stringify(editPingRoles) !== JSON.stringify(integration.pingRoles || {});
 
     setHasChanges(
@@ -446,6 +488,9 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
       noticeDenialTitleChanged || noticeDenialColorChanged || noticeDenialDescChanged || noticeDenialFooterChanged ||
       sessionNotifyCreateChanged || sessionNotifyClaimChanged || sessionNotifyStartChanged || sessionChannelChanged ||
       sessionTitleChanged || sessionColorChanged || sessionDescChanged || sessionFooterChanged ||
+      sessionCreateTitleChanged || sessionCreateColorChanged || sessionCreateDescChanged || sessionCreateFooterChanged ||
+      sessionClaimTitleChanged || sessionClaimColorChanged || sessionClaimDescChanged || sessionClaimFooterChanged ||
+      sessionStartTitleChanged || sessionStartColorChanged || sessionStartDescChanged || sessionStartFooterChanged ||
       pingRolesChanged
     );
   };
@@ -510,6 +555,18 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     setEditSessionEmbedColor(integration.sessionEmbedColor || '');
     setEditSessionEmbedDescription(integration.sessionEmbedDescription || '');
     setEditSessionEmbedFooter(integration.sessionEmbedFooter || '');
+    setEditSessionCreateEmbedTitle(integration.sessionCreateEmbedTitle || '');
+    setEditSessionCreateEmbedColor(integration.sessionCreateEmbedColor || '');
+    setEditSessionCreateEmbedDescription(integration.sessionCreateEmbedDescription || '');
+    setEditSessionCreateEmbedFooter(integration.sessionCreateEmbedFooter || '');
+    setEditSessionClaimEmbedTitle(integration.sessionClaimEmbedTitle || '');
+    setEditSessionClaimEmbedColor(integration.sessionClaimEmbedColor || '');
+    setEditSessionClaimEmbedDescription(integration.sessionClaimEmbedDescription || '');
+    setEditSessionClaimEmbedFooter(integration.sessionClaimEmbedFooter || '');
+    setEditSessionStartEmbedTitle(integration.sessionStartEmbedTitle || '');
+    setEditSessionStartEmbedColor(integration.sessionStartEmbedColor || '');
+    setEditSessionStartEmbedDescription(integration.sessionStartEmbedDescription || '');
+    setEditSessionStartEmbedFooter(integration.sessionStartEmbedFooter || '');
     const savedPingRoles = { ...(integration.pingRoles || {}) } as Record<string, string>;
     if (integration.sessionPingRoleId && !savedPingRoles['session']) {
       savedPingRoles['session'] = integration.sessionPingRoleId;
@@ -583,6 +640,18 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
         sessionEmbedColor: editSessionEmbedColor || null,
         sessionEmbedDescription: editSessionEmbedDescription || null,
         sessionEmbedFooter: editSessionEmbedFooter || null,
+        sessionCreateEmbedTitle: editSessionCreateEmbedTitle || null,
+        sessionCreateEmbedColor: editSessionCreateEmbedColor || null,
+        sessionCreateEmbedDescription: editSessionCreateEmbedDescription || null,
+        sessionCreateEmbedFooter: editSessionCreateEmbedFooter || null,
+        sessionClaimEmbedTitle: editSessionClaimEmbedTitle || null,
+        sessionClaimEmbedColor: editSessionClaimEmbedColor || null,
+        sessionClaimEmbedDescription: editSessionClaimEmbedDescription || null,
+        sessionClaimEmbedFooter: editSessionClaimEmbedFooter || null,
+        sessionStartEmbedTitle: editSessionStartEmbedTitle || null,
+        sessionStartEmbedColor: editSessionStartEmbedColor || null,
+        sessionStartEmbedDescription: editSessionStartEmbedDescription || null,
+        sessionStartEmbedFooter: editSessionStartEmbedFooter || null,
         sessionPingRoleId: editPingRoles['session'] || null,
         sessionPingRoleName: editPingRoles['session'] ? (discordRoles.find(r => r.id === editPingRoles['session'])?.name || null) : null,
         pingRoles: editPingRoles,
@@ -844,7 +913,9 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     { key: 'notice-submit', label: 'Notice', icon: IconFileText, target: 'dm' as const },
     { key: 'notice-approval', label: 'Approved', icon: IconCircleCheck, target: 'dm' as const },
     { key: 'notice-denial', label: 'Denied', icon: IconCircleX, target: 'dm' as const },
-    { key: 'session', label: 'Session', icon: IconCalendarEvent, target: 'channel' as const },
+    { key: 'session-create', label: 'Created', icon: IconCalendarEvent, target: 'channel' as const },
+    { key: 'session-claim', label: 'Claimed', icon: IconCalendarEvent, target: 'channel' as const },
+    { key: 'session-start', label: 'Started', icon: IconCalendarEvent, target: 'channel' as const },
   ];
 
   const getEmbedValues = (cat: string) => {
@@ -859,6 +930,9 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
       case 'notice-approval': return { title: editNoticeApprovalEmbedTitle, color: editNoticeApprovalEmbedColor || '#10b981', description: editNoticeApprovalEmbedDescription, footer: editNoticeApprovalEmbedFooter };
       case 'notice-denial': return { title: editNoticeDenialEmbedTitle, color: editNoticeDenialEmbedColor || '#ef4444', description: editNoticeDenialEmbedDescription, footer: editNoticeDenialEmbedFooter };
       case 'session': return { title: editSessionEmbedTitle, color: editSessionEmbedColor || '#3b82f6', description: editSessionEmbedDescription, footer: editSessionEmbedFooter };
+      case 'session-create': return { title: editSessionCreateEmbedTitle, color: editSessionCreateEmbedColor || '#10b981', description: editSessionCreateEmbedDescription, footer: editSessionCreateEmbedFooter };
+      case 'session-claim': return { title: editSessionClaimEmbedTitle, color: editSessionClaimEmbedColor || '#f59e0b', description: editSessionClaimEmbedDescription, footer: editSessionClaimEmbedFooter };
+      case 'session-start': return { title: editSessionStartEmbedTitle, color: editSessionStartEmbedColor || '#3b82f6', description: editSessionStartEmbedDescription, footer: editSessionStartEmbedFooter };
       default: return { title: '', color: '#5865F2', description: '', footer: '' };
     }
   };
@@ -875,6 +949,9 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
       'notice-approval': { title: setEditNoticeApprovalEmbedTitle, color: setEditNoticeApprovalEmbedColor, description: setEditNoticeApprovalEmbedDescription, footer: setEditNoticeApprovalEmbedFooter },
       'notice-denial': { title: setEditNoticeDenialEmbedTitle, color: setEditNoticeDenialEmbedColor, description: setEditNoticeDenialEmbedDescription, footer: setEditNoticeDenialEmbedFooter },
       'session': { title: setEditSessionEmbedTitle, color: setEditSessionEmbedColor, description: setEditSessionEmbedDescription, footer: setEditSessionEmbedFooter },
+      'session-create': { title: setEditSessionCreateEmbedTitle, color: setEditSessionCreateEmbedColor, description: setEditSessionCreateEmbedDescription, footer: setEditSessionCreateEmbedFooter },
+      'session-claim': { title: setEditSessionClaimEmbedTitle, color: setEditSessionClaimEmbedColor, description: setEditSessionClaimEmbedDescription, footer: setEditSessionClaimEmbedFooter },
+      'session-start': { title: setEditSessionStartEmbedTitle, color: setEditSessionStartEmbedColor, description: setEditSessionStartEmbedDescription, footer: setEditSessionStartEmbedFooter },
     };
     setters[cat]?.[field]?.(value);
     if (cat !== 'general') checkForChanges();
@@ -894,7 +971,7 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     if (cat === 'general') return ['{action}', '{user}', '{username}'];
     if (cat === 'birthday') return ['{user}', '{username}', '{workspace}'];
     if (cat.startsWith('notice')) return ['{username}', '{userId}', '{workspace}', '{reason}', '{startDate}', '{endDate}', ...(cat !== 'notice-submit' ? ['{reviewedBy}', '{reviewComment}'] : [])];
-    if (cat === 'session') return ['{sessionName}', '{host}', '{date}', '{type}', '{duration}', '{sessionTypeName}', '{workspace}'];
+    if (cat === 'session' || cat.startsWith('session-')) return ['{sessionName}', '{host}', '{date}', '{type}', '{duration}', '{sessionTypeName}', '{workspace}'];
     return ['{user}', '{username}', '{workspace}', '{reason}', '{issuedBy}', ...(cat !== 'warning' ? ['{newRank}', '{oldRank}'] : [])];
   };
 

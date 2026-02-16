@@ -715,6 +715,18 @@ model DiscordIntegration {
   sessionEmbedColor         String?
   sessionEmbedDescription   String?
   sessionEmbedFooter        String?
+  sessionCreateEmbedTitle   String?
+  sessionCreateEmbedColor   String?
+  sessionCreateEmbedDescription String?
+  sessionCreateEmbedFooter  String?
+  sessionClaimEmbedTitle    String?
+  sessionClaimEmbedColor    String?
+  sessionClaimEmbedDescription String?
+  sessionClaimEmbedFooter   String?
+  sessionStartEmbedTitle    String?
+  sessionStartEmbedColor    String?
+  sessionStartEmbedDescription String?
+  sessionStartEmbedFooter   String?
   sessionPingRoleId         String?
   sessionPingRoleName       String?
   pingRoles                 Json?
