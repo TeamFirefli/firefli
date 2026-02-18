@@ -38,9 +38,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   const currentConfig =
     (await getConfig("activity", parseInt(req.query.id as string))) || {};
+  const { lRole, ...configWithoutOldKey } = currentConfig as any;
   const updatedConfig = {
-    ...currentConfig,
-    lRole: role,
+    ...configWithoutOldKey,
+    leaderboardRole: role,
   };
 
   await setConfig("activity", updatedConfig, parseInt(req.query.id as string));

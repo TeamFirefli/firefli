@@ -34,11 +34,12 @@ export async function handler(
 
 	const roles = await noblox.getRoles(workspace.groupId);
 	const activityconfig = await getConfig('activity', parseInt(req.query.id as string));
+	const leaderboardRole = activityconfig?.leaderboardRole ?? (activityconfig as any)?.lRole;
 
 	res.status(200).send({
 		roles,
 		currentRole: activityconfig?.role,
-		leaderboardRole: activityconfig?.leaderboardRole,
+		leaderboardRole: leaderboardRole,
 		idleTimeEnabled: activityconfig?.idleTimeEnabled ?? true,
 		success: true,
 	});

@@ -9,6 +9,7 @@ import {
   getDisplayName,
 } from "@/utils/userinfoEngine";
 import { getConfig } from "@/utils/configEngine";
+import noblox from "noblox.js";
 
 const activityUsersCache = new Map<string, { data: any; timestamp: number }>();
 const ACTIVITY_CACHE_DURATION = 60000; // Increase from 30s to 60s
@@ -82,19 +83,23 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     }
   }
 
-  // Parallel queries for lastReset and activityConfig
-  const [lastReset, activityConfig] = await Promise.all([
+  const [lastReset, activityConfig, robloxRoles] = await Promise.all([
     prisma.activityReset.findFirst({
       where: { workspaceGroupId: workspaceId },
       orderBy: { resetAt: "desc" },
     }),
-    getConfig("activity", workspaceId)
+    getConfig("activity", workspaceId),
+    noblox.getRoles(workspaceId).catch(() => [])
   ]);
 
   const startDate = lastReset?.resetAt || new Date("2025-01-01");
   const currentDate = new Date();
-  const leaderboardRank = activityConfig?.leaderboardRole;
+  const leaderboardRankNum = activityConfig?.leaderboardRole ?? (activityConfig as any)?.lRole;
   const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true;
+  const roleIdToRankNum = new Map<number, number>();
+  for (const role of robloxRoles) {
+    roleIdToRankNum.set(role.id, role.rank);
+  }
 
   // Parallel queries for all session and user data
   const [sessions, activeSession, inactiveSession, users] = await Promise.all([
@@ -125,20 +130,20 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     }),
     prisma.user.findMany({
       where: {
-        workspaceMemberships: {
-          some: { workspaceGroupId: workspaceId }
+        ranks: {
+          some: {
+            workspaceGroupId: workspaceId
+          }
         }
       },
       select: {
         userid: true,
         username: true,
         picture: true,
-        ...(leaderboardRank ? {
-          ranks: {
-            where: { workspaceGroupId: workspaceId },
-            select: { rankId: true }
-          }
-        } : {})
+        ranks: {
+          where: { workspaceGroupId: workspaceId },
+          select: { rankId: true }
+        }
       }
     })
   ]);
@@ -164,7 +169,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     activeUsers.push({
       userId: Number(user.userId),
       username: u?.username || "Unknown",
-      picture: u?.picture || "",
+      picture: getThumbnail(user.userId),
     });
   }
   for (const session of inactiveSession) {
@@ -175,7 +180,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       from: session.startTime,
       to: session.endTime!,
       username: u?.username || "Unknown",
-      picture: u?.picture || "",
+      picture: getThumbnail(session.userId),
     });
   }
 
@@ -221,7 +226,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       archived: { not: true },
     },
   });
-
   adjustments.forEach((adjustment: any) => {
     const found = combinedMinutes.find(
       (x) => x.userId == Number(adjustment.userId)
@@ -242,9 +246,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   for (const min of combinedMinutes) {
     const minSum = min.ms.reduce((partial, a) => partial + a, 0);
     const found = users.find((x) => x.userid === BigInt(min.userId));
-    if (leaderboardRank && found) {
-      const userRank = (found as any).ranks?.[0]?.rankId;
-      if (!userRank || Number(userRank) < leaderboardRank) {
+    if (leaderboardRankNum !== undefined && found) {
+      const userRoleId = (found as any).ranks?.[0]?.rankId;
+      const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined;
+      if (userRankNum === undefined || userRankNum < leaderboardRankNum) {
         continue;
       }
     }
@@ -254,7 +259,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         userId: min.userId,
         username: found?.username || "Unknown",
         ms: minSum,
-        picture: found?.picture || "Unknown",
+        picture: getThumbnail(found.userid),
       });
       processedUserIds.add(min.userId);
     }
@@ -263,9 +268,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const userId = Number(user.userid);
     if (processedUserIds.has(userId)) continue;
 
-    if (leaderboardRank) {
-      const userRank = (user as any).ranks?.[0]?.rankId;
-      if (!userRank || Number(userRank) < leaderboardRank) {
+    if (leaderboardRankNum !== undefined) {
+      const userRoleId = (user as any).ranks?.[0]?.rankId;
+      const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined;
+      if (userRankNum === undefined || userRankNum < leaderboardRankNum) {
         continue;
       }
     }
@@ -274,7 +280,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       userId: userId,
       username: user.username || "Unknown",
       ms: 0,
-      picture: user.picture || "Unknown",
+      picture: getThumbnail(user.userid),
     });
   }
 
@@ -293,18 +299,23 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
 // Helper function for background refresh
 async function fetchActivityData(workspaceId: number) {
-  const [lastReset, activityConfig] = await Promise.all([
+  const [lastReset, activityConfig, robloxRoles] = await Promise.all([
     prisma.activityReset.findFirst({
       where: { workspaceGroupId: workspaceId },
       orderBy: { resetAt: "desc" },
     }),
-    getConfig("activity", workspaceId)
+    getConfig("activity", workspaceId),
+    noblox.getRoles(workspaceId).catch(() => [])
   ]);
 
   const startDate = lastReset?.resetAt || new Date("2025-01-01");
   const currentDate = new Date();
-  const leaderboardRank = activityConfig?.leaderboardRole;
+  const leaderboardRankNum = activityConfig?.leaderboardRole ?? (activityConfig as any)?.lRole;
   const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true;
+  const roleIdToRankNum = new Map<number, number>();
+  for (const role of robloxRoles) {
+    roleIdToRankNum.set(role.id, role.rank);
+  }
 
   const [sessions, activeSession, inactiveSession, users] = await Promise.all([
     prisma.activitySession.findMany({
@@ -334,20 +345,20 @@ async function fetchActivityData(workspaceId: number) {
     }),
     prisma.user.findMany({
       where: {
-        workspaceMemberships: {
-          some: { workspaceGroupId: workspaceId }
+        ranks: {
+          some: {
+            workspaceGroupId: workspaceId
+          }
         }
       },
       select: {
         userid: true,
         username: true,
         picture: true,
-        ...(leaderboardRank ? {
-          ranks: {
-            where: { workspaceGroupId: workspaceId },
-            select: { rankId: true }
-          }
-        } : {})
+        ranks: {
+          where: { workspaceGroupId: workspaceId },
+          select: { rankId: true }
+        }
       }
     })
   ]);
@@ -366,7 +377,7 @@ async function fetchActivityData(workspaceId: number) {
     return {
       userId: Number(session.userId),
       username: u?.username || "Unknown",
-      picture: u?.picture || "",
+      picture: getThumbnail(session.userId),
     };
   }).filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
 
@@ -379,7 +390,7 @@ async function fetchActivityData(workspaceId: number) {
       from: session.startTime,
       to: session.endTime!,
       username: u?.username || "Unknown",
-      picture: u?.picture || "",
+      picture: getThumbnail(session.userId),
     };
   }).filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
 
@@ -434,9 +445,10 @@ async function fetchActivityData(workspaceId: number) {
   for (const min of combinedMinutes) {
     const minSum = min.ms.reduce((partial, a) => partial + a, 0);
     const found = users.find((x) => x.userid === BigInt(min.userId));
-    if (leaderboardRank && found) {
-      const userRank = (found as any).ranks?.[0]?.rankId;
-      if (!userRank || Number(userRank) < leaderboardRank) {
+    if (leaderboardRankNum !== undefined && found) {
+      const userRoleId = (found as any).ranks?.[0]?.rankId;
+      const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined;
+      if (userRankNum === undefined || userRankNum < leaderboardRankNum) {
         continue;
       }
     }
@@ -446,7 +458,7 @@ async function fetchActivityData(workspaceId: number) {
         userId: min.userId,
         username: found?.username || "Unknown",
         ms: minSum,
-        picture: found?.picture || "Unknown",
+        picture: getThumbnail(found.userid),
       });
       processedUserIds.add(min.userId);
     }
@@ -456,9 +468,10 @@ async function fetchActivityData(workspaceId: number) {
     const userId = Number(user.userid);
     if (processedUserIds.has(userId)) continue;
 
-    if (leaderboardRank) {
-      const userRank = (user as any).ranks?.[0]?.rankId;
-      if (!userRank || Number(userRank) < leaderboardRank) {
+    if (leaderboardRankNum !== undefined) {
+      const userRoleId = (user as any).ranks?.[0]?.rankId;
+      const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined;
+      if (userRankNum === undefined || userRankNum < leaderboardRankNum) {
         continue;
       }
     }
@@ -467,7 +480,7 @@ async function fetchActivityData(workspaceId: number) {
       userId: userId,
       username: user.username || "Unknown",
       ms: 0,
-      picture: user.picture || "Unknown",
+      picture: getThumbnail(user.userid),
     });
   }
 

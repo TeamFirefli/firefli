@@ -3,6 +3,7 @@ import prisma from "@/utils/database"
 import { validateApiKey } from "@/utils/api-auth"
 import { getConfig } from "@/utils/configEngine"
 import { withPublicApiRateLimit } from "@/utils/prtl"
+import noblox from "noblox.js"
 
 type LeaderboardEntry = {
   _id: string
@@ -27,8 +28,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const activityConfig = await getConfig("activity", workspaceId)
-    const leaderboardRank = activityConfig?.leaderboardRole
+    const leaderboardRankNum = activityConfig?.leaderboardRole ?? (activityConfig as any)?.lRole
     const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true
+    const robloxRoles = await noblox.getRoles(workspaceId).catch(() => [])
+    const roleIdToRankNum = new Map<number, number>()
+    for (const role of robloxRoles) {
+      roleIdToRankNum.set(role.id, role.rank)
+    }
+    
     const lastReset = await prisma.activityReset.findFirst({
       where: { workspaceGroupId: workspaceId },
       orderBy: { resetAt: "desc" },
@@ -65,22 +72,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     })
 
+    const userIdsSet = new Set<bigint>()
+    sessions.forEach(s => userIdsSet.add(s.userId))
+    adjustments.forEach(a => userIdsSet.add(a.userId))
     const users = await prisma.user.findMany({
       where: {
-        workspaceMemberships: {
-          some: { workspaceGroupId: workspaceId }
-        }
+        userid: { in: Array.from(userIdsSet) }
       },
       select: {
         userid: true,
         username: true,
         picture: true,
-        ...(leaderboardRank ? {
-          ranks: {
-            where: { workspaceGroupId: workspaceId },
-            select: { rankId: true }
-          }
-        } : {})
+        ranks: {
+          where: { workspaceGroupId: workspaceId },
+          select: { rankId: true }
+        }
       }
     })
 
@@ -106,9 +112,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const leaderboard: LeaderboardEntry[] = users
       .map(user => {
         const userId = Number(user.userid)
-        if (leaderboardRank) {
-          const userRank = (user as any).ranks?.[0]?.rankId
-          if (!userRank || Number(userRank) < leaderboardRank) {
+        if (leaderboardRankNum !== undefined) {
+          const userRoleId = (user as any).ranks?.[0]?.rankId
+          const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined
+          if (userRankNum === undefined || userRankNum < leaderboardRankNum) {
             return null
           }
         }
