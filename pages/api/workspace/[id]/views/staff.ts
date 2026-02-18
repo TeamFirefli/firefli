@@ -41,46 +41,33 @@ export default withPermissionCheck(
         orderBy: {
           resetAt: "desc",
         },
+        select: {
+          resetAt: true,
+          previousPeriodStart: true,
+          previousPeriodEnd: true,
+        },
       });
 
-      const timePeriodFilter = filters.find(f => f.column === "timePeriod");
-      let startDate: Date;
-      let currentDate = new Date();
+      const secondLastReset = await prisma.activityReset.findFirst({
+        where: {
+          workspaceGroupId,
+          resetAt: {
+            lt: lastReset?.resetAt || new Date(),
+          },
+        },
+        orderBy: {
+          resetAt: "desc",
+        },
+        select: {
+          resetAt: true,
+          previousPeriodStart: true,
+          previousPeriodEnd: true,
+        },
+      });
 
-      if (timePeriodFilter) {
-        const now = new Date();
-        switch (timePeriodFilter.value) {
-          case "current":
-            startDate = lastReset?.resetAt || new Date("2025-01-01");
-            currentDate = now;
-            break;
-          case "last":
-            const secondLastReset = await prisma.activityReset.findFirst({
-              where: {
-                workspaceGroupId,
-                resetAt: {
-                  lt: lastReset?.resetAt || now,
-                },
-              },
-              orderBy: {
-                resetAt: "desc",
-              },
-            });
-            startDate = secondLastReset?.resetAt || new Date("2025-01-01");
-            currentDate = lastReset?.resetAt || now;
-            break;
-          case "thisMonth":
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            currentDate = now;
-            break;
-          default:
-            startDate = lastReset?.resetAt || new Date("2025-01-01");
-            currentDate = now;
-        }
-      } else {
-        startDate = lastReset?.resetAt || new Date("2025-01-01");
-        currentDate = new Date();
-      }
+      const startDate = lastReset?.resetAt || new Date("2025-01-01");
+      const currentDate = new Date();
+      const lastPeriodEnd = lastReset?.previousPeriodEnd || null;
 
       const activityConfig = await getConfig("activity", workspaceGroupId);
       const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true;
@@ -265,6 +252,25 @@ export default withPermissionCheck(
       }) : [];
 
       const userIds = allUsers.map(u => u.userid);
+      const lastPeriodHistory = lastPeriodEnd ? await prisma.activityHistory.findMany({
+        where: {
+          workspaceGroupId,
+          userId: {
+            in: userIds,
+          },
+          periodEnd: lastPeriodEnd,
+        },
+        select: {
+          userId: true,
+          minutes: true,
+          sessionsHosted: true,
+          sessionsAttended: true,
+        },
+      }) : [];
+      const lastPeriodHistoryByUser = new Map<string, any>();
+      lastPeriodHistory.forEach(history => {
+        lastPeriodHistoryByUser.set(history.userId.toString(), history);
+      });
       
       const [allAdjustments, allOwnedSessions, allParticipations, allAllyVisits, allCurrentWallPosts] = await Promise.all([
         needsActivity ? prisma.activityAdjustment.findMany({
@@ -533,10 +539,13 @@ export default withPermissionCheck(
 
         const totalActiveMs =
           (ms.length ? ms.reduce((p, c) => p + c) : 0) + totalAdjustmentMs;
-
         const userDepartments = user.workspaceMemberships?.[0]?.departmentMembers?.map(
           (dm: any) => dm.department.id
         ) || [];
+        const userHistory = lastPeriodHistoryByUser.get(userKey);
+        const lastPeriodMinutes = userHistory?.minutes ?? null;
+        const lastPeriodSessionsHosted = userHistory?.sessionsHosted ?? null;
+        const lastPeriodSessionsAttended = userHistory?.sessionsAttended ?? null;
 
         computedUsers.push({
           info: {
@@ -572,11 +581,14 @@ export default withPermissionCheck(
             }
           })(),
           minutes: Math.round(totalActiveMs / 60000),
+          lastPeriodMinutes: lastPeriodMinutes,
           idleMinutes: ims.length
             ? Math.round(ims.reduce((p, c) => p + c))
             : 0,
           hostedSessions: { length: sessionsHosted },
+          lastPeriodSessionsHosted: lastPeriodSessionsHosted,
           sessionsAttended: sessionsAttended,
+          lastPeriodSessionsAttended: lastPeriodSessionsAttended,
           allianceVisits: allianceVisits,
           messages: messages.length
             ? Math.round(messages.reduce((p, c) => p + c))
@@ -645,8 +657,6 @@ export default withPermissionCheck(
               case "department":
                 value = user.departments || [];
                 break;
-              case "timePeriod":
-                return true;
               default:
                 return true;
             }

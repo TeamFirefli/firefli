@@ -102,6 +102,9 @@ type User = {
   quotaCompleted: number;
   quotaTotal: number;
   departments?: string[];
+  lastPeriodMinutes: number | null;
+  lastPeriodSessionsHosted: number | null;
+  lastPeriodSessionsAttended: number | null;
 };
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -172,7 +175,6 @@ const filters: {
   quota: ["equal", "notEqual"],
   quotaFailed: ["equal", "notEqual"],
   department: ["equal", "notEqual"],
-  Period: ["equal"],
 };
 
 const filterNames: {
@@ -385,6 +387,20 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
+    columnHelper.accessor("lastPeriodSessionsHosted", {
+      header: "Last Period Hosted",
+      cell: (row) => {
+        const val = row.getValue();
+        return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
+      },
+    }),
+    columnHelper.accessor("lastPeriodSessionsAttended", {
+      header: "Last Period Attended",
+      cell: (row) => {
+        const val = row.getValue();
+        return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
+      },
+    }),
     columnHelper.accessor("allianceVisits", {
       header: "Alliance Visits",
       cell: (row) => {
@@ -411,6 +427,13 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       header: "Minutes",
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
+      },
+    }),
+    columnHelper.accessor("lastPeriodMinutes", {
+      header: "Last Period Activity",
+      cell: (row) => {
+        const val = row.getValue();
+        return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("idleMinutes", {
@@ -455,10 +478,13 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     rankID: true,
     book: true,
     minutes: true,
+    lastPeriodMinutes: false,
     idleMinutes: true,
     select: true,
     hostedSessions: false,
+    lastPeriodSessionsHosted: false,
     sessionsAttended: false,
+    lastPeriodSessionsAttended: false,
     allianceVisits: false,
     inactivityNotices: false,
     messages: false,
@@ -651,10 +677,13 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       rankID: true,
       book: true,
       minutes: true,
+      lastPeriodMinutes: false,
       idleMinutes: true,
       select: true,
       hostedSessions: false,
+      lastPeriodSessionsHosted: false,
       sessionsAttended: false,
+      lastPeriodSessionsAttended: false,
       allianceVisits: false,
       inactivityNotices: false,
       messages: false,
@@ -736,10 +765,13 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
           rankID: true,
           book: true,
           minutes: true,
+          lastPeriodMinutes: false,
           idleMinutes: true,
           select: true,
           hostedSessions: false,
+          lastPeriodSessionsHosted: false,
           sessionsAttended: false,
+          lastPeriodSessionsAttended: false,
           allianceVisits: false,
           inactivityNotices: false,
           messages: false,
@@ -976,6 +1008,12 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       return "Inactivity notices";
     } else if (columnId == "minutes") {
       return "Minutes";
+    } else if (columnId == "lastPeriodMinutes") {
+      return "Last Period Activity";
+    } else if (columnId == "lastPeriodSessionsHosted") {
+      return "Last Period Hosted";
+    } else if (columnId == "lastPeriodSessionsAttended") {
+      return "Last Period Attended";
     } else if (columnId == "idleMinutes") {
       return "Idle minutes";
     } else if (columnId == "messages") {
@@ -1593,6 +1631,12 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                           <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.minutes}</p>
                         </div>
                       )}
+                      {columnVisibility.lastPeriodMinutes && (
+                        <div>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Last Period</p>
+                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.lastPeriodMinutes !== null ? user.lastPeriodMinutes : "-"}</p>
+                        </div>
+                      )}
                       {columnVisibility.idleMinutes && (
                         <div>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">Idle</p>
@@ -1615,6 +1659,18 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                         <div>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">Attended</p>
                           <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.sessionsAttended}</p>
+                        </div>
+                      )}
+                      {columnVisibility.lastPeriodSessionsHosted && (
+                        <div>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Last Period Hosted</p>
+                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.lastPeriodSessionsHosted !== null ? user.lastPeriodSessionsHosted : "-"}</p>
+                        </div>
+                      )}
+                      {columnVisibility.lastPeriodSessionsAttended && (
+                        <div>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Last Period Attended</p>
+                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.lastPeriodSessionsAttended !== null ? user.lastPeriodSessionsAttended : "-"}</p>
                         </div>
                       )}
                       {columnVisibility.allianceVisits && (
@@ -2317,7 +2373,7 @@ const Filter: React.FC<{
           </select>
         </div>
 
-        {getValues("col") !== "rank" && getValues("col") !== "registered" && getValues("col") !== "quota" && getValues("col") !== "quotaFailed" && getValues("col") !== "department" && getValues("col") !== "Period" && (
+        {getValues("col") !== "rank" && getValues("col") !== "registered" && getValues("col") !== "quota" && getValues("col") !== "quotaFailed" && getValues("col") !== "department" && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-zinc-700 dark:text-white">
               Value
@@ -2385,22 +2441,6 @@ const Filter: React.FC<{
             >
               <option value="true">❌ (Failed)</option>
               <option value="false">✅ (Passed)</option>
-            </select>
-          </div>
-        )}
-
-        {getValues("col") === "Period" && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-white">
-              Period
-            </label>
-            <select
-              {...register("value")}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
-            >
-              <option value="current">Current Period</option>
-              <option value="last">Last Period</option>
-              <option value="thisMonth">This Month</option>
             </select>
           </div>
         )}
