@@ -166,9 +166,15 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   for (const user of activeSession) {
     const u = users.find((u) => u.userid === user.userId);
+    if (!u) continue; // Skip users not in workspace (guests/non-staff)
+    if (leaderboardRankNum !== undefined) {
+      const userRoleId = (u as any).ranks?.[0]?.rankId;
+      const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined;
+      if (userRankNum === undefined || userRankNum < leaderboardRankNum) continue;
+    }
     activeUsers.push({
       userId: Number(user.userId),
-      username: u?.username || "Unknown",
+      username: u.username || "Unknown",
       picture: getThumbnail(user.userId),
     });
   }
@@ -184,13 +190,12 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     });
   }
 
-  activeUsers = activeUsers.filter((v, i, a) => a.indexOf(v) == i);
-  inactiveUsers = inactiveUsers.filter((v, i, a) => a.indexOf(v) == i);
+  activeUsers = activeUsers.filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
+  inactiveUsers = inactiveUsers.filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
 
-  inactiveUsers = inactiveUsers.filter((x) => {
-    if (activeUsers.find((y) => x == y)) return false;
-    return true;
-  });
+  inactiveUsers = inactiveUsers.filter(
+    (x) => !activeUsers.find((y) => x.userId === y.userId)
+  );
 
   const combinedMinutes: CombinedObj[] = [];
   sessions.forEach((session) => {
@@ -371,15 +376,27 @@ async function fetchActivityData(workspaceId: number) {
     }
   });
 
-  // Process active users
-  const activeUsers = activeSession.map((session) => {
-    const u = users.find((u) => u.userid === session.userId);
-    return {
-      userId: Number(session.userId),
-      username: u?.username || "Unknown",
-      picture: getThumbnail(session.userId),
-    };
-  }).filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
+  // Process active users (filter by rank to exclude guests/non-staff)
+  const activeUsers = activeSession
+    .filter((session) => {
+      const u = users.find((u) => u.userid === session.userId);
+      if (!u) return false;
+      if (leaderboardRankNum !== undefined) {
+        const userRoleId = (u as any).ranks?.[0]?.rankId;
+        const userRankNum = userRoleId ? roleIdToRankNum.get(Number(userRoleId)) : undefined;
+        if (userRankNum === undefined || userRankNum < leaderboardRankNum) return false;
+      }
+      return true;
+    })
+    .map((session) => {
+      const u = users.find((u) => u.userid === session.userId);
+      return {
+        userId: Number(session.userId),
+        username: u?.username || "Unknown",
+        picture: getThumbnail(session.userId),
+      };
+    })
+    .filter((v, i, a) => a.findIndex(t => t.userId === v.userId) === i);
 
   // Process inactive users
   let inactiveUsers = inactiveSession.map((session) => {
