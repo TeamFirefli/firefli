@@ -727,6 +727,10 @@ model DiscordIntegration {
   sessionStartEmbedColor    String?
   sessionStartEmbedDescription String?
   sessionStartEmbedFooter   String?
+  sessionReviewEmbedTitle       String?
+  sessionReviewEmbedColor       String?
+  sessionReviewEmbedDescription String?
+  sessionReviewEmbedFooter      String?
   sessionPingRoleId         String?
   sessionPingRoleName       String?
   pingRoles                 Json?
@@ -754,6 +758,7 @@ model BloxlinkIntegration {
   notifyPromotion    Boolean   @default(true)
   notifyDemotion     Boolean   @default(true)
   notifyWarning      Boolean   @default(true)
+  notifyActivityReview Boolean @default(false)
   messageTemplate    Json?
   lastUsed           DateTime?
   errorCount         Int       @default(0)

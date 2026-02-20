@@ -12,6 +12,7 @@ type Data = {
     notifyPromotion: boolean;
     notifyDemotion: boolean;
     notifyWarning: boolean;
+    notifyActivityReview: boolean;
     messageTemplate: any;
     lastUsed: string | null;
     errorCount: number;
@@ -54,6 +55,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         notifyPromotion: integration.notifyPromotion,
         notifyDemotion: integration.notifyDemotion,
         notifyWarning: integration.notifyWarning,
+        notifyActivityReview: integration.notifyActivityReview,
         messageTemplate: integration.messageTemplate,
         lastUsed: integration.lastUsed?.toISOString() || null,
         errorCount: integration.errorCount,

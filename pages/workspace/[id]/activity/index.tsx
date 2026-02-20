@@ -618,12 +618,12 @@ const Activity: pageWithLayout = () => {
                     if (item.__type === "session") {
                       const isLive = item.active && !item.endTime;
                       const sessionDuration = isLive
-                        ? Math.floor(
+                        ? Math.ceil(
                             (new Date().getTime() -
                               new Date(item.startTime).getTime()) /
                               (1000 * 60)
                           )
-                        : Math.floor(
+                        : Math.ceil(
                             (new Date(item.endTime || new Date()).getTime() -
                               new Date(item.startTime).getTime()) /
                               (1000 * 60)

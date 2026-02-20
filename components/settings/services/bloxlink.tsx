@@ -13,6 +13,7 @@ type BloxlinkIntegration = {
   notifyPromotion: boolean;
   notifyDemotion: boolean;
   notifyWarning: boolean;
+  notifyActivityReview: boolean;
   messageTemplate: any;
   lastUsed: string | null;
   errorCount: number;
@@ -366,6 +367,37 @@ const BloxlinkSettings: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
             </button>
           </div>
         )}
+
+        {/* Session Review DMs toggle */}
+        <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <div>
+            <p className="text-sm font-medium text-zinc-900 dark:text-white">Session Review DMs</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Send users a session summary when they leave the game</p>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                const response = await axios.patch(`/api/workspace/${workspace?.groupId}/settings/bloxlink/configure`, {
+                  notifyActivityReview: !integration?.notifyActivityReview,
+                });
+                if (response.data.success) {
+                  setIntegration((prev) => prev ? { ...prev, notifyActivityReview: !prev.notifyActivityReview } : prev);
+                }
+              } catch (error) {
+                console.error('Failed to toggle session review DMs:', error);
+              }
+            }}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              integration?.notifyActivityReview ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                integration?.notifyActivityReview ? 'translate-x-[18px]' : 'translate-x-[3px]'
+              }`}
+            />
+          </button>
+        </div>
 
         {/* Remove */}
         <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/10">

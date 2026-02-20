@@ -6,6 +6,7 @@ import * as noblox from "noblox.js";
 import { getUsername, getThumbnail } from "@/utils/userinfoEngine";
 import { checkSpecificUser } from "@/utils/permissionsManager";
 import { generateSessionTimeMessage } from "@/utils/sessionMessage";
+import { sendSessionReviewNotification } from "@/utils/session-review-notification";
 
 type Data = {
   success: boolean;
@@ -139,20 +140,78 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       });
 
       if (!session) {
+        // Session may have been closed by bulk-end (server shutdown).
+        // Look for a recently-ended session to still send the review DM.
+        const recentSession = await prisma.activitySession.findFirst({
+          where: {
+            userId: BigInt(userid),
+            active: false,
+            workspaceGroupId: groupId,
+            endTime: { gte: new Date(Date.now() - 60_000) },
+          },
+          orderBy: { endTime: 'desc' },
+        });
+
+        if (recentSession) {
+          const sessionIdleTime = idleTime ? Number(idleTime) : Number(recentSession.idleTime ?? 0);
+          const sessionMessages = messages ? Number(messages) : Number(recentSession.messages ?? 0);
+
+          // Update with client-reported idle/messages if provided
+          if (idleTime || messages) {
+            await prisma.activitySession.update({
+              where: { id: recentSession.id },
+              data: {
+                idleTime: sessionIdleTime,
+                messages: sessionMessages,
+              },
+            });
+          }
+
+          sendSessionReviewNotification({
+            sessionId: recentSession.id,
+            userId: BigInt(userid),
+            startTime: recentSession.startTime,
+            endTime: recentSession.endTime!,
+            idleTime: sessionIdleTime,
+            messages: sessionMessages,
+            sessionMessage: recentSession.sessionMessage,
+            workspaceGroupId: groupId,
+          }).catch((err) => console.error('[SessionReview] Error:', err));
+
+          console.log(`[SESSION REVIEW] Sending review for bulk-ended session ${recentSession.id}`);
+          return res.status(200).json({ success: true });
+        }
+
         return res
           .status(400)
           .json({ success: false, error: "Session not found" });
       }
 
+      const sessionEndTime = new Date();
+      const sessionIdleTime = idleTime ? Number(idleTime) : 0;
+      const sessionMessages = messages ? Number(messages) : 0;
+
       await prisma.activitySession.update({
         where: { id: session.id },
         data: {
-          endTime: new Date(),
+          endTime: sessionEndTime,
           active: false,
-          idleTime: idleTime ? Number(idleTime) : 0,
-          messages: messages ? Number(messages) : 0,
+          idleTime: sessionIdleTime,
+          messages: sessionMessages,
         },
       });
+
+      // Fire-and-forget session review DM
+      sendSessionReviewNotification({
+        sessionId: session.id,
+        userId: BigInt(userid),
+        startTime: session.startTime,
+        endTime: sessionEndTime,
+        idleTime: sessionIdleTime,
+        messages: sessionMessages,
+        sessionMessage: session.sessionMessage,
+        workspaceGroupId: groupId,
+      }).catch((err) => console.error('[SessionReview] Error:', err));
 
       console.log(`[SESSION ENDED] User ${userid} (ID: ${session.id})`);
       return res.status(200).json({ success: true });

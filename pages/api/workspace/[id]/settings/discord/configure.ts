@@ -41,6 +41,8 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     sessionChannelId, sessionChannelName,
     sessionNotifyOnCreate, sessionNotifyOnClaim, sessionNotifyOnStart,
     sessionEmbedTitle, sessionEmbedColor, sessionEmbedDescription, sessionEmbedFooter,
+    // Session review embed templates
+    sessionReviewEmbedTitle, sessionReviewEmbedColor, sessionReviewEmbedDescription, sessionReviewEmbedFooter,
     sessionPingRoleId, sessionPingRoleName,
     pingRoles,
   } = req.body;
@@ -158,6 +160,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         sessionEmbedColor: sessionEmbedColor || null,
         sessionEmbedDescription: sessionEmbedDescription || null,
         sessionEmbedFooter: sessionEmbedFooter || null,
+        // Session review embed templates
+        sessionReviewEmbedTitle: sessionReviewEmbedTitle || null,
+        sessionReviewEmbedColor: sessionReviewEmbedColor || null,
+        sessionReviewEmbedDescription: sessionReviewEmbedDescription || null,
+        sessionReviewEmbedFooter: sessionReviewEmbedFooter || null,
         sessionPingRoleId: sessionPingRoleId || null,
         sessionPingRoleName: sessionPingRoleName || null,
         pingRoles: pingRoles || null,
@@ -225,6 +232,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         sessionEmbedColor: sessionEmbedColor || null,
         sessionEmbedDescription: sessionEmbedDescription || null,
         sessionEmbedFooter: sessionEmbedFooter || null,
+        // Session review embed templates
+        sessionReviewEmbedTitle: sessionReviewEmbedTitle || null,
+        sessionReviewEmbedColor: sessionReviewEmbedColor || null,
+        sessionReviewEmbedDescription: sessionReviewEmbedDescription || null,
+        sessionReviewEmbedFooter: sessionReviewEmbedFooter || null,
         sessionPingRoleId: sessionPingRoleId || null,
         sessionPingRoleName: sessionPingRoleName || null,
         pingRoles: pingRoles || null,
@@ -296,6 +308,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         sessionEmbedColor: integration.sessionEmbedColor,
         sessionEmbedDescription: integration.sessionEmbedDescription,
         sessionEmbedFooter: integration.sessionEmbedFooter,
+        sessionReviewEmbedTitle: integration.sessionReviewEmbedTitle,
+        sessionReviewEmbedColor: integration.sessionReviewEmbedColor,
+        sessionReviewEmbedDescription: integration.sessionReviewEmbedDescription,
+        sessionReviewEmbedFooter: integration.sessionReviewEmbedFooter,
         sessionPingRoleId: integration.sessionPingRoleId,
         sessionPingRoleName: integration.sessionPingRoleName,
         pingRoles: integration.pingRoles as Record<string, string> || null,

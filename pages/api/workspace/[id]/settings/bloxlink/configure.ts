@@ -19,7 +19,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   if (req.method === 'POST') {
     // Configure new integration
-    const { apiKey, discordServerId, notifyPromotion, notifyDemotion, notifyWarning } = req.body;
+    const { apiKey, discordServerId, notifyPromotion, notifyDemotion, notifyWarning, notifyActivityReview } = req.body;
 
     if (!apiKey || !discordServerId) {
       return res.status(400).json({
@@ -54,6 +54,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           notifyPromotion: notifyPromotion ?? true,
           notifyDemotion: notifyDemotion ?? true,
           notifyWarning: notifyWarning ?? true,
+          notifyActivityReview: notifyActivityReview ?? false,
           errorCount: 0,
           lastError: null,
         },
@@ -64,6 +65,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           notifyPromotion: notifyPromotion ?? true,
           notifyDemotion: notifyDemotion ?? true,
           notifyWarning: notifyWarning ?? true,
+          notifyActivityReview: notifyActivityReview ?? false,
           errorCount: 0,
           lastError: null,
         },
@@ -78,6 +80,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           notifyPromotion: integration.notifyPromotion,
           notifyDemotion: integration.notifyDemotion,
           notifyWarning: integration.notifyWarning,
+          notifyActivityReview: integration.notifyActivityReview,
         },
       });
     } catch (error: any) {
@@ -91,7 +94,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   if (req.method === 'PATCH') {
     // Update existing integration settings
-    const { discordServerId, notifyPromotion, notifyDemotion, notifyWarning } = req.body;
+    const { discordServerId, notifyPromotion, notifyDemotion, notifyWarning, notifyActivityReview } = req.body;
 
     try {
       const integration = await prisma.bloxlinkIntegration.findUnique({
@@ -126,6 +129,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           notifyPromotion: notifyPromotion ?? integration.notifyPromotion,
           notifyDemotion: notifyDemotion ?? integration.notifyDemotion,
           notifyWarning: notifyWarning ?? integration.notifyWarning,
+          notifyActivityReview: notifyActivityReview ?? integration.notifyActivityReview,
         },
       });
 
@@ -138,6 +142,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           notifyPromotion: updatedIntegration.notifyPromotion,
           notifyDemotion: updatedIntegration.notifyDemotion,
           notifyWarning: updatedIntegration.notifyWarning,
+          notifyActivityReview: updatedIntegration.notifyActivityReview,
         },
       });
     } catch (error: any) {
