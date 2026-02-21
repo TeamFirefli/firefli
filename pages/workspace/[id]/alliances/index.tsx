@@ -2,6 +2,7 @@ import workspace from "@/layouts/workspace";
 import { pageWithLayout } from "@/layoutTypes";
 import { loginState, workspacestate } from "@/state";
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, Fragment, useMemo } from "react";
 import randomText from "@/utils/randomText";
@@ -328,18 +329,20 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                             orientation="top"
                             tooltipText={rep.username}
                           >
-                            <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                                rep.userid
-                              )} border-2 border-gray-200 dark:border-zinc-700 transition-transform overflow-hidden`}
-                            >
-                              <img
-                                src={rep.thumbnail}
-                                className="w-full h-full object-cover"
-                                alt={rep.username}
-                                style={{ background: "transparent" }}
-                              />
-                            </div>
+                            <Link href={`/workspace/${id}/profile/${rep.userid}`}>
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
+                                  rep.userid
+                                )} border-2 border-gray-200 dark:border-zinc-700 transition-transform overflow-hidden hover:scale-110 cursor-pointer`}
+                              >
+                                <img
+                                  src={rep.thumbnail}
+                                  className="w-full h-full object-cover"
+                                  alt={rep.username}
+                                  style={{ background: "transparent" }}
+                                />
+                              </div>
+                            </Link>
                           </Tooltip>
                         ))}
                       </div>
