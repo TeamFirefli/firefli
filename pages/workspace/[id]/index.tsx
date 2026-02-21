@@ -15,6 +15,7 @@ import NewToTeam from "@/components/newmembers"
 import { useRecoilState } from "recoil"
 import { useMemo, useEffect, useState } from "react"
 import { useRouter } from "next/router"
+import { detectUserTimezone } from "@/utils/timezoneUtils"
 import {
   IconHome,
   IconWall,
@@ -115,13 +116,13 @@ const Home: pageWithLayout = () => {
 
   useEffect(() => {
     if (workspace?.groupId && login?.userId) {
-      const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const detectedTz = detectUserTimezone();
       fetch(`/api/workspace/${workspace.groupId}/timezone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timezone: detectedTimezone }),
+        body: JSON.stringify({ timezone: detectedTz.label }),
       }).catch(() => {
-		// no errors its gonan work amazing trust - famous last words
+		// no errors its gonna work amazing trust - famous last words
       });
     }
   }, [workspace?.groupId, login?.userId])

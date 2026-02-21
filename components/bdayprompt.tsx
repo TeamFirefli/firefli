@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { detectUserTimezone } from '@/utils/timezoneUtils';
 
 interface WorkspaceBirthdayPromptProps {
   workspaceId: number | string;
@@ -16,8 +17,8 @@ export const WorkspaceBirthdayPrompt: React.FC<WorkspaceBirthdayPromptProps> = (
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   useEffect(() => {
-    const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    setTimezone(detectedTimezone);
+    const detectedTz = detectUserTimezone();
+    setTimezone(detectedTz.label);
   }, []);
 
   useEffect(() => {

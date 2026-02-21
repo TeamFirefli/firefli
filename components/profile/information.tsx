@@ -18,7 +18,13 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { Listbox, Transition, Combobox } from "@headlessui/react";
 import toast from "react-hot-toast";
-import moment from "moment-timezone";
+import {
+  getTimezoneOptions,
+  parseTimezoneOffset,
+  convertLegacyTimezone,
+  detectUserTimezone,
+  formatTimezoneDisplay,
+} from "@/utils/timezoneUtils";
 
 const BG_COLORS = [
   "bg-rose-300",
@@ -106,27 +112,7 @@ const monthNames = [
   "December",
 ];
 
-const commonTimezones = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Toronto",
-  "America/Vancouver",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Europe/Madrid",
-  "Europe/Rome",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Asia/Singapore",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "Australia/Sydney",
-  "Pacific/Auckland",
-];
+const timezoneOptions = getTimezoneOptions();
 
 export function InformationTab({
   user,
@@ -142,7 +128,19 @@ export function InformationTab({
   const [editing, setEditing] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState(workspaceMember?.departments || []);
   const [selectedManager, setSelectedManager] = useState(initialLineManager);
-  const [selectedTimezone, setSelectedTimezone] = useState(workspaceMember?.timezone || "");
+  
+  // Handle legacy timezone conversion
+  const initializeTimezone = () => {
+    const tz = workspaceMember?.timezone || "";
+    if (!tz) return "";
+    // Check if it looks like a legacy location-based timezone (contains /)
+    if (tz.includes("/")) {
+      return convertLegacyTimezone(tz);
+    }
+    return tz;
+  };
+  
+  const [selectedTimezone, setSelectedTimezone] = useState(initializeTimezone());
   const [birthdayDay, setBirthdayDay] = useState(user.birthdayDay || "");
   const [birthdayMonth, setBirthdayMonth] = useState(user.birthdayMonth || "");
   const [discordId, setDiscordId] = useState(workspaceMember?.discordId || "");
@@ -166,11 +164,26 @@ export function InformationTab({
 
   useEffect(() => {
     const updateTime = () => {
-      const tz = workspaceMember?.timezone || "UTC";
-      const now = moment().tz(tz);
-      setLocalTime(now.format("h:mm A"));
-      const hour = now.hour();
-      setIsNight(hour < 6 || hour >= 18);
+      const tzLabel = workspaceMember?.timezone || "UTC±00:00 (GMT)";
+      const offset = parseTimezoneOffset(tzLabel);
+      
+      // Get current UTC time
+      const now = new Date();
+      const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+      
+      // Apply offset to get local time in the selected timezone
+      const tzTime = new Date(utcMs + offset * 3600000);
+      
+      // Format time as h:mm A
+      let hours = tzTime.getHours();
+      const minutes = tzTime.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 0 should be 12
+      const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+      
+      setLocalTime(`${hours}:${minutesStr} ${ampm}`);
+      setIsNight(hours < 6 || hours >= 18);
     };
 
     updateTime();
@@ -207,7 +220,9 @@ export function InformationTab({
   const handleCancel = () => {
     setSelectedDepartments(workspaceMember?.departments || []);
     setSelectedManager(initialLineManager);
-    setSelectedTimezone(workspaceMember?.timezone || "");
+    const tz = workspaceMember?.timezone || "";
+    const convertedTz = tz.includes("/") ? convertLegacyTimezone(tz) : tz;
+    setSelectedTimezone(convertedTz);
     setBirthdayDay(user.birthdayDay || "");
     setBirthdayMonth(user.birthdayMonth || "");
     setDiscordId(workspaceMember?.discordId || "");
@@ -421,7 +436,7 @@ export function InformationTab({
                           >
                             Not set
                           </Listbox.Option>
-                          {commonTimezones.map((tz) => (
+                          {timezoneOptions.map((tz) => (
                             <Listbox.Option
                               key={tz}
                               className={({ active }) =>
@@ -440,7 +455,7 @@ export function InformationTab({
                   </Listbox>
                 ) : (
                   <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    {workspaceMember?.timezone || "Not set"}
+                    {formatTimezoneDisplay(workspaceMember?.timezone)}
                   </p>
                 )}
               </div>
