@@ -130,7 +130,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     }),
     prisma.user.findMany({
       where: {
-        ranks: {
+        roles: {
           some: {
             workspaceGroupId: workspaceId
           }
@@ -350,7 +350,7 @@ async function fetchActivityData(workspaceId: number) {
     }),
     prisma.user.findMany({
       where: {
-        ranks: {
+        roles: {
           some: {
             workspaceGroupId: workspaceId
           }
