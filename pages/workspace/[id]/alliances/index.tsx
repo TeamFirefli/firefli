@@ -283,7 +283,9 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                       No Alliances
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                      You haven't created any allies yet
+                      {canManageAlliances
+                        ? "You haven't created any allies yet."
+                        : "Your workspace admin has not created any allies yet."}
                     </p>
                   </div>
                 </div>

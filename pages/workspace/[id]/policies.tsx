@@ -965,7 +965,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                             No policies yet
                           </h3>
                           <p className="text-sm text-zinc-500 dark:text-zinc-300 mb-4">
-                            Create your first policy to get started
+                            {hasCreatePermission ? "You haven't created any policies yet." : "Your workspace admin has not created any policies yet."}
                           </p>
                           {hasCreatePermission && (
                             <button

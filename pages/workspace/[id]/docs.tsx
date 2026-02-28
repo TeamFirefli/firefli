@@ -396,7 +396,7 @@ const Home: pageWithLayout<pageProps> = ({ documents, canCreate, canEdit, canDel
             {canCreate && (
               <>
                 <p className="text-sm text-zinc-500 dark:text-zinc-300 mb-4">
-                  Get started by creating your first document
+                  You haven't created any documents yet.
                 </p>
                 <button
                   onClick={() =>
@@ -412,7 +412,7 @@ const Home: pageWithLayout<pageProps> = ({ documents, canCreate, canEdit, canDel
             {!canCreate && (
               <>
                 <p className="text-sm text-zinc-500 dark:text-zinc-300 mb-4">
-                  Contact your workspace admin to create a document.
+                  Your workspace admin has not created any documents yet.
                 </p>
               </>
             )}

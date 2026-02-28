@@ -919,7 +919,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                       No Quotas
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                      {canManageQuotas ? "You haven't set up any activity quotas yet" : "No activity quotas have been set up yet"}
+                      {canManageQuotas ? "You haven't set up any activity quotas yet." : "Your workspace admin has not set up any activity quotas yet."}
                     </p>
                     {canManageQuotas && (
                       <button
