@@ -102,9 +102,9 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
       );
 
       if (res.status === 200) {
-        triggerToast.success("Custom color saved!");
+        triggerToast.success("Custom colour saved!");
       } else {
-        triggerToast.error("Failed to save custom color.");
+        triggerToast.error("Failed to save custom colour.");
         handleRevert();
       }
     } catch (error) {
