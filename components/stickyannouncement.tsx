@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const ANNOUNCEMENT_KEY = "announcementDismissed_v2";
+const ANNOUNCEMENT_KEY = "announcementDismissed_v2.1";
 
 interface Section {
   title: string;
@@ -158,7 +158,7 @@ export default function StickyNoteAnnouncement() {
         <img
           src="/stickylogo.png"
           alt="Firefli"
-          className="w-full h-full object-cover scale-150"
+          className="w-full h-full object-cover scale-100"
         />
       </div>
       <div className="flex-1">
