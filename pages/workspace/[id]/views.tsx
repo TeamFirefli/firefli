@@ -75,6 +75,7 @@ import {
   IconLayoutList,
   IconLayoutGrid,
   IconCopy,
+  IconBeach,
 } from "@tabler/icons-react";
 import { UserGroupIcon, UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -359,6 +360,40 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
             >
               {row.getValue().username}
             </p>
+            {(() => {
+              const notices = row.row.original.inactivityNotices || [];
+              const now = new Date();
+              const approved = notices.filter(
+                (n: any) => n.approved === true && n.reviewed === true && n.revoked === false
+              );
+              const active = approved.find(
+                (n: any) => n.endTime && new Date(n.startTime) <= now && new Date(n.endTime) >= now
+              );
+              if (active) {
+                return (
+                  <div className="flex-shrink-0 my-auto" title={`On notice: ${active.reason || "N/A"}`}>
+                    <IconBeach className="w-4 h-4 text-amber-500" />
+                  </div>
+                );
+              }
+              const upcoming = approved.find((n: any) => new Date(n.startTime) > now);
+              if (upcoming) {
+                return (
+                  <div className="flex-shrink-0 my-auto" title={`Upcoming notice (starts ${new Date(upcoming.startTime).toLocaleDateString()})`}>
+                    <IconBeach className="w-4 h-4 text-emerald-500" />
+                  </div>
+                );
+              }
+              const past = approved.find((n: any) => n.endTime && new Date(n.endTime) < now);
+              if (past) {
+                return (
+                  <div className="flex-shrink-0 my-auto" title={`Previous notice (ended ${new Date(past.endTime!).toLocaleDateString()})`}>
+                    <IconBeach className="w-4 h-4 text-zinc-400" />
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <button
               type="button"
               title="Copy username"
