@@ -74,6 +74,7 @@ import {
   IconLoader2,
   IconLayoutList,
   IconLayoutGrid,
+  IconCopy,
 } from "@tabler/icons-react";
 import { UserGroupIcon, UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -358,6 +359,21 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
             >
               {row.getValue().username}
             </p>
+            <button
+              type="button"
+              title="Copy username"
+              className="ml-1 p-1 my-auto rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0 leading-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                const username = row.getValue().username;
+                if (username) {
+                  navigator.clipboard.writeText(username);
+                  toast.success(`Copied "${username}"`);
+                }
+              }}
+            >
+              <IconCopy className="w-3.5 h-3.5" />
+            </button>
           </div>
         );
       },
@@ -2489,7 +2505,7 @@ const Filter: React.FC<{
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
             >
               {departments.map((dept) => (
-                <option value={dept.id} key={dept.id}>
+                <option value={dept.name} key={dept.id}>
                   {dept.name}
                 </option>
               ))}
