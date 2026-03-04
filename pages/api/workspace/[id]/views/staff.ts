@@ -106,7 +106,7 @@ export default withPermissionCheck(
       // Determine what data to fetch based on visible columns and filters
       const needsBook = visibleColumns.length === 0 || visibleColumns.includes("book") || filters.some(f => f.column === "warnings");
       const needsWallPosts = visibleColumns.length === 0 || visibleColumns.includes("wallPosts");
-      const needsInactivityNotices = visibleColumns.length === 0 || visibleColumns.includes("inactivityNotices") || filters.some(f => f.column === "notices");
+      const needsInactivityNotices = true;
       const needsSessions = visibleColumns.length === 0 || visibleColumns.includes("hostedSessions") || visibleColumns.includes("sessionsAttended") || filters.some(f => ["sessions", "hosted"].includes(f.column));
       const needsRanks = visibleColumns.length === 0 || visibleColumns.includes("rankName") || visibleColumns.includes("rankID") || filters.some(f => f.column === "rank");
       const needsActivity = visibleColumns.length === 0 || visibleColumns.includes("minutes") || visibleColumns.includes("idleMinutes") || visibleColumns.includes("messages") || filters.some(f => ["minutes", "idle", "messages"].includes(f.column));

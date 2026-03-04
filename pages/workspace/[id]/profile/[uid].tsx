@@ -1127,11 +1127,14 @@ const Profile: pageWithLayout<pageProps> = ({
                   </h1>
                   {(() => {
                     const now = new Date();
-                    const activeNotice = notices.find(
+                    const approvedNotices = notices.filter(
                       (notice: any) =>
                         notice.approved === true &&
                         notice.reviewed === true &&
-                        notice.revoked === false &&
+                        notice.revoked === false
+                    );
+                    const activeNotice = approvedNotices.find(
+                      (notice: any) =>
                         new Date(notice.startTime) <= now &&
                         new Date(notice.endTime) >= now
                     );
@@ -1142,6 +1145,32 @@ const Profile: pageWithLayout<pageProps> = ({
                           title={`On notice: ${activeNotice.reason || "N/A"}`}
                         >
                           <IconBeach className="w-5 h-5 text-amber-500" />
+                        </div>
+                      );
+                    }
+                    const upcomingNotice = approvedNotices.find(
+                      (notice: any) => new Date(notice.startTime) > now
+                    );
+                    if (upcomingNotice) {
+                      return (
+                        <div
+                          className="flex-shrink-0"
+                          title={`Upcoming notice (starts ${new Date(upcomingNotice.startTime).toLocaleDateString()})`}
+                        >
+                          <IconBeach className="w-5 h-5 text-emerald-500" />
+                        </div>
+                      );
+                    }
+                    const pastNotice = approvedNotices.find(
+                      (notice: any) => new Date(notice.endTime) < now
+                    );
+                    if (pastNotice) {
+                      return (
+                        <div
+                          className="flex-shrink-0"
+                          title={`Previous notice (ended ${new Date(pastNotice.endTime).toLocaleDateString()})`}
+                        >
+                          <IconBeach className="w-5 h-5 text-zinc-400" />
                         </div>
                       );
                     }
