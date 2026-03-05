@@ -144,10 +144,14 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
           where: { workspaceGroupId: workspaceGroupId },
           orderBy: { isOwnerRole: "desc" },
         },
+        workspaceMemberships: {
+          where: { workspaceGroupId: workspaceGroupId },
+        },
       },
     });
 
     const userPermissions = user?.roles?.[0]?.permissions || [];
+    const userIsAdmin = user?.workspaceMemberships?.[0]?.isAdmin || false;
 
     return {
       props: {
@@ -157,6 +161,7 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
           )
         ) as WallPostWithAuthor[],
         userPermissions,
+        userIsAdmin,
       },
     };
   }
@@ -165,6 +170,7 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
 type pageProps = {
   posts: WallPostWithAuthor[];
   userPermissions: string[];
+  userIsAdmin: boolean;
 };
 
 const Wall: pageWithLayout<pageProps> = (props) => {
@@ -176,6 +182,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
   const [wallMessage, setWallMessage] = useState("");
   const [posts, setPosts] = useState(props.posts);
   const userPermissions = props.userPermissions;
+  const userIsAdmin = props.userIsAdmin;
   const [loading, setLoading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -216,7 +223,6 @@ const Wall: pageWithLayout<pageProps> = (props) => {
 
   function sendPost() {
     if (!canPostOnWall()) {
-      toast.error("You don't have permission to post on the wall.");
       return;
     }
 
@@ -326,12 +332,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
 
   const canPostOnWall = () => {
     try {
-      const role = workspace?.roles?.find(
-        (r: any) => r.id === workspace?.yourRole
-      );
-      const isOwner = !!(role && role.isOwnerRole);
-      const hasPerm = !!workspace?.yourPermission?.includes("post_on_wall");
-      return isOwner || hasPerm || !!login?.canMakeWorkspace;
+      return userIsAdmin || userPermissions.includes("post_on_wall");
     } catch (e) {
       return false;
     }
@@ -339,12 +340,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
 
   const canAddPhotos = () => {
     try {
-      const role = workspace?.roles?.find(
-        (r: any) => r.id === workspace?.yourRole
-      );
-      const isOwner = !!(role && role.isOwnerRole);
-      const hasPerm = !!workspace?.yourPermission?.includes("add_wall_photos");
-      return isOwner || hasPerm || !!login?.canMakeWorkspace;
+      return userIsAdmin || userPermissions.includes("add_wall_photos");
     } catch (e) {
       return false;
     }
@@ -366,7 +362,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
         </div>
       </div>
 
-      {canPostOnWall() ? (
+      {canPostOnWall() && (
         <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-4 mb-8">
           <div className="flex items-start gap-4">
             <div
@@ -460,10 +456,6 @@ const Wall: pageWithLayout<pageProps> = (props) => {
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-4 mb-8 text-sm text-zinc-600 dark:text-zinc-400">
-          You don't have permission to post on the wall.
         </div>
       )}
 
