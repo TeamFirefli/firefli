@@ -29,7 +29,7 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
   );
   const [customColor, setCustomColor] = useState<string>("#3498db");
   const [colorPickerTimeout, setColorPickerTimeout] = useState<NodeJS.Timeout | null>(null);
-  const isFirefliApp = process.env.NEXT_PUBLIC_NEXTAUTH_URL === "https://app.firefli.net" || process.env.NEXT_PUBLIC_NEXTAUTH_URL === "https://ant.firefli.net";
+  const isFirefliApp = true;
 
   useEffect(() => {
     if (workspace?.groupTheme) {
@@ -169,7 +169,7 @@ const Color: FC<props> = ({ triggerToast, isSidebarExpanded }) => {
           </h3>
         </div>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4 text-left">
-          Choose a color theme for your workspace
+          Choose a colour theme for your workspace
         </p>
         <div className="grid grid-cols-10 gap-3">
           {isFirefliApp ? (
