@@ -4,6 +4,8 @@ import { workspacestate } from '@/state';
 import { useRecoilState } from 'recoil';
 import { IconCheck, IconX, IconRefresh, IconTrash, IconBrandDiscord, IconSettings, IconPalette, IconBell, IconTrendingUp, IconTrendingDown, IconAlertTriangle, IconBan, IconCake, IconFileText, IconCircleCheck, IconCircleX, IconCalendarEvent, IconClipboardCheck } from '@tabler/icons-react';
 import { FC } from '@/types/settingsComponent';
+import { set } from 'zod/v4';
+import { setRandomFallback } from 'bcryptjs';
 
 type DiscordGuild = {
   id: string;
@@ -53,6 +55,10 @@ type DiscordIntegration = {
   terminationEmbedColor?: string | null;
   terminationEmbedDescription?: string | null;
   terminationEmbedFooter?: string | null;
+  resignationEmbedTitle?: string | null;
+  resignationEmbedColor?: string | null;
+  resignationEmbedDescription?: string | null;
+  resignationEmbedFooter?: string | null;
   birthdayEmbedTitle?: string | null;
   birthdayEmbedColor?: string | null;
   birthdayEmbedDescription?: string | null;
@@ -161,6 +167,11 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
   const [editTerminationEmbedColor, setEditTerminationEmbedColor] = useState<string>('');
   const [editTerminationEmbedDescription, setEditTerminationEmbedDescription] = useState<string>('');
   const [editTerminationEmbedFooter, setEditTerminationEmbedFooter] = useState<string>('');
+
+  const [editResignationEmbedTitle, setEditResignationEmbedTitle] = useState<string>('');
+  const [editResignationEmbedColor, setEditResignationEmbedColor] = useState<string>('');
+  const [editResignationEmbedDescription, setEditResignationEmbedDescription] = useState<string>('');
+  const [editResignationEmbedFooter, setEditResignationEmbedFooter] = useState<string>('');
 
   // Birthday embed states
   const [editBirthdayEmbedTitle, setEditBirthdayEmbedTitle] = useState<string>('');
@@ -443,6 +454,11 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     const terminationDescChanged = editTerminationEmbedDescription !== (integration.terminationEmbedDescription || '');
     const terminationFooterChanged = editTerminationEmbedFooter !== (integration.terminationEmbedFooter || '');
 
+    const resignationTitleChanged = editResignationEmbedTitle !== (integration.resignationEmbedTitle || '');
+    const resignationColorChanged = editResignationEmbedColor !== (integration.resignationEmbedColor || '');
+    const resignationDescChanged = editResignationEmbedDescription !== (integration.resignationEmbedDescription || '');
+    const resignationFooterChanged = editResignationEmbedFooter !== (integration.resignationEmbedFooter || '');
+
     // Check birthday embed changes
     const birthdayTitleChanged = editBirthdayEmbedTitle !== (integration.birthdayEmbedTitle || '');
     const birthdayColorChanged = editBirthdayEmbedColor !== (integration.birthdayEmbedColor || '');
@@ -499,7 +515,8 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
       promotionColorChanged || promotionDescChanged || promotionFooterChanged || demotionTitleChanged ||
       demotionColorChanged || demotionDescChanged || demotionFooterChanged || warningTitleChanged ||
       warningColorChanged || warningDescChanged || warningFooterChanged || terminationTitleChanged ||
-      terminationColorChanged || terminationDescChanged || terminationFooterChanged || birthdayTitleChanged ||
+      terminationColorChanged || terminationDescChanged || terminationFooterChanged || resignationTitleChanged ||
+      resignationColorChanged || resignationDescChanged || resignationFooterChanged || birthdayTitleChanged ||
       birthdayColorChanged || birthdayDescChanged || noticeSubmitTitleChanged || noticeSubmitColorChanged ||
       noticeSubmitDescChanged || noticeSubmitFooterChanged || noticeApprovalTitleChanged ||
       noticeApprovalColorChanged || noticeApprovalDescChanged || noticeApprovalFooterChanged ||
@@ -543,6 +560,11 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     setEditTerminationEmbedColor(integration.terminationEmbedColor || '');
     setEditTerminationEmbedDescription(integration.terminationEmbedDescription || '');
     setEditTerminationEmbedFooter(integration.terminationEmbedFooter || '');
+
+    setEditResignationEmbedTitle(integration.resignationEmbedTitle || '');
+    setEditResignationEmbedColor(integration.resignationEmbedColor || '');
+    setEditResignationEmbedDescription(integration.resignationEmbedDescription || '');
+    setEditResignationEmbedFooter(integration.resignationEmbedFooter || '');
 
     // Populate birthday embed states
     setEditBirthdayEmbedTitle(integration.birthdayEmbedTitle || '');
@@ -639,6 +661,10 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
         terminationEmbedColor: editTerminationEmbedColor || null,
         terminationEmbedDescription: editTerminationEmbedDescription || null,
         terminationEmbedFooter: editTerminationEmbedFooter || null,
+        resignationEmbedTitle: editResignationEmbedTitle || null,
+        resignationEmbedColor: editResignationEmbedColor || null,
+        resignationEmbedDescription: editResignationEmbedDescription || null,
+        resignationEmbedFooter: editResignationEmbedFooter || null,
         // Birthday embed templates
         birthdayEmbedTitle: editBirthdayEmbedTitle || null,
         birthdayEmbedColor: editBirthdayEmbedColor || null,

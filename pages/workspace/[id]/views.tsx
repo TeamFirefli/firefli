@@ -977,7 +977,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
             {
               notes: message,
               type: apiType,
-              notifyDiscord: notifyDiscord && bloxlinkEnabled && discordEnabled && (apiType === "warning" || apiType === "promotion" || apiType === "demotion" || apiType === "termination"),
+              notifyDiscord: notifyDiscord && bloxlinkEnabled && discordEnabled && (apiType === "warning" || apiType === "promotion" || apiType === "demotion" || apiType === "termination" || apiType === "resignation"),
               ...(apiType === "termination" && notifyDiscord && bloxlinkEnabled && {
                 terminationAction: banFromDiscord ? 'ban' : (kickFromDiscord ? 'kick' : 'none'),
                 ...(banFromDiscord && { banDeleteDays })

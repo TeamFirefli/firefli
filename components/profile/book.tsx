@@ -9,6 +9,7 @@ import {
   IconAlertTriangle,
   IconStar,
   IconShieldCheck,
+  IconDoorExit,
   IconClipboardList,
   IconRocket,
   IconTrash,
@@ -29,6 +30,7 @@ interface Props {
     promotion: boolean;
     demotion: boolean;
     termination: boolean;
+    resignation: boolean;
     redact: boolean;
   };
 }
@@ -213,13 +215,15 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
       case "warning":
         return <IconAlertTriangle className="w-5 h-5 text-yellow-500" />;
       case "promotion":
-        return <IconStar className="w-5 h-5 text-primary" />;
+        return <IconStar className="w-5 h-5 text-green-500" />;
       case "demotion":
         return <IconX className="w-5 h-5 text-red-500" />;
       case "rank_change":
         return <IconRocket className="w-5 h-5 text-blue-500" />;
       case "termination":
         return <IconX className="w-5 h-5 text-red-500" />;
+      case "resignation":
+        return <IconDoorExit className="w-5 h-5 text-primary" />;
       default:
         return (
           <IconClipboardList className="w-5 h-5 text-zinc-500 dark:text-white" />
@@ -241,6 +245,8 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
         return "Rank Change";
       case "termination":
         return "Termination";
+      case "resignation":
+        return "Resignation";
       default:
         return "Note";
     }
@@ -325,7 +331,8 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
       (entry.type === "promotion" ||
         entry.type === "demotion" ||
         entry.type === "rank_change" ||
-        entry.type === "termination") &&
+        entry.type === "termination" ||
+        entry.type === "resignation") &&
       entry.rankBefore !== null &&
       entry.rankAfter !== null
     ) {
@@ -380,6 +387,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
                   <option value="rank_change">Rank Change</option>
                 )}
                 {logbookPermissions?.termination && <option value="termination">Termination</option>}
+                {logbookPermissions?.resignation && <option value="resignation">Resignation</option>}
               </select>
             </div>
 

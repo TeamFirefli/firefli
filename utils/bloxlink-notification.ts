@@ -6,7 +6,7 @@ import { getUsername } from './userinfoEngine';
 export async function sendBloxlinkNotification(
   workspaceGroupId: number,
   targetUserId: number,
-  action: 'promotion' | 'demotion' | 'warning' | 'termination',
+  action: 'promotion' | 'demotion' | 'warning' | 'termination' | 'resignation',
   details: {
     reason?: string;
     issuedBy?: string;
@@ -44,7 +44,8 @@ export async function sendBloxlinkNotification(
       promotion: integration.notifyPromotion,
       demotion: integration.notifyDemotion,
       warning: integration.notifyWarning,
-      termination: integration.notifyDemotion, // Use demotion setting for termination
+      termination: integration.notifyDemotion,
+      resignation: integration.notifyDemotion,
     };
 
     if (!notificationEnabled[action]) {
@@ -131,28 +132,32 @@ export async function sendBloxlinkNotification(
       promotion: discordIntegration.promotionEmbedTitle,
       demotion: discordIntegration.demotionEmbedTitle,
       warning: discordIntegration.warningEmbedTitle,
-      termination: discordIntegration.terminationEmbedTitle
+      termination: discordIntegration.terminationEmbedTitle,
+      resignation: discordIntegration.resignationEmbedTitle
     };
 
     const customColor = {
       promotion: discordIntegration.promotionEmbedColor,
       demotion: discordIntegration.demotionEmbedColor,
       warning: discordIntegration.warningEmbedColor,
-      termination: discordIntegration.terminationEmbedColor
+      termination: discordIntegration.terminationEmbedColor,
+      resignation: discordIntegration.resignationEmbedColor
     };
 
     const customDescription = {
       promotion: discordIntegration.promotionEmbedDescription,
       demotion: discordIntegration.demotionEmbedDescription,
       warning: discordIntegration.warningEmbedDescription,
-      termination: discordIntegration.terminationEmbedDescription
+      termination: discordIntegration.terminationEmbedDescription,
+      resignation: discordIntegration.resignationEmbedDescription
     };
 
     const customFooter = {
       promotion: discordIntegration.promotionEmbedFooter,
       demotion: discordIntegration.demotionEmbedFooter,
       warning: discordIntegration.warningEmbedFooter,
-      termination: discordIntegration.terminationEmbedFooter
+      termination: discordIntegration.terminationEmbedFooter,
+      resignation: discordIntegration.resignationEmbedFooter
     };
 
     // Default values if no custom templates
@@ -160,14 +165,16 @@ export async function sendBloxlinkNotification(
       promotion: '📈',
       demotion: '📉',
       warning: '⚠️',
-      termination: '🚫'
+      termination: '🚫',
+      resignation: '💼'
     };
 
     const defaultColor = {
       promotion: 0x00ff00, // Green
       demotion: 0xff9900,  // Orange
       warning: 0xff0000,   // Red
-      termination: 0x8b0000 // Dark red
+      termination: 0x8b0000, // Dark red
+      resignation: 0x0000ff  // Blue
     };
 
     const defaultTitle = `${defaultEmoji[action]} ${action.charAt(0).toUpperCase() + action.slice(1)}`;

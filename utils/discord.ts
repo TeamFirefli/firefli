@@ -278,6 +278,7 @@ export function formatAuditEvent(
         termination: 'Termination',
         note: 'Note',
         rank_change: 'Rank Change',
+        resignation: '"Resignation',
       };
       if (details.type) {
         fields.push({ name: 'Type', value: typeLabels[details.type] || details.type, inline: true });

@@ -28,6 +28,7 @@ async function checkPermissionForType(req: NextApiRequest, type: string, workspa
     promotion: "logbook_promotion",
     demotion: "logbook_demotion",
     termination: "logbook_termination",
+    resignation: "logbook_resignation",
     rank_change: "logbook_promotion",
   };
   
@@ -80,6 +81,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   if (
     type !== "termination" &&
+    type !== "resignation" &&
     type !== "warning" &&
     type !== "promotion" &&
     type !== "demotion" &&
@@ -182,7 +184,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       });
 
       if (targetUserRank) {
-        rankBefore = Number(targetUserRank.rankId);
+        const storedRankId = Number(targetUserRank.rankId);
         
         if (rankingProvider?.type === "roblox_cloud") {
           try {
@@ -192,19 +194,45 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             if (apiKey) {
               const cloudApi = new RobloxCloudRankingAPI(apiKey, workspaceGroupId);
               const roles = await cloudApi.getGroupRoles();
-              const roleInfo = roles.find(r => r.rank === rankBefore);
+              const roleInfo = storedRankId > 255
+                ? roles.find(r => r.id === storedRankId)
+                : roles.find(r => r.rank === storedRankId);
+              rankBefore = roleInfo?.rank ?? storedRankId;
+              rankNameBefore = roleInfo?.name || null;
+            } else {
+              rankBefore = storedRankId;
+            }
+          } catch {
+            try {
+              const robloxRoles = await noblox.getRoles(workspaceGroupId);
+              if (storedRankId > 255) {
+                const roleInfo = robloxRoles.find(r => r.id === storedRankId);
+                rankBefore = roleInfo?.rank ?? storedRankId;
+                rankNameBefore = roleInfo?.name || null;
+              } else {
+                rankBefore = storedRankId;
+                const roleInfo = robloxRoles.find(r => r.rank === storedRankId);
+                rankNameBefore = roleInfo?.name || null;
+              }
+            } catch {
+              rankBefore = storedRankId;
+            }
+          }
+        } else {
+          try {
+            const robloxRoles = await noblox.getRoles(workspaceGroupId);
+            if (storedRankId > 255) {
+              const roleInfo = robloxRoles.find(r => r.id === storedRankId);
+              rankBefore = roleInfo?.rank ?? storedRankId;
+              rankNameBefore = roleInfo?.name || null;
+            } else {
+              rankBefore = storedRankId;
+              const roleInfo = robloxRoles.find(r => r.rank === storedRankId);
               rankNameBefore = roleInfo?.name || null;
             }
           } catch {
-            const currentRankInfo = await noblox.getRole(workspaceGroupId, rankBefore);
-            rankNameBefore = currentRankInfo?.name || null;
+            rankBefore = storedRankId;
           }
-        } else {
-          const currentRankInfo = await noblox.getRole(
-            workspaceGroupId,
-            rankBefore
-          );
-          rankNameBefore = currentRankInfo?.name || null;
         }
       }
 
@@ -253,7 +281,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     (type === "promotion" ||
       type === "demotion" ||
       type === "rank_change" ||
-      type === "termination")
+      type === "termination" ||
+      type === "resignation")
   ) {
     let result;
 
@@ -266,6 +295,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           result = await rankingProvider.demoteUser(userId);
           break;
         case "termination":
+          result = await rankingProvider.terminateUser(userId);
+          break;
+        case "resignation":
           result = await rankingProvider.terminateUser(userId);
           break;
         case "rank_change":

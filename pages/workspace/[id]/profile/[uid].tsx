@@ -124,6 +124,7 @@ export const getServerSideProps = withPermissionCheckSsr(
       promotion: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_promotion")) ?? false),
       demotion: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_demotion")) ?? false),
       termination: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_termination")) ?? false),
+      resignation: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_resignation")) ?? false),
       redact: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_redact")) ?? false),
     };
 
@@ -319,22 +320,6 @@ export const getServerSideProps = withPermissionCheckSsr(
         key: "notices",
       },
     });
-
-    let noticesEnabled = false;
-    if (noticesConfig?.value) {
-      let val = noticesConfig.value;
-      if (typeof val === "string") {
-        try {
-          val = JSON.parse(val);
-        } catch {
-          val = {};
-        }
-      }
-      noticesEnabled =
-        typeof val === "object" && val !== null && "enabled" in val
-          ? (val as { enabled?: boolean }).enabled ?? false
-          : false;
-    }
 
     const notices = await prisma.inactivityNotice.findMany({
       where: {
@@ -778,7 +763,6 @@ export const getServerSideProps = withPermissionCheckSsr(
         availableDepartments,
         lineManager,
         allMembers,
-        noticesEnabled,
         canManageMembers: hasManageMembersPermission,
         canManageNotices: hasManageNoticesPermission,
         canApproveNotices: hasApproveNoticesPermission,
@@ -851,7 +835,6 @@ type pageProps = {
     username: string;
     picture: string;
   }>;
-  noticesEnabled: boolean;
   canManageMembers: boolean;
   canManageNotices: boolean;
   canApproveNotices: boolean;
@@ -867,6 +850,7 @@ type pageProps = {
     promotion: boolean;
     demotion: boolean;
     termination: boolean;
+    resignation: boolean;
     redact: boolean;
   };
 };
@@ -892,7 +876,6 @@ const Profile: pageWithLayout<pageProps> = ({
   availableDepartments,
   lineManager,
   allMembers,
-  noticesEnabled,
   canManageMembers,
   canManageNotices,
   canApproveNotices,
@@ -1272,7 +1255,6 @@ const Profile: pageWithLayout<pageProps> = ({
                   Logbook
                 </Tab>
               )}
-              {noticesEnabled && (
                 <Tab
                   className={({ selected }) =>
                     `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -1285,7 +1267,6 @@ const Profile: pageWithLayout<pageProps> = ({
                   <IconCalendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Notices
                 </Tab>
-              )}
             </Tab.List>
             <Tab.Panels className="p-3 sm:p-4 bg-white dark:bg-zinc-800 rounded-b-xl">
               <Tab.Panel>
@@ -1355,7 +1336,6 @@ const Profile: pageWithLayout<pageProps> = ({
                   />
                 </Tab.Panel>
               )}
-              {noticesEnabled && (
                 <Tab.Panel>
                   <Notices
                     notices={notices}
@@ -1365,7 +1345,6 @@ const Profile: pageWithLayout<pageProps> = ({
                     userId={user.userid}
                   />
                 </Tab.Panel>
-              )}
             </Tab.Panels>
           </Tab.Group>
         </div>

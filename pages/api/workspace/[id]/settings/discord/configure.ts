@@ -31,6 +31,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     demotionEmbedTitle, demotionEmbedColor, demotionEmbedDescription, demotionEmbedFooter,
     warningEmbedTitle, warningEmbedColor, warningEmbedDescription, warningEmbedFooter,
     terminationEmbedTitle, terminationEmbedColor, terminationEmbedDescription, terminationEmbedFooter,
+    resignationEmbedTitle, resignationEmbedColor, resignationEmbedDescription, resignationEmbedFooter,
     // Birthday embed templates
     birthdayEmbedTitle, birthdayEmbedColor, birthdayEmbedDescription,
     // Notice embed templates
@@ -133,6 +134,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         terminationEmbedColor: terminationEmbedColor || null,
         terminationEmbedDescription: terminationEmbedDescription || null,
         terminationEmbedFooter: terminationEmbedFooter || null,
+        resignationEmbedTitle: resignationEmbedTitle || null,
+        resignationEmbedColor: resignationEmbedColor || null,
+        resignationEmbedDescription: resignationEmbedDescription || null,
+        resignationEmbedFooter: resignationEmbedFooter || null,
         // Birthday embed templates
         birthdayEmbedTitle: birthdayEmbedTitle || null,
         birthdayEmbedColor: birthdayEmbedColor || null,
@@ -284,6 +289,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         terminationEmbedColor: integration.terminationEmbedColor,
         terminationEmbedDescription: integration.terminationEmbedDescription,
         terminationEmbedFooter: integration.terminationEmbedFooter,
+        resignationEmbedTitle: integration.resignationEmbedTitle,
+        resignationEmbedColor: integration.resignationEmbedColor,
+        resignationEmbedDescription: integration.resignationEmbedDescription,
+        resignationEmbedFooter: integration.resignationEmbedFooter,
         birthdayEmbedTitle: integration.birthdayEmbedTitle,
         birthdayEmbedColor: integration.birthdayEmbedColor,
         birthdayEmbedDescription: integration.birthdayEmbedDescription,

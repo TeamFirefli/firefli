@@ -43,6 +43,7 @@ model workspace {
   playerBans          PlayerBan[]
   playerReports       PlayerReport[]
   adminMessageLogs    AdminMessageLog[]
+  recommendations     Recommendation[]
 }
 
 model config {
@@ -698,6 +699,11 @@ model DiscordIntegration {
   terminationEmbedDescription String?
   terminationEmbedFooter    String?
 
+  resignationEmbedTitle     String?
+  resignationEmbedColor     String?
+  resignationEmbedDescription String?
+  resignationEmbedFooter    String?
+
   noticeSubmitEmbedTitle    String?
   noticeSubmitEmbedColor    String?
   noticeSubmitEmbedDescription String?
@@ -865,4 +871,57 @@ model AdminMessageLog {
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
 
   @@index([workspaceGroupId, createdAt])
+}
+
+model Recommendation {
+  id               String                   @id @default(uuid()) @db.Uuid
+  workspaceGroupId Int
+  targetUserId     BigInt
+  targetUsername    String
+  targetPicture    String?
+  reason           String
+  status           String                   @default("active")
+  createdById      BigInt
+  createdByName    String?
+  editedById       BigInt?
+  editedByName     String?
+  editedAt         DateTime?
+  statusChangedById   BigInt?
+  statusChangedByName String?
+  statusChangedAt     DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  votes            RecommendationVote[]
+  comments         RecommendationComment[]
+  workspace        workspace                @relation(fields: [workspaceGroupId], references: [groupId])
+
+  @@index([workspaceGroupId, status])
+  @@index([workspaceGroupId, createdAt])
+  @@index([targetUserId])
+}
+
+model RecommendationVote {
+  id               String         @id @default(uuid()) @db.Uuid
+  recommendationId String         @db.Uuid
+  userId           BigInt
+  createdAt        DateTime       @default(now())
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  @@unique([recommendationId, userId])
+  @@index([recommendationId])
+}
+
+model RecommendationComment {
+  id               String         @id @default(uuid()) @db.Uuid
+  recommendationId String         @db.Uuid
+  authorId         BigInt
+  authorName       String?
+  authorPicture    String?
+  content          String
+  image            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  @@index([recommendationId, createdAt])
 }

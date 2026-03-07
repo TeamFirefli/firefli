@@ -67,6 +67,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         "demotion",
         "termination",
         "rank-change",
+        "resignation",
         "note",
       ];
       if (validTypes.includes(String(type))) {
