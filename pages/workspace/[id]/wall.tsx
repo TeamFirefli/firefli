@@ -512,11 +512,6 @@ const Wall: pageWithLayout<pageProps> = (props) => {
                           {post.author.rankName}
                         </p>
                       )}
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {moment(post.createdAt).format(
-                          "MMMM D, YYYY [at] h:mm A"
-                        )}
-                      </p>
                     </div>
                     {(() => {
                       const isAuthor =
@@ -553,6 +548,11 @@ const Wall: pageWithLayout<pageProps> = (props) => {
                       />
                     </div>
                   )}
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
+                    {moment(post.createdAt).format(
+                      "MMMM D, YYYY [at] h:mm A"
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
