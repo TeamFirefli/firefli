@@ -667,6 +667,7 @@ const workspace: LayoutProps = ({ children }) => {
 						<div className="hidden md:flex w-4 h-full bg-zinc-50 dark:bg-zinc-900 rounded-tl-2xl flex-shrink-0" />
 					)}
 					<main
+						id="main-content-scroll"
 						className={clsx(
 						"flex-1 transition-all duration-300 overflow-y-auto",
 						"pb-20 md:pb-0",

@@ -3,7 +3,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
-import { ComponentType, useState } from "react";
+import { ComponentType, useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -70,13 +70,36 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
     onDelete: (id: string) => void;
   } | null>(null);
 
+  const scrollToTop = () => {
+    const mainContent = document.getElementById('main-content-scroll');
+    if (mainContent) {
+      mainContent.scrollTo({ top: 0, behavior: 'instant' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  };
+
   const handleItemClick = (item: SecondarySidebarItem) => {
     if (item.onClick) {
       item.onClick();
     } else if (item.href) {
-      router.push(item.href);
+      router.push(item.href, undefined, { scroll: false }).then(() => {
+        scrollToTop();
+      });
     }
   };
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      scrollToTop();
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
 
   interface SortableItemProps {
     item: SecondarySidebarItem;
@@ -93,6 +116,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
       } | null,
     ) => void;
     draggable?: boolean;
+    scrollToTop: () => void;
   }
 
   const SortableItem: React.FC<SortableItemProps> = ({
@@ -104,6 +128,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
     handleItemClick,
     setDeleteConfirm,
     draggable,
+    scrollToTop,
   }) => {
     const {
       attributes,
@@ -185,6 +210,12 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
           style={style}
           href={item.href}
           className={itemClassName}
+          scroll={false}
+          onClick={() => {
+            setTimeout(() => {
+              scrollToTop();
+            }, 0);
+          }}
           {...(draggable ? { ...attributes, ...listeners } : {})}
         >
           {itemContent}
@@ -361,6 +392,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                             handleItemClick={handleItemClick}
                             setDeleteConfirm={setDeleteConfirm}
                             draggable={section.draggable}
+                            scrollToTop={scrollToTop}
                           />
                         );
                       })}
@@ -436,6 +468,12 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                           key={itemKey}
                           href={item.href}
                           className={itemClassName}
+                          scroll={false}
+                          onClick={() => {
+                            setTimeout(() => {
+                            scrollToTop();
+                           }, 0);
+                          }}
                         >
                           {itemContent}
                         </Link>

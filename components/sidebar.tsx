@@ -346,8 +346,19 @@ const Sidebar: NextPage = () => {
   const settingsHref = `/workspace/${workspace.groupId}/settings`;
   const isSettingsActive = router.asPath === settingsHref || router.asPath.startsWith(`${settingsHref}/`);
 
+  const scrollToTop = () => {
+    const mainContent = document.getElementById('main-content-scroll');
+    if (mainContent) {
+      mainContent.scrollTo({ top: 0, behavior: 'instant' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  };
+
   const gotopage = (page: string) => {
-    router.push(page)
+    router.push(page, undefined, { scroll: false }).then(() => {
+      scrollToTop();
+    });
   }
 
   const logout = async () => {
@@ -402,6 +413,18 @@ const Sidebar: NextPage = () => {
         .catch(() => setPendingPolicyCount(0));
     }
   }, [workspace.groupId, policiesEnabled]);
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      scrollToTop();
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
 
   return (
     <div className="hidden md:flex h-full flex-row">
