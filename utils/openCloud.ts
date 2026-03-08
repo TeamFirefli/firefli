@@ -212,16 +212,33 @@ export class RobloxCloudRankingAPI {
 
   async promoteUser(userId: number): Promise<RankingResponse> {
     try {
-      const [membership, roles] = await Promise.all([
-        this.getUserMembership(userId),
-        this.getGroupRoles(),
-      ]);
-      if (!membership) return { success: false, error: "User is not in the group" };
-      const currentIdx = roles.findIndex(r => r.rank === membership.rank);
-      if (currentIdx === -1 || currentIdx >= roles.length - 1) {
+      const roles = await this.getGroupRoles();
+      const nonGuestRoles = roles.filter(r => r.rank > 0).sort((a, b) => a.rank - b.rank);
+      const prisma = (await import("./database")).default;
+      const userRank = await prisma.rank.findFirst({
+        where: { userId: BigInt(userId), workspaceGroupId: this.groupId },
+      });
+      
+      if (!userRank) {
+        return { success: false, error: "User rank not found in database" };
+      }
+      const storedRoleId = Number(userRank.rankId);
+      const currentRole = roles.find(r => r.id === storedRoleId);
+      if (!currentRole) {
+        return { success: false, error: `Stored role ID ${storedRoleId} not found in group roles` };
+      }
+      
+      const currentRankNumber = currentRole.rank;
+      const currentIdx = nonGuestRoles.findIndex(r => r.rank === currentRankNumber);
+      
+      if (currentIdx === -1) {
+        return { success: false, error: `Current rank ${currentRankNumber} not found in non-guest roles` };
+      }
+      
+      if (currentIdx >= nonGuestRoles.length - 1) {
         return { success: false, error: "User is already at the highest rank" };
       }
-      const nextRole = roles[currentIdx + 1];
+      const nextRole = nonGuestRoles[currentIdx + 1];
       return this.setUserRole(userId, nextRole.id);
     } catch (error: any) {
       return { success: false, error: error.message || "Promotion failed" };
@@ -230,13 +247,29 @@ export class RobloxCloudRankingAPI {
 
   async demoteUser(userId: number): Promise<RankingResponse> {
     try {
-      const [membership, roles] = await Promise.all([
-        this.getUserMembership(userId),
-        this.getGroupRoles(),
-      ]);
-      if (!membership) return { success: false, error: "User is not in the group" };
-      const nonGuestRoles = roles.filter(r => r.rank > 0);
-      const currentIdx = nonGuestRoles.findIndex(r => r.rank === membership.rank);
+      const roles = await this.getGroupRoles();
+      const nonGuestRoles = roles.filter(r => r.rank > 0).sort((a, b) => a.rank - b.rank);
+      const prisma = (await import("./database")).default;
+      const userRank = await prisma.rank.findFirst({
+        where: { userId: BigInt(userId), workspaceGroupId: this.groupId },
+      });
+      
+      if (!userRank) {
+        return { success: false, error: "User rank not found in database" };
+      }
+      
+      const storedRoleId = Number(userRank.rankId);
+      const currentRole = roles.find(r => r.id === storedRoleId);
+      if (!currentRole) {
+        return { success: false, error: `Stored role ID ${storedRoleId} not found in group roles` };
+      }
+      const currentRankNumber = currentRole.rank;
+      const currentIdx = nonGuestRoles.findIndex(r => r.rank === currentRankNumber);
+      
+      if (currentIdx === -1) {
+        return { success: false, error: `Current rank ${currentRankNumber} not found in non-guest roles` };
+      }
+      
       if (currentIdx <= 0) {
         return { success: false, error: "User is already at the lowest rank" };
       }
@@ -251,8 +284,9 @@ export class RobloxCloudRankingAPI {
   async terminateUser(userId: number): Promise<RankingResponse> {
     try {
       const roles = await this.getGroupRoles();
-      const lowestRole = roles.find(r => r.rank === 1);
-      if (!lowestRole) return { success: false, error: "Could not find lowest rank" };
+      const nonGuestRoles = roles.filter(r => r.rank > 0).sort((a, b) => a.rank - b.rank);
+      const lowestRole = nonGuestRoles[0];
+      if (!lowestRole) return { success: false, error: "Could not find lowest non-guest rank" };
       return this.setUserRole(userId, lowestRole.id);
     } catch (error: any) {
       return { success: false, error: error.message || "Termination failed" };

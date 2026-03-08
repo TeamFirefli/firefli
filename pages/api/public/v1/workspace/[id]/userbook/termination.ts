@@ -97,7 +97,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     let rankBefore: number | null = null;
+    let rankAfter: number | null = null;
     let rankNameBefore: string | null = null;
+    let rankNameAfter: string | null = null;
 
     const rankingProvider = await getRankingProvider(workspaceId);
 
@@ -167,6 +169,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             .json({ success: false, error: String(errorMessage) });
         }
 
+        // Remove user from Firefli workspace roles
         if (result?.success) {
           const currentUser = await prisma.user.findFirst({
             where: { userid: BigInt(numericUserId) },
@@ -183,13 +186,105 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
               });
             }
           }
+        }
 
-          await prisma.rank.deleteMany({
+        try {
+          let newRank: number = 0;
+          let newRankName: string | null = null;
+          let newRolesetId: number | null = null;
+
+          if (rankingProvider.type === "roblox_cloud") {
+            const { RobloxCloudRankingAPI, getWorkspaceRobloxApiKey } =
+              await import("@/utils/openCloud");
+            const robloxApiKey = await getWorkspaceRobloxApiKey(workspaceId);
+            if (robloxApiKey) {
+              const cloudApi = new RobloxCloudRankingAPI(
+                robloxApiKey,
+                workspaceId,
+              );
+              const membership =
+                await cloudApi.getUserMembership(numericUserId);
+              if (membership) {
+                newRank = membership.rank;
+                const roles = await cloudApi.getGroupRoles();
+                const roleInfo = roles.find((r) => r.rank === membership.rank);
+                newRankName = roleInfo?.name || null;
+                newRolesetId = roleInfo?.id || null;
+              }
+            } else {
+              newRank = await noblox.getRankInGroup(workspaceId, numericUserId);
+              const newRankInfo = await noblox.getRole(workspaceId, newRank);
+              newRankName = newRankInfo?.name || null;
+              newRolesetId = newRankInfo?.id || null;
+            }
+          } else {
+            newRank = await noblox.getRankInGroup(workspaceId, numericUserId);
+            const newRankInfo = await noblox.getRole(workspaceId, newRank);
+            newRankName = newRankInfo?.name || null;
+            newRolesetId = newRankInfo?.id || null;
+          }
+
+          rankAfter = newRank;
+          rankNameAfter = newRankName;
+          let rolesetIdForSync = newRolesetId;
+          if (!rolesetIdForSync) {
+            try {
+              const fallbackInfo = await noblox.getRole(workspaceId, newRank);
+              rolesetIdForSync = fallbackInfo?.id || null;
+            } catch {}
+          }
+          const rankIdToStore = rolesetIdForSync || newRank;
+          await prisma.rank.upsert({
             where: {
+              userId_workspaceGroupId: {
+                userId: BigInt(numericUserId),
+                workspaceGroupId: workspaceId,
+              },
+            },
+            update: { rankId: BigInt(rankIdToStore) },
+            create: {
               userId: BigInt(numericUserId),
               workspaceGroupId: workspaceId,
+              rankId: BigInt(rankIdToStore),
             },
           });
+
+          if (rolesetIdForSync) {
+            const role = await prisma.role.findFirst({
+              where: {
+                workspaceGroupId: workspaceId,
+                groupRoles: { hasSome: [rolesetIdForSync] },
+              },
+            });
+
+            if (role) {
+              const currentUser = await prisma.user.findFirst({
+                where: { userid: BigInt(numericUserId) },
+                include: {
+                  roles: { where: { workspaceGroupId: workspaceId } },
+                },
+              });
+
+              if (currentUser && currentUser.roles.length > 0) {
+                for (const oldRole of currentUser.roles) {
+                  await prisma.user.update({
+                    where: { userid: BigInt(numericUserId) },
+                    data: { roles: { disconnect: { id: oldRole.id } } },
+                  });
+                }
+              }
+
+              await prisma.user.update({
+                where: { userid: BigInt(numericUserId) },
+                data: { roles: { connect: { id: role.id } } },
+              });
+            }
+          }
+        } catch (rankUpdateError) {
+          console.error(
+            "[Public API] Error updating user rank in database:",
+            rankUpdateError,
+          );
         }
       } catch (error: any) {
         let errorMessage =
@@ -217,9 +312,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         reason,
         adminId,
         rankBefore,
-        rankAfter: 1,
+        rankAfter,
         rankNameBefore,
-        rankNameAfter: null,
+        rankNameAfter,
       },
       include: { admin: true },
     });
@@ -236,8 +331,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           adminId: Number(adminId),
           reason,
           rankBefore,
-          rankAfter: 1,
+          rankAfter,
           rankNameBefore,
+          rankNameAfter,
           source: "public_api",
         },
       );

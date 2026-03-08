@@ -244,8 +244,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       });
 
       if (adminUserRank) {
-        const adminRank = Number(adminUserRank.rankId);
-        if (rankBefore && rankBefore >= adminRank) {
+        const storedAdminRankId = Number(adminUserRank.rankId);
+        let adminRankNumber = storedAdminRankId;
+        if (storedAdminRankId > 255) {
+          try {
+            const robloxRoles = await noblox.getRoles(workspaceGroupId);
+            const adminRoleInfo = robloxRoles.find(r => r.id === storedAdminRankId);
+            adminRankNumber = adminRoleInfo?.rank ?? storedAdminRankId;
+          } catch {
+            adminRankNumber = storedAdminRankId;
+          }
+        }
+        if (rankBefore && rankBefore >= adminRankNumber) {
           const adminUser = await prisma.user.findFirst({
             where: {
               userid: BigInt(req.session.userid),
@@ -316,7 +326,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             });
 
             if (adminUserRank) {
-              const adminRank = Number(adminUserRank.rankId);
+              const storedAdminRankId = Number(adminUserRank.rankId);
               const roles = await noblox.getRoles(workspaceGroupId);
               const targetRoleData = roles.find(r => r.id === parseInt(targetRole));
               if (!targetRoleData) {
@@ -326,7 +336,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
                 });
               }
               const targetRankNumber = targetRoleData.rank;
-              if (targetRankNumber >= adminRank) {
+              let adminRankNumber = storedAdminRankId;
+              if (storedAdminRankId > 255) {
+                const adminRoleData = roles.find(r => r.id === storedAdminRankId);
+                adminRankNumber = adminRoleData?.rank ?? storedAdminRankId;
+              }
+              if (targetRankNumber >= adminRankNumber) {
                 const adminUser = await prisma.user.findFirst({
                   where: {
                     userid: BigInt(req.session.userid),
@@ -383,7 +398,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
       if (type === "termination" && result?.success) {
         try {
-          // Compare as strings to handle any type coercion issues
           if (BigInt(userId) === req.session.userid) {
             return res.status(400).json({
               success: false,
@@ -420,84 +434,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
               });
             }
           }
-
-          await prisma.rank.deleteMany({
-            where: {
-              userId: BigInt(userId),
-              workspaceGroupId: workspaceGroupId,
-            },
-          });
-
-          const userbook = await prisma.userBook.create({
-            data: {
-              userId: BigInt(userId),
-              type,
-              workspaceGroupId: workspaceGroupId,
-              reason: notes,
-              adminId: BigInt(req.session.userid),
-              rankBefore,
-              rankAfter: 1,
-              rankNameBefore,
-              rankNameAfter,
-            },
-            include: {
-              admin: true,
-            },
-          });
-
-          try {
-            await logAudit(
-              workspaceGroupId,
-              req.session.userid || null,
-              "userbook.create",
-              `userbook:${userbook.id}`,
-              {
-                type,
-                userId,
-                adminId: req.session.userid,
-                reason: notes,
-                rankBefore,
-                rankAfter: 1,
-                rankNameBefore,
-                rankNameAfter,
-              }
-            );
-          } catch (e) {}
-
-          // Send Bloxlink DM notification if requested and Bloxlink is configured
-          if (notifyDiscord) {
-            const bloxlinkIntegration = await prisma.bloxlinkIntegration.findUnique({
-              where: { workspaceGroupId },
-            }).catch(() => null);
-
-            if (bloxlinkIntegration?.isActive) {
-              sendBloxlinkNotification(workspaceGroupId, userId, 'termination', {
-                reason: notes,
-                issuedBy: String(req.session.userid),
-                rankBefore,
-                rankAfter: 1,
-                rankNameBefore,
-                rankNameAfter,
-                terminationAction: terminationAction || 'none',
-                banDeleteDays: banDeleteDays || 0,
-              }).catch((e) => console.error('[Bloxlink] Failed to send termination notification:', e));
-            }
-          }
-
-          return res.status(200).json({
-            success: true,
-            log: JSON.parse(
-              JSON.stringify(userbook, (key, value) =>
-                typeof value === "bigint" ? value.toString() : value
-              )
-            ),
-            terminated: true,
-          });
         } catch (terminationError) {
-          return res.status(500).json({
-            success: false,
-            error: "Failed to remove user from workspace",
-          });
+          console.error("Error removing user roles:", terminationError);
         }
       }
 
@@ -677,13 +615,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   } catch (e) {}
 
   // Send Bloxlink DM notification if requested and Bloxlink is configured
-  if (notifyDiscord && (type === 'promotion' || type === 'demotion' || type === 'warning')) {
+  if (notifyDiscord && (type === 'promotion' || type === 'demotion' || type === 'warning' || type === 'termination' || type === 'resignation')) {
     const bloxlinkIntegration = await prisma.bloxlinkIntegration.findUnique({
       where: { workspaceGroupId: parseInt(id as string) },
     }).catch(() => null);
 
     if (bloxlinkIntegration?.isActive) {
-      sendBloxlinkNotification(parseInt(id as string), userId, type, {
+      const notificationData: any = {
         reason: notes,
         issuedBy: String(req.session.userid),
         newRole: rankNameAfter || undefined,
@@ -691,7 +629,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         rankAfter,
         rankNameBefore,
         rankNameAfter,
-      }).catch((e) => console.error('[Bloxlink] Failed to send notification:', e));
+      };
+      
+      if (type === 'termination') {
+        notificationData.terminationAction = terminationAction || 'none';
+        notificationData.banDeleteDays = banDeleteDays || 0;
+      }
+      
+      sendBloxlinkNotification(parseInt(id as string), userId, type as any, notificationData).catch((e) => console.error('[Bloxlink] Failed to send notification:', e));
     }
   }
 
@@ -702,6 +647,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         typeof value === "bigint" ? value.toString() : value
       )
     ),
+    ...(type === 'termination' || type === 'resignation' ? { terminated: true } : {}),
   });
 }
 
