@@ -222,10 +222,16 @@ export class RobloxCloudRankingAPI {
       if (!userRank) {
         return { success: false, error: "User rank not found in database" };
       }
-      const storedRoleId = Number(userRank.rankId);
-      const currentRole = roles.find(r => r.id === storedRoleId);
+      
+      const storedValue = Number(userRank.rankId);
+      let currentRole;
+      if (storedValue > 255) {
+        currentRole = roles.find(r => r.id === storedValue);
+      } else {
+        currentRole = roles.find(r => r.rank === storedValue);
+      }
       if (!currentRole) {
-        return { success: false, error: `Stored role ID ${storedRoleId} not found in group roles` };
+        return { success: false, error: `Stored value ${storedValue} (${storedValue > 255 ? 'role ID' : 'rank number'}) not found in group roles` };
       }
       
       const currentRankNumber = currentRole.rank;
@@ -258,10 +264,16 @@ export class RobloxCloudRankingAPI {
         return { success: false, error: "User rank not found in database" };
       }
       
-      const storedRoleId = Number(userRank.rankId);
-      const currentRole = roles.find(r => r.id === storedRoleId);
+      const storedValue = Number(userRank.rankId);
+      let currentRole
+      if (storedValue > 255) {
+        currentRole = roles.find(r => r.id === storedValue);
+      } else {
+        currentRole = roles.find(r => r.rank === storedValue);
+      }
+      
       if (!currentRole) {
-        return { success: false, error: `Stored role ID ${storedRoleId} not found in group roles` };
+        return { success: false, error: `Stored value ${storedValue} (${storedValue > 255 ? 'role ID' : 'rank number'}) not found in group roles` };
       }
       const currentRankNumber = currentRole.rank;
       const currentIdx = nonGuestRoles.findIndex(r => r.rank === currentRankNumber);
