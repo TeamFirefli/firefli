@@ -436,6 +436,7 @@ model userBook {
 model rank {
   userId           BigInt
   rankId           BigInt
+  roleId           BigInt?
   workspaceGroupId Int
   user             user      @relation(fields: [userId], references: [userid], onDelete: Cascade)
   workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId], onDelete: Cascade)

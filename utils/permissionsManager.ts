@@ -594,6 +594,11 @@ export async function checkGroupRoles(groupID: number) {
     );
     const userRoleMap = new Map<number, { roleId: number; username: string; displayName: string }>();
     const assignedGroupRoleIds = new Set<number>();
+    const roleIdToRankNumber = new Map<number, number>();
+    for (const rank of ranks) {
+      roleIdToRankNumber.set(rank.id, rank.rank);
+    }
+    
     for (const workspaceRole of rs) {
       if (workspaceRole.groupRoles && workspaceRole.groupRoles.length > 0) {
         for (const grId of workspaceRole.groupRoles) {
@@ -797,12 +802,14 @@ export async function checkGroupRoles(groupID: number) {
               },
             },
             update: {
-              rankId: BigInt(roleId),
+              rankId: BigInt(roleIdToRankNumber.get(roleId) || 0),
+              roleId: BigInt(roleId),
             },
             create: {
               userId: BigInt(userId),
               workspaceGroupId: groupID,
-              rankId: BigInt(roleId),
+              rankId: BigInt(roleIdToRankNumber.get(roleId) || 0),
+              roleId: BigInt(roleId),
             },
           })
           .catch((error) => {
@@ -899,11 +906,13 @@ export async function checkGroupRoles(groupID: number) {
                   },
                   update: {
                     rankId: BigInt(0),
+                    roleId: null,
                   },
                   create: {
                     userId: user.userid,
                     workspaceGroupId: groupID,
                     rankId: BigInt(0),
+                    roleId: null,
                   },
                 })
                 .catch((error) => {
@@ -980,6 +989,7 @@ export async function checkGroupRoles(groupID: number) {
         }
         
         const currentRobloxRoleId = userRankData.roleId;
+        const currentRobloxRankNumber = roleIdToRankNumber.get(currentRobloxRoleId) || 0;
         
         await prisma.rank
           .upsert({
@@ -990,12 +1000,14 @@ export async function checkGroupRoles(groupID: number) {
               },
             },
             update: {
-              rankId: BigInt(currentRobloxRoleId),
+              rankId: BigInt(currentRobloxRankNumber),
+              roleId: BigInt(currentRobloxRoleId),
             },
             create: {
               userId: user.userid,
               workspaceGroupId: groupID,
-              rankId: BigInt(currentRobloxRoleId),
+              rankId: BigInt(currentRobloxRankNumber),
+              roleId: BigInt(currentRobloxRoleId),
             },
           })
           .catch((error) => {
@@ -1286,6 +1298,7 @@ export async function checkSpecificUser(userID: number) {
     
     const membership = userGroupMemberships.get(w.groupId);
     const userRoleId = membership?.roleId || null;
+    const userRankNumber = membership?.rank || 0;
     
     await prisma.rank.upsert({
       where: {
@@ -1295,12 +1308,14 @@ export async function checkSpecificUser(userID: number) {
         },
       },
       update: {
-        rankId: BigInt(userRoleId || 0),
+        rankId: BigInt(userRankNumber),
+        roleId: userRoleId ? BigInt(userRoleId) : null,
       },
       create: {
         userId: BigInt(userID),
         workspaceGroupId: w.groupId,
-        rankId: BigInt(userRoleId || 0),
+        rankId: BigInt(userRankNumber),
+        roleId: userRoleId ? BigInt(userRoleId) : null,
       },
     });
 

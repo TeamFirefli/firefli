@@ -176,6 +176,31 @@ export class RobloxCloudRankingAPI {
         String(userId),
         String(roleId)
       );
+      const roles = await this.getGroupRoles();
+      const role = roles.find(r => r.id === roleId);
+      const rankNumber = role?.rank || 0;
+      const prisma = (await import("./database")).default;
+      await prisma.rank.upsert({
+        where: {
+          userId_workspaceGroupId: {
+            userId: BigInt(userId),
+            workspaceGroupId: this.groupId,
+          },
+        },
+        update: {
+          rankId: BigInt(rankNumber),
+          roleId: BigInt(roleId),
+        },
+        create: {
+          userId: BigInt(userId),
+          workspaceGroupId: this.groupId,
+          rankId: BigInt(rankNumber),
+          roleId: BigInt(roleId),
+        },
+      });
+      
+      console.log(`[OpenCloud] Updated stored rank for user ${userId}: rankId=${rankNumber}, roleId=${roleId}`);
+      
       return { success: true, message: "Role updated successfully" };
     } catch (error: any) {
       return { success: false, error: error.message || "Open Cloud ranking request failed" };
@@ -223,15 +248,45 @@ export class RobloxCloudRankingAPI {
         return { success: false, error: "User rank not found in database" };
       }
       
-      const storedValue = Number(userRank.rankId);
+      const storedRoleId = userRank.roleId ? Number(userRank.roleId) : null;
+      const storedRankNumber = Number(userRank.rankId);
       let currentRole;
-      if (storedValue > 255) {
-        currentRole = roles.find(r => r.id === storedValue);
-      } else {
-        currentRole = roles.find(r => r.rank === storedValue);
+      console.log(`[Promote] Stored values for user ${userId}: rankId=${storedRankNumber}, roleId=${storedRoleId}`);
+      console.log(`[Promote] Available roles for group ${this.groupId}:`, roles.map(r => ({ id: r.id, rank: r.rank, name: r.name })));
+      if (storedRoleId) {
+        currentRole = roles.find(r => r.id === storedRoleId);
+        console.log(`[Promote] Looking for roleId ${storedRoleId}: ${currentRole ? 'found' : 'not found'}`);
+      }
+      
+      if (!currentRole && storedRankNumber <= 255) {
+        currentRole = roles.find(r => r.rank === storedRankNumber);
+        console.log(`[Promote] Looking for rankNumber ${storedRankNumber}: ${currentRole ? 'found' : 'not found'}`);
       }
       if (!currentRole) {
-        return { success: false, error: `Stored value ${storedValue} (${storedValue > 255 ? 'role ID' : 'rank number'}) not found in group roles` };
+        console.log(`[Promote] Stored role not found, fetching live data from Roblox for user ${userId}`);
+        const membership = await this.getUserMembership(userId);
+        if (membership) {
+          currentRole = roles.find(r => r.id === membership.roleId);
+          if (currentRole) {
+            await prisma.rank.update({
+              where: {
+                userId_workspaceGroupId: {
+                  userId: BigInt(userId),
+                  workspaceGroupId: this.groupId,
+                },
+              },
+              data: {
+                rankId: BigInt(currentRole.rank),
+                roleId: BigInt(membership.roleId),
+              },
+            });
+            console.log(`[Promote] Updated stale data: rankId=${currentRole.rank}, roleId=${membership.roleId}`);
+          }
+        }
+        
+        if (!currentRole) {
+          return { success: false, error: `User role not found. Stored: rankId=${storedRankNumber}, roleId=${storedRoleId}. Available role IDs: ${roles.map(r => r.id).join(', ')}. User may not be in the group.` };
+        }
       }
       
       const currentRankNumber = currentRole.rank;
@@ -264,16 +319,46 @@ export class RobloxCloudRankingAPI {
         return { success: false, error: "User rank not found in database" };
       }
       
-      const storedValue = Number(userRank.rankId);
-      let currentRole
-      if (storedValue > 255) {
-        currentRole = roles.find(r => r.id === storedValue);
-      } else {
-        currentRole = roles.find(r => r.rank === storedValue);
+      const storedRoleId = userRank.roleId ? Number(userRank.roleId) : null;
+      const storedRankNumber = Number(userRank.rankId);
+      let currentRole;
+      console.log(`[Demote] Stored values for user ${userId}: rankId=${storedRankNumber}, roleId=${storedRoleId}`);
+      console.log(`[Demote] Available roles for group ${this.groupId}:`, roles.map(r => ({ id: r.id, rank: r.rank, name: r.name })));
+      if (storedRoleId) {
+        currentRole = roles.find(r => r.id === storedRoleId);
+        console.log(`[Demote] Looking for roleId ${storedRoleId}: ${currentRole ? 'found' : 'not found'}`);
+      }
+      
+      if (!currentRole && storedRankNumber <= 255) {
+        currentRole = roles.find(r => r.rank === storedRankNumber);
+        console.log(`[Demote] Looking for rankNumber ${storedRankNumber}: ${currentRole ? 'found' : 'not found'}`);
       }
       
       if (!currentRole) {
-        return { success: false, error: `Stored value ${storedValue} (${storedValue > 255 ? 'role ID' : 'rank number'}) not found in group roles` };
+        console.log(`[Demote] Stored role not found, fetching live data from Roblox for user ${userId}`);
+        const membership = await this.getUserMembership(userId);
+        if (membership) {
+          currentRole = roles.find(r => r.id === membership.roleId);
+          if (currentRole) {
+            await prisma.rank.update({
+              where: {
+                userId_workspaceGroupId: {
+                  userId: BigInt(userId),
+                  workspaceGroupId: this.groupId,
+                },
+              },
+              data: {
+                rankId: BigInt(currentRole.rank),
+                roleId: BigInt(membership.roleId),
+              },
+            });
+            console.log(`[Demote] Updated stale data: rankId=${currentRole.rank}, roleId=${membership.roleId}`);
+          }
+        }
+        
+        if (!currentRole) {
+          return { success: false, error: `User role not found. Stored: rankId=${storedRankNumber}, roleId=${storedRoleId}. Available role IDs: ${roles.map(r => r.id).join(', ')}. User may not be in the group.` };
+        }
       }
       const currentRankNumber = currentRole.rank;
       const currentIdx = nonGuestRoles.findIndex(r => r.rank === currentRankNumber);
