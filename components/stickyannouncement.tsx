@@ -6,6 +6,34 @@ import toast from "react-hot-toast";
 
 const ANNOUNCEMENT_KEY = "announcementDismissed_v2.1";
 
+const BG_COLORS = [
+  "bg-rose-300",
+  "bg-lime-300",
+  "bg-teal-200",
+  "bg-amber-300",
+  "bg-rose-200",
+  "bg-lime-200",
+  "bg-green-100",
+  "bg-red-100",
+  "bg-yellow-200",
+  "bg-amber-200",
+  "bg-emerald-300",
+  "bg-green-300",
+  "bg-red-300",
+  "bg-emerald-200",
+  "bg-green-200",
+  "bg-red-200",
+];
+
+function getRandomBg(username: string) {
+  let hash = 5381;
+  for (let i = 0; i < username.length; i++) {
+    hash = ((hash << 5) - hash) ^ username.charCodeAt(i);
+  }
+  const index = (hash >>> 0) % BG_COLORS.length;
+  return BG_COLORS[index];
+}
+
 interface Section {
   title: string;
   content: string;
@@ -152,14 +180,27 @@ export default function StickyNoteAnnouncement() {
   const displayAnnouncement = isEditing ? editData : announcement;
   if (!displayAnnouncement) return null;
 
+  const isCustom = !announcement.isDefault && announcement.editorUsername;
+  const avatarBg = isCustom && announcement.editorUsername 
+    ? getRandomBg(announcement.editorUsername)
+    : "bg-primary";
+
   return (
     <div className="z-0 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-4 flex items-start space-x-4 mb-6 relative">
-      <div className="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center overflow-hidden">
-        <img
-          src="/stickylogo.png"
-          alt="Firefli"
-          className="w-full h-full object-cover scale-100"
-        />
+      <div className={`w-10 h-10 rounded-full ${avatarBg} flex-shrink-0 flex items-center justify-center overflow-hidden`}>
+        {isCustom && announcement.editorPicture ? (
+          <img
+            src={announcement.editorPicture}
+            alt={announcement.editorUsername || "Editor"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <img
+            src="/stickylogo.png"
+            alt="Firefli"
+            className="w-full h-full object-cover scale-100"
+          />
+        )}
       </div>
       <div className="flex-1">
         {isEditing ? (
@@ -283,16 +324,6 @@ export default function StickyNoteAnnouncement() {
               {!announcement.isDefault && announcement.editorUsername && (
                 <div className="pt-3 mt-3 border-t border-zinc-200 dark:border-zinc-700">
                   <div className="flex items-center gap-2">
-                    {announcement.editorPicture && (
-                      <img
-                        src={announcement.editorPicture}
-                        alt={announcement.editorUsername}
-                        className="w-5 h-5 rounded-full"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    )}
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       Last edited by {announcement.editorUsername}
                     </p>
