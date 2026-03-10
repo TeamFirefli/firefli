@@ -72,63 +72,115 @@ export const getServerSideProps = withPermissionCheckSsr(
     });
     const membership = currentUser?.workspaceMemberships?.[0];
     const isAdmin = membership?.isAdmin || false;
-    const hasManagePermission = isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("view_member_profiles")) ?? false);
+    const hasManagePermission =
+      isAdmin ||
+      (currentUser?.roles?.some((role) =>
+        role.permissions?.includes("view_member_profiles"),
+      ) ??
+        false);
 
     const hasManageMembersPermission =
       isAdmin ||
       (currentUser?.roles?.some((role) =>
-        role.permissions?.includes("edit_member_details")
+        role.permissions?.includes("edit_member_details"),
       ) ??
         false);
 
     const hasManageNoticesPermission =
       isAdmin ||
       (currentUser?.roles?.some((role) =>
-        role.permissions?.includes("manage_notices")
+        role.permissions?.includes("manage_notices"),
       ) ??
         false);
 
     const hasApproveNoticesPermission =
       isAdmin ||
       (currentUser?.roles?.some((role) =>
-        role.permissions?.includes("approve_notices")
+        role.permissions?.includes("approve_notices"),
       ) ??
         false);
 
     const hasRecordNoticesPermission =
       isAdmin ||
       (currentUser?.roles?.some((role) =>
-        role.permissions?.includes("record_notices")
+        role.permissions?.includes("record_notices"),
       ) ??
         false);
 
     const hasActivityAdjustmentsPermission =
       isAdmin ||
       (currentUser?.roles?.some((role) =>
-        role.permissions?.includes("activity_adjustments")
+        role.permissions?.includes("activity_adjustments"),
       ) ??
         false);
 
     const canSignoffQuotas =
       isAdmin ||
       (currentUser?.roles?.some((role) =>
-        role.permissions?.includes("signoff_custom_quotas")
+        role.permissions?.includes("signoff_custom_quotas"),
       ) ??
         false);
 
     const logbookPermissions = {
-      view: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("view_logbook")) ?? false),
-      rank: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("rank_users")) ?? false),
-      note: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_note")) ?? false),
-      warning: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_warning")) ?? false),
-      promotion: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_promotion")) ?? false),
-      demotion: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_demotion")) ?? false),
-      termination: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_termination")) ?? false),
-      resignation: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_resignation")) ?? false),
-      redact: isAdmin || (currentUser?.roles?.some((role) => role.permissions?.includes("logbook_redact")) ?? false),
+      view:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("view_logbook"),
+        ) ??
+          false),
+      rank:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("rank_users"),
+        ) ??
+          false),
+      note:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_note"),
+        ) ??
+          false),
+      warning:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_warning"),
+        ) ??
+          false),
+      promotion:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_promotion"),
+        ) ??
+          false),
+      demotion:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_demotion"),
+        ) ??
+          false),
+      termination:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_termination"),
+        ) ??
+          false),
+      resignation:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_resignation"),
+        ) ??
+          false),
+      redact:
+        isAdmin ||
+        (currentUser?.roles?.some((role) =>
+          role.permissions?.includes("logbook_redact"),
+        ) ??
+          false),
     };
 
-    const hasAnyLogbookPermission = Object.values(logbookPermissions).some(p => p);
+    const hasAnyLogbookPermission = Object.values(logbookPermissions).some(
+      (p) => p,
+    );
 
     if (!hasManagePermission) {
       return { notFound: true };
@@ -224,7 +276,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           },
         });
       } catch (error) {
-        console.error('Failed to fetch user from Roblox:', error);
+        console.error("Failed to fetch user from Roblox:", error);
         return { notFound: true };
       }
     }
@@ -250,10 +302,10 @@ export const getServerSideProps = withPermissionCheckSsr(
     const roleQuotasWithInfo = userTakingAction.roles.flatMap((role) =>
       role.quotaRoles.map((qr) => ({
         ...qr.quota,
-        linkedVia: 'role' as const,
+        linkedVia: "role" as const,
         linkedName: role.name,
         linkedColor: role.color,
-      }))
+      })),
     );
 
     const departmentQuotasWithInfo = userTakingAction.workspaceMemberships
@@ -261,10 +313,10 @@ export const getServerSideProps = withPermissionCheckSsr(
       .flatMap((dm) =>
         dm.department.quotaDepartments.map((qd) => ({
           ...qd.quota,
-          linkedVia: 'department' as const,
+          linkedVia: "department" as const,
           linkedName: dm.department.name,
           linkedColor: dm.department.color,
-        }))
+        })),
       );
 
     const quotaMap = new Map();
@@ -274,40 +326,46 @@ export const getServerSideProps = withPermissionCheckSsr(
       }
     });
     let quotasArray = Array.from(quotaMap.values());
-    const quotaIds = quotasArray.map(q => q.id);
-    const customQuotaCompletions = quotaIds.length > 0 ? await (prisma as any).userQuotaCompletion.findMany({
-      where: {
-        quotaId: { in: quotaIds },
-        userId: BigInt(query.uid as string),
-        workspaceGroupId: parseInt(query.id as string),
-        archived: { not: true },
-        OR: [
-          { completedAt: null },
-          { completedAt: { gte: startDate } },
-        ],
-      },
-      include: {
-        completedByUser: {
-          select: {
-            userid: true,
-            username: true,
-          },
-        },
-      },
-    }) : [];
+    const quotaIds = quotasArray.map((q) => q.id);
+    const customQuotaCompletions =
+      quotaIds.length > 0
+        ? await (prisma as any).userQuotaCompletion.findMany({
+            where: {
+              quotaId: { in: quotaIds },
+              userId: BigInt(query.uid as string),
+              workspaceGroupId: parseInt(query.id as string),
+              archived: { not: true },
+              OR: [{ completedAt: null }, { completedAt: { gte: startDate } }],
+            },
+            include: {
+              completedByUser: {
+                select: {
+                  userid: true,
+                  username: true,
+                },
+              },
+            },
+          })
+        : [];
 
     const quotas = quotasArray.map((quota: any) => {
-      const completion = customQuotaCompletions.find((c: any) => c.quotaId === quota.id);
+      const completion = customQuotaCompletions.find(
+        (c: any) => c.quotaId === quota.id,
+      );
       if (quota.type === "custom" && completion) {
         return {
           ...quota,
           completed: completion.completed || false,
           completedAt: completion.completedAt,
-          completedBy: completion.completedBy ? completion.completedBy.toString() : null,
-          completedByUser: completion.completedByUser ? {
-            userid: completion.completedByUser.userid.toString(),
-            username: completion.completedByUser.username,
-          } : null,
+          completedBy: completion.completedBy
+            ? completion.completedBy.toString()
+            : null,
+          completedByUser: completion.completedByUser
+            ? {
+                userid: completion.completedByUser.userid.toString(),
+                username: completion.completedByUser.username,
+              }
+            : null,
           completionNotes: completion.notes,
         };
       }
@@ -371,7 +429,7 @@ export const getServerSideProps = withPermissionCheckSsr(
     let totalIdleTime = 0;
     if (sessions.length) {
       const completedSessions = sessions.filter(
-        (session) => !session.active && session.endTime
+        (session) => !session.active && session.endTime,
       );
       timeSpent = completedSessions.reduce((sum, session) => {
         const totalTime =
@@ -410,7 +468,7 @@ export const getServerSideProps = withPermissionCheckSsr(
       (_, i) => ({
         day: i,
         ms: [],
-      })
+      }),
     );
 
     weeklySessions.forEach((session) => {
@@ -420,11 +478,11 @@ export const getServerSideProps = withPermissionCheckSsr(
 
       if (session.active && !session.endTime) {
         duration = Math.round(
-          (new Date().getTime() - session.startTime.getTime()) / 60000
+          (new Date().getTime() - session.startTime.getTime()) / 60000,
         );
       } else if (session.endTime) {
         duration = Math.round(
-          (session.endTime.getTime() - session.startTime.getTime()) / 60000
+          (session.endTime.getTime() - session.startTime.getTime()) / 60000,
         );
       }
 
@@ -434,7 +492,7 @@ export const getServerSideProps = withPermissionCheckSsr(
     });
 
     const data: number[] = days.map((d) =>
-      d.ms.reduce((sum, val) => sum + val, 0)
+      d.ms.reduce((sum, val) => sum + val, 0),
     );
 
     const ubook = await prisma.userBook.findMany({
@@ -509,7 +567,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           participation.roleID.toLowerCase().includes("co-host") ||
           slotName.toLowerCase().includes("co-host")
         );
-      }
+      },
     ).length;
 
     const sessionsHosted = ownedSessions.length + roleBasedHostedSessions;
@@ -525,7 +583,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           slotName.toLowerCase().includes("co-host");
 
         return !isCoHost && !ownedSessionIds.has(participation.sessionid);
-      }
+      },
     ).length;
 
     const allianceVisits = await prisma.allyVisit.count({
@@ -594,7 +652,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         color: true,
       },
       orderBy: {
-        name: 'asc',
+        name: "asc",
       },
     });
 
@@ -624,7 +682,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         const roles = await noblox.getRoles(workspaceGroupId);
         const userRankRecord =
           user?.ranks?.find(
-            (r: any) => Number(r.workspaceGroupId) === workspaceGroupId
+            (r: any) => Number(r.workspaceGroupId) === workspaceGroupId,
           ) || user?.ranks?.[0];
 
         if (userRankRecord) {
@@ -643,7 +701,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         }
       }
     } catch (e) {
-      console.error('Error fetching member role name:', e);
+      console.error("Error fetching member role name:", e);
       memberRoleName = null;
     }
 
@@ -680,7 +738,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         picture: true,
       },
       orderBy: {
-        username: 'asc',
+        username: "asc",
       },
     });
 
@@ -698,8 +756,8 @@ export const getServerSideProps = withPermissionCheckSsr(
       props: {
         notices: JSON.parse(
           JSON.stringify(notices, (_k, v) =>
-            typeof v === "bigint" ? v.toString() : v
-          )
+            typeof v === "bigint" ? v.toString() : v,
+          ),
         ),
         timeSpent: displayTimeSpent,
         totalIdleTime: Math.round(totalIdleTime),
@@ -707,13 +765,13 @@ export const getServerSideProps = withPermissionCheckSsr(
         data,
         sessions: JSON.parse(
           JSON.stringify(sessions, (_k, v) =>
-            typeof v === "bigint" ? v.toString() : v
-          )
+            typeof v === "bigint" ? v.toString() : v,
+          ),
         ),
         adjustments: JSON.parse(
           JSON.stringify(adjustments, (_k, v) =>
-            typeof v === "bigint" ? v.toString() : v
-          )
+            typeof v === "bigint" ? v.toString() : v,
+          ),
         ),
         info: {
           username: await getUsername(Number(query?.uid as string)),
@@ -727,19 +785,19 @@ export const getServerSideProps = withPermissionCheckSsr(
         allianceVisits: allianceVisits,
         quotas: JSON.parse(
           JSON.stringify(quotas, (_k, v) =>
-            typeof v === "bigint" ? v.toString() : v
-          )
+            typeof v === "bigint" ? v.toString() : v,
+          ),
         ),
         userBook: JSON.parse(
           JSON.stringify(ubook, (_k, v) =>
-            typeof v === "bigint" ? v.toString() : v
-          )
+            typeof v === "bigint" ? v.toString() : v,
+          ),
         ),
         user: {
           ...JSON.parse(
             JSON.stringify(user, (_k, v) =>
-              typeof v === "bigint" ? v.toString() : v
-            )
+              typeof v === "bigint" ? v.toString() : v,
+            ),
           ),
           userid: user.userid.toString(),
           joinDate: targetUserMembership?.joinDate
@@ -749,7 +807,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         memberRoleName,
         workspaceMember: targetUserMembership
           ? {
-              departments: targetUserMembership.departmentMembers.map(dm => ({
+              departments: targetUserMembership.departmentMembers.map((dm) => ({
                 id: dm.department.id,
                 name: dm.department.name,
                 color: dm.department.color,
@@ -773,7 +831,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         logbookPermissions,
       },
     };
-  }
+  },
 );
 
 type pageProps = {
@@ -904,10 +962,10 @@ const Profile: pageWithLayout<pageProps> = ({
     adjustments,
     messages: sessions.reduce(
       (acc, session) => acc + Number(session.messages || 0),
-      0
+      0,
     ),
     idleTime: Math.round(
-      sessions.reduce((acc, session) => acc + Number(session.idleTime || 0), 0)
+      sessions.reduce((acc, session) => acc + Number(session.idleTime || 0), 0),
     ),
   };
 
@@ -923,23 +981,22 @@ const Profile: pageWithLayout<pageProps> = ({
     async function fetchAvailableHistory() {
       try {
         const response = await axios.get(
-          `/api/workspace/${router.query.id}/activity/history/${router.query.uid}`
+          `/api/workspace/${router.query.id}/activity/history/${router.query.uid}`,
         );
         if (response.data.success && response.data.data.history) {
-          const validHistory = response.data.data.history.filter(
-            (h: any) => {
-              const hasActivity = 
-                h.activity.minutes > 0 ||
-                h.activity.messages > 0 ||
-                h.activity.sessionsHosted > 0 ||
-                h.activity.sessionsAttended > 0;
-              
-              const hasQuotas = h.activity.quotaProgress && 
-                Object.keys(h.activity.quotaProgress).length > 0;
-              
-              return hasActivity || hasQuotas;
-            }
-          );
+          const validHistory = response.data.data.history.filter((h: any) => {
+            const hasActivity =
+              h.activity.minutes > 0 ||
+              h.activity.messages > 0 ||
+              h.activity.sessionsHosted > 0 ||
+              h.activity.sessionsAttended > 0;
+
+            const hasQuotas =
+              h.activity.quotaProgress &&
+              Object.keys(h.activity.quotaProgress).length > 0;
+
+            return hasActivity || hasQuotas;
+          });
           setAvailableHistory(validHistory);
         } else {
           setAvailableHistory([]);
@@ -970,7 +1027,7 @@ const Profile: pageWithLayout<pageProps> = ({
         const historyPeriod = availableHistory[selectedWeek - 1];
         if (historyPeriod) {
           const response = await axios.get(
-            `/api/workspace/${router.query.id}/activity/history/${router.query.uid}?periodEnd=${historyPeriod.period.end}`
+            `/api/workspace/${router.query.id}/activity/history/${router.query.uid}?periodEnd=${historyPeriod.period.end}`,
           );
           if (response.data.success) {
             setHistoricalData(response.data.data);
@@ -1011,61 +1068,60 @@ const Profile: pageWithLayout<pageProps> = ({
     selectedWeek === 0
       ? currentData
       : historicalData
-      ? {
-          timeSpent: historicalData.activity.minutes,
-          timesPlayed:
-            historicalData.activity.totalSessions ||
-            historicalData.activity.sessionsHosted +
-              historicalData.activity.sessionsAttended,
-          data: historicalData.chartData || [0, 0, 0, 0, 0, 0, 0],
-          quotas: historicalData.activity.quotaProgress
-            ? Object.values(historicalData.activity.quotaProgress).map(
-                (qp: any) => ({
-                  id: qp.id || qp.name || "",
-                  name: qp.name || "",
-                  type: qp.type || "",
-                  value: qp.requirement || 0,
-                  workspaceGroupId: parseInt(router.query.id as string),
-                  description: null,
-                  sessionType: null,
-                  completionType: null,
-                  sessionRole: null,
-                  currentValue: qp.value || 0,
-                  percentage: qp.percentage || 0,
-                  completed: qp.completed || false,
-                })
-              )
-            : [],
-          sessionsHosted: historicalData.activity.sessionsHosted,
-          sessionsAttended: historicalData.activity.sessionsAttended,
-          allianceVisits: historicalData.activity.allianceVisits || 0,
-          sessions: historicalData.sessions || [],
-          adjustments: historicalData.adjustments || [],
-          messages: historicalData.activity.messages || 0,
-          idleTime: historicalData.activity.idleTime || 0,
-        }
-      : currentData;
+        ? {
+            timeSpent: historicalData.activity.minutes,
+            timesPlayed:
+              historicalData.activity.totalSessions ||
+              historicalData.activity.sessionsHosted +
+                historicalData.activity.sessionsAttended,
+            data: historicalData.chartData || [0, 0, 0, 0, 0, 0, 0],
+            quotas: historicalData.activity.quotaProgress
+              ? Object.values(historicalData.activity.quotaProgress).map(
+                  (qp: any) => ({
+                    id: qp.id || qp.name || "",
+                    name: qp.name || "",
+                    type: qp.type || "",
+                    value: qp.requirement || 0,
+                    workspaceGroupId: parseInt(router.query.id as string),
+                    description: null,
+                    sessionType: null,
+                    completionType: null,
+                    sessionRole: null,
+                    currentValue: qp.value || 0,
+                    percentage: qp.percentage || 0,
+                    completed: qp.completed || false,
+                  }),
+                )
+              : [],
+            sessionsHosted: historicalData.activity.sessionsHosted,
+            sessionsAttended: historicalData.activity.sessionsAttended,
+            allianceVisits: historicalData.activity.allianceVisits || 0,
+            sessions: historicalData.sessions || [],
+            adjustments: historicalData.adjustments || [],
+            messages: historicalData.activity.messages || 0,
+            idleTime: historicalData.activity.idleTime || 0,
+          }
+        : currentData;
 
-  const refetchUserBook = async () => {
-  };
+  const refetchUserBook = async () => {};
 
   const BG_COLORS = [
-    "bg-rose-300",
-    "bg-lime-300",
-    "bg-teal-200",
-    "bg-amber-300",
-    "bg-rose-200",
-    "bg-lime-200",
-    "bg-green-100",
-    "bg-red-100",
-    "bg-yellow-200",
     "bg-amber-200",
-    "bg-emerald-300",
-    "bg-green-300",
     "bg-red-300",
+    "bg-lime-200",
+    "bg-emerald-300",
+    "bg-rose-200",
+    "bg-green-100",
+    "bg-teal-200",
+    "bg-yellow-200",
+    "bg-red-100",
+    "bg-green-300",
+    "bg-lime-300",
     "bg-emerald-200",
-    "bg-green-200",
+    "bg-rose-300",
+    "bg-amber-300",
     "bg-red-200",
+    "bg-green-200",
   ];
 
   function getRandomBg(userid: string, username?: string) {
@@ -1081,167 +1137,147 @@ const Profile: pageWithLayout<pageProps> = ({
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <div className="pagePadding">
-      <Toaster position="bottom-center" />
-      <div>
-        <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 sm:p-6 shadow-sm mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="relative flex-shrink-0">
-              <div
-                className={`rounded-xl h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center ${getRandomBg(
-                  user.userid
-                )}`}
-              >
-                <img
-                  src={info.avatar}
-                  className="rounded-xl h-16 w-16 sm:h-20 sm:w-20 object-cover border-2 border-white"
-                  alt={`${info.displayName}'s avatar`}
-                  style={{ background: "transparent" }}
-                />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-primary rounded-lg flex items-center justify-center">
-                <IconUserCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-            </div>
-            <div className="flex-1 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-medium text-zinc-900 dark:text-white truncate">
-                    {info.displayName}
-                  </h1>
-                  {(() => {
-                    const now = new Date();
-                    const approvedNotices = notices.filter(
-                      (notice: any) =>
-                        notice.approved === true &&
-                        notice.reviewed === true &&
-                        notice.revoked === false
-                    );
-                    const activeNotice = approvedNotices.find(
-                      (notice: any) =>
-                        new Date(notice.startTime) <= now &&
-                        new Date(notice.endTime) >= now
-                    );
-                    if (activeNotice) {
-                      return (
-                        <div
-                          className="flex-shrink-0"
-                          title={`On notice: ${activeNotice.reason || "N/A"}`}
-                        >
-                          <IconBeach className="w-5 h-5 text-amber-500" />
-                        </div>
-                      );
-                    }
-                    const upcomingNotice = approvedNotices.find(
-                      (notice: any) => new Date(notice.startTime) > now
-                    );
-                    if (upcomingNotice) {
-                      return (
-                        <div
-                          className="flex-shrink-0"
-                          title={`Upcoming notice (starts ${new Date(upcomingNotice.startTime).toLocaleDateString()})`}
-                        >
-                          <IconBeach className="w-5 h-5 text-emerald-500" />
-                        </div>
-                      );
-                    }
-                    const pastNotice = approvedNotices.find(
-                      (notice: any) => new Date(notice.endTime) < now
-                    );
-                    if (pastNotice) {
-                      return (
-                        <div
-                          className="flex-shrink-0"
-                          title={`Previous notice (ended ${new Date(pastNotice.endTime).toLocaleDateString()})`}
-                        >
-                          <IconBeach className="w-5 h-5 text-zinc-400" />
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
-                  @{info.username}
-                </p>
-                {memberRoleName && (
-                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
-                    {memberRoleName}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                {workspaceMember &&
-                  workspaceMember.timezone &&
-                  (() => {
-                    const userHour = new Date().toLocaleString("en-US", {
-                      timeZone: areaBasedToIANATimezone(workspaceMember.timezone) || "UTC",
-                      hour: "numeric",
-                      hour12: false,
-                    });
-                    const hour = parseInt(userHour);
-                    const isDay = hour >= 6 && hour < 18;
-
-                    return (
-                      <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-900 text-white shadow-sm border border-primary/40">
-                        {isDay ? (
-                          <IconSun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
-                        ) : (
-                          <IconMoon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-100" />
-                        )}
-                        <span className="text-xs sm:text-sm font-semibold tabular-nums">
-                          {currentTime.toLocaleTimeString("en-US", {
-                            timeZone: areaBasedToIANATimezone(workspaceMember.timezone) || "UTC",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                <a
-                  href={`https://www.roblox.com/users/${user.userid}/profile`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border border-zinc-300 bg-white text-xs font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 whitespace-nowrap"
+        <Toaster position="bottom-center" />
+        <div>
+          <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 sm:p-6 shadow-sm mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="relative flex-shrink-0">
+                <div
+                  className={`rounded-xl h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center ${getRandomBg(
+                    user.userid,
+                  )}`}
                 >
-                  <IconExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">View on Roblox</span>
-                  <span className="sm:hidden">Roblox</span>
-                </a>
+                  <img
+                    src={info.avatar}
+                    className="rounded-xl h-16 w-16 sm:h-20 sm:w-20 object-cover border-2 border-white"
+                    alt={`${info.displayName}'s avatar`}
+                    style={{ background: "transparent" }}
+                  />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-primary rounded-lg flex items-center justify-center">
+                  <IconUserCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                </div>
+              </div>
+              <div className="flex-1 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-medium text-zinc-900 dark:text-white truncate">
+                      {info.displayName}
+                    </h1>
+                    {(() => {
+                      const now = new Date();
+                      const approvedNotices = notices.filter(
+                        (notice: any) =>
+                          notice.approved === true &&
+                          notice.reviewed === true &&
+                          notice.revoked === false,
+                      );
+                      const activeNotice = approvedNotices.find(
+                        (notice: any) =>
+                          new Date(notice.startTime) <= now &&
+                          new Date(notice.endTime) >= now,
+                      );
+                      if (activeNotice) {
+                        return (
+                          <div
+                            className="flex-shrink-0"
+                            title={`On notice: ${activeNotice.reason || "N/A"}`}
+                          >
+                            <IconBeach className="w-5 h-5 text-amber-500" />
+                          </div>
+                        );
+                      }
+                      const upcomingNotice = approvedNotices.find(
+                        (notice: any) => new Date(notice.startTime) > now,
+                      );
+                      if (upcomingNotice) {
+                        return (
+                          <div
+                            className="flex-shrink-0"
+                            title={`Upcoming notice (starts ${new Date(upcomingNotice.startTime).toLocaleDateString()})`}
+                          >
+                            <IconBeach className="w-5 h-5 text-emerald-500" />
+                          </div>
+                        );
+                      }
+                      const pastNotice = approvedNotices.find(
+                        (notice: any) => new Date(notice.endTime) < now,
+                      );
+                      if (pastNotice) {
+                        return (
+                          <div
+                            className="flex-shrink-0"
+                            title={`Previous notice (ended ${new Date(pastNotice.endTime).toLocaleDateString()})`}
+                          >
+                            <IconBeach className="w-5 h-5 text-zinc-400" />
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                    @{info.username}
+                  </p>
+                  {memberRoleName && (
+                    <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+                      {memberRoleName}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  {workspaceMember &&
+                    workspaceMember.timezone &&
+                    (() => {
+                      const userHour = new Date().toLocaleString("en-US", {
+                        timeZone:
+                          areaBasedToIANATimezone(workspaceMember.timezone) ||
+                          "UTC",
+                        hour: "numeric",
+                        hour12: false,
+                      });
+                      const hour = parseInt(userHour);
+                      const isDay = hour >= 6 && hour < 18;
+
+                      return (
+                        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-zinc-900 text-white shadow-sm border border-primary/40">
+                          {isDay ? (
+                            <IconSun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
+                          ) : (
+                            <IconMoon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-100" />
+                          )}
+                          <span className="text-xs sm:text-sm font-semibold tabular-nums">
+                            {currentTime.toLocaleTimeString("en-US", {
+                              timeZone:
+                                areaBasedToIANATimezone(
+                                  workspaceMember.timezone,
+                                ) || "UTC",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  <a
+                    href={`https://www.roblox.com/users/${user.userid}/profile`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border border-zinc-300 bg-white text-xs font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 whitespace-nowrap"
+                  >
+                    <IconExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">View on Roblox</span>
+                    <span className="sm:hidden">Roblox</span>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden">
-          <Tab.Group>
-            <Tab.List className="flex p-1 gap-1 mx-2 sm:mx-4 mt-3 mb-2 bg-zinc-50 dark:bg-zinc-700/60 border border-zinc-200 dark:border-zinc-600 rounded-lg overflow-x-auto scrollbar-hide">
-              <Tab
-                className={({ selected }) =>
-                  `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selected
-                      ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                      : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
-                  }`
-                }
-              >
-                <IconClipboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Details
-              </Tab>
-              <Tab
-                className={({ selected }) =>
-                  `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selected
-                      ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                      : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
-                  }`
-                }
-              >
-                <IconHistory className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Activity
-              </Tab>
-              {logbookEnabled && (
+          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden">
+            <Tab.Group>
+              <Tab.List className="flex p-1 gap-1 mx-2 sm:mx-4 mt-3 mb-2 bg-zinc-50 dark:bg-zinc-700/60 border border-zinc-200 dark:border-zinc-600 rounded-lg overflow-x-auto scrollbar-hide">
                 <Tab
                   className={({ selected }) =>
                     `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -1251,10 +1287,35 @@ const Profile: pageWithLayout<pageProps> = ({
                     }`
                   }
                 >
-                  <IconBook className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Logbook
+                  <IconClipboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Details
                 </Tab>
-              )}
+                <Tab
+                  className={({ selected }) =>
+                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
+                      selected
+                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
+                        : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                    }`
+                  }
+                >
+                  <IconHistory className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Activity
+                </Tab>
+                {logbookEnabled && (
+                  <Tab
+                    className={({ selected }) =>
+                      `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
+                        selected
+                          ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
+                          : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                      }`
+                    }
+                  >
+                    <IconBook className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    Logbook
+                  </Tab>
+                )}
                 <Tab
                   className={({ selected }) =>
                     `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -1267,75 +1328,75 @@ const Profile: pageWithLayout<pageProps> = ({
                   <IconCalendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Notices
                 </Tab>
-            </Tab.List>
-            <Tab.Panels className="p-3 sm:p-4 bg-white dark:bg-zinc-800 rounded-b-xl">
-              <Tab.Panel>
-                <InformationTab
-                  user={{
-                    userid: String(user.userid),
-                    username: user.username,
-                    displayname: info.displayName,
-                    registered: user.registered,
-                    birthdayDay: user.birthdayDay,
-                    birthdayMonth: user.birthdayMonth,
-                    joinDate: user.joinDate,
-                  }}
-                  workspaceMember={workspaceMember || undefined}
-                  availableDepartments={availableDepartments}
-                  lineManager={lineManager}
-                  allMembers={allMembers}
-                  isUser={isUser}
-                  isAdmin={isAdmin}
-                  canEditMembers={canManageMembers}
-                />
-              </Tab.Panel>
-              <Tab.Panel>
-                <Activity
-                  timeSpent={displayData.timeSpent}
-                  timesPlayed={displayData.timesPlayed}
-                  data={displayData.data}
-                  quotas={displayData.quotas}
-                  sessionsHosted={displayData.sessionsHosted}
-                  sessionsAttended={displayData.sessionsAttended}
-                  allianceVisits={displayData.allianceVisits}
-                  avatar={info.avatar}
-                  sessions={displayData.sessions}
-                  adjustments={displayData.adjustments}
-                  notices={notices}
-                  messages={displayData.messages}
-                  idleTime={displayData.idleTime}
-                  isHistorical={selectedWeek > 0}
-                  historicalPeriod={
-                    selectedWeek > 0 && historicalData
-                      ? {
-                          start: historicalData.period?.start,
-                          end: historicalData.period?.end,
-                        }
-                      : null
-                  }
-                  loadingHistory={loadingHistory}
-                  selectedWeek={selectedWeek}
-                  availableHistory={availableHistory}
-                  getCurrentWeekLabel={getCurrentWeekLabel}
-                  canGoBack={canGoBack}
-                  canGoForward={canGoForward}
-                  goToPreviousWeek={goToPreviousWeek}
-                  goToNextWeek={goToNextWeek}
-                  canAdjustActivity={canAdjustActivity}
-                  canSignoffQuotas={canSignoffQuotas}
-                  targetUserId={user.userid}
-                  isViewingOwnProfile={isUser}
-                />
-              </Tab.Panel>
-              {logbookEnabled && (
+              </Tab.List>
+              <Tab.Panels className="p-3 sm:p-4 bg-white dark:bg-zinc-800 rounded-b-xl">
                 <Tab.Panel>
-                  <Book
-                    userBook={userBook}
-                    onRefetch={refetchUserBook}
-                    logbookPermissions={logbookPermissions}
+                  <InformationTab
+                    user={{
+                      userid: String(user.userid),
+                      username: user.username,
+                      displayname: info.displayName,
+                      registered: user.registered,
+                      birthdayDay: user.birthdayDay,
+                      birthdayMonth: user.birthdayMonth,
+                      joinDate: user.joinDate,
+                    }}
+                    workspaceMember={workspaceMember || undefined}
+                    availableDepartments={availableDepartments}
+                    lineManager={lineManager}
+                    allMembers={allMembers}
+                    isUser={isUser}
+                    isAdmin={isAdmin}
+                    canEditMembers={canManageMembers}
                   />
                 </Tab.Panel>
-              )}
+                <Tab.Panel>
+                  <Activity
+                    timeSpent={displayData.timeSpent}
+                    timesPlayed={displayData.timesPlayed}
+                    data={displayData.data}
+                    quotas={displayData.quotas}
+                    sessionsHosted={displayData.sessionsHosted}
+                    sessionsAttended={displayData.sessionsAttended}
+                    allianceVisits={displayData.allianceVisits}
+                    avatar={info.avatar}
+                    sessions={displayData.sessions}
+                    adjustments={displayData.adjustments}
+                    notices={notices}
+                    messages={displayData.messages}
+                    idleTime={displayData.idleTime}
+                    isHistorical={selectedWeek > 0}
+                    historicalPeriod={
+                      selectedWeek > 0 && historicalData
+                        ? {
+                            start: historicalData.period?.start,
+                            end: historicalData.period?.end,
+                          }
+                        : null
+                    }
+                    loadingHistory={loadingHistory}
+                    selectedWeek={selectedWeek}
+                    availableHistory={availableHistory}
+                    getCurrentWeekLabel={getCurrentWeekLabel}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
+                    goToPreviousWeek={goToPreviousWeek}
+                    goToNextWeek={goToNextWeek}
+                    canAdjustActivity={canAdjustActivity}
+                    canSignoffQuotas={canSignoffQuotas}
+                    targetUserId={user.userid}
+                    isViewingOwnProfile={isUser}
+                  />
+                </Tab.Panel>
+                {logbookEnabled && (
+                  <Tab.Panel>
+                    <Book
+                      userBook={userBook}
+                      onRefetch={refetchUserBook}
+                      logbookPermissions={logbookPermissions}
+                    />
+                  </Tab.Panel>
+                )}
                 <Tab.Panel>
                   <Notices
                     notices={notices}
@@ -1345,9 +1406,9 @@ const Profile: pageWithLayout<pageProps> = ({
                     userId={user.userid}
                   />
                 </Tab.Panel>
-            </Tab.Panels>
-          </Tab.Group>
-        </div>
+              </Tab.Panels>
+            </Tab.Group>
+          </div>
         </div>
       </div>
     </div>

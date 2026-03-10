@@ -7,23 +7,24 @@ import toast from "react-hot-toast";
 const ANNOUNCEMENT_KEY = "announcementDismissed_v2.1";
 
 const BG_COLORS = [
-  "bg-rose-300",
-  "bg-lime-300",
-  "bg-teal-200",
-  "bg-amber-300",
-  "bg-rose-200",
-  "bg-lime-200",
-  "bg-green-100",
-  "bg-red-100",
-  "bg-yellow-200",
   "bg-amber-200",
-  "bg-emerald-300",
-  "bg-green-300",
   "bg-red-300",
+  "bg-lime-200",
+  "bg-emerald-300",
+  "bg-rose-200",
+  "bg-green-100",
+  "bg-teal-200",
+  "bg-yellow-200",
+  "bg-red-100",
+  "bg-green-300",
+  "bg-lime-300",
   "bg-emerald-200",
-  "bg-green-200",
+  "bg-rose-300",
+  "bg-amber-300",
   "bg-red-200",
+  "bg-green-200",
 ];
+
 
 function getRandomBg(username: string) {
   let hash = 5381;

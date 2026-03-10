@@ -56,7 +56,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           userid: Number(user.userid),
           thumbnail: getThumbnail(user.userid),
         };
-      })
+      }),
     );
 
     const ally: any = await prisma.ally.findUnique({
@@ -84,7 +84,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           username: await getUsername(rep.userid),
           thumbnail: getThumbnail(rep.userid),
         };
-      })
+      }),
     );
 
     let infoAlly = ally;
@@ -98,7 +98,7 @@ export const getServerSideProps = withPermissionCheckSsr(
       .map((u: any) => Number(u.userid))
       .filter((id: number) => !eligibleIds.has(id) && !repIds.has(id));
     const missingReps = infoReps.filter(
-      (r: any) => !eligibleIds.has(Number(r.userid))
+      (r: any) => !eligibleIds.has(Number(r.userid)),
     );
     // @ts-ignore
     const visits = await prisma.allyVisit.findMany({
@@ -120,7 +120,7 @@ export const getServerSideProps = withPermissionCheckSsr(
             ? visit.participants.map((p: bigint) => Number(p))
             : [],
         };
-      })
+      }),
     );
 
     const currentUserId = req.session?.userid;
@@ -209,7 +209,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         canDeleteVisits: hasDeleteVisits,
       },
     };
-  }
+  },
 );
 
 type Notes = {
@@ -250,22 +250,22 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
   const canDeleteVisits: boolean = Boolean(props.canDeleteVisits);
 
   const BG_COLORS = [
-    "bg-rose-300",
-    "bg-lime-300",
-    "bg-teal-200",
-    "bg-amber-300",
-    "bg-rose-200",
-    "bg-lime-200",
-    "bg-green-100",
-    "bg-red-100",
-    "bg-yellow-200",
     "bg-amber-200",
-    "bg-emerald-300",
-    "bg-green-300",
     "bg-red-300",
+    "bg-lime-200",
+    "bg-emerald-300",
+    "bg-rose-200",
+    "bg-green-100",
+    "bg-teal-200",
+    "bg-yellow-200",
+    "bg-red-100",
+    "bg-green-300",
+    "bg-lime-300",
     "bg-emerald-200",
-    "bg-green-200",
+    "bg-rose-300",
+    "bg-amber-300",
     "bg-red-200",
+    "bg-green-200",
   ];
 
   function getRandomBg(userid: string, username?: string) {
@@ -284,7 +284,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
   const [reps, setReps] = useState(
     ally.reps.map((u: any) => {
       return u.userid;
-    })
+    }),
   );
 
   const handleCheckboxChange = (event: any) => {
@@ -323,20 +323,20 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
         discordServer: discordServer.trim(),
         ourReps: reps,
         theirReps: filteredTheirReps,
-      }
+      },
     );
 
     // Use old rep api
     const repsPromise = axios.patch(
       `/api/workspace/${id}/allies/${ally.id}/reps`,
-      { reps: reps }
+      { reps: reps },
     );
 
     const dualPromise = Promise.all([allianceInfoPromise, repsPromise]).then(
       () => {
         setIsEditingInfo(false);
         router.reload();
-      }
+      },
     );
 
     toast.promise(dualPromise, {
@@ -370,7 +370,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setEditOpen] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<number[]>(
-    []
+    [],
   );
   const [editSelectedParticipants, setEditSelectedParticipants] = useState<
     number[]
@@ -385,7 +385,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
   const handleVisitChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: "name" | "time"
+    field: "name" | "time",
   ) => {
     setEditContent({ ...editContent, [field]: e.target.value });
     return true;
@@ -397,7 +397,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
   const handleNoteChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index: number
+    index: number,
   ) => {
     const newValue = e.target.value;
     let updateNote = [...notes];
@@ -435,10 +435,14 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     const noteClone = [...notes];
     noteClone.splice(index, 1);
     setNotes(noteClone);
-    setNewNotes(newNotes.filter(i => i !== index).map(i => i > index ? i - 1 : i));
+    setNewNotes(
+      newNotes.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i)),
+    );
 
     const axiosPromise = axios
-      .patch(`/api/workspace/${id}/allies/${ally.id}/notes`, { notes: noteClone })
+      .patch(`/api/workspace/${id}/allies/${ally.id}/notes`, {
+        notes: noteClone,
+      })
       .then((req) => {
         setEditNotes([]);
       });
@@ -490,7 +494,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     visitId: any,
     visitName: any,
     visitTime: any,
-    visitParticipants?: number[]
+    visitParticipants?: number[],
   ) => {
     // Format the time for datetime-local input (YYYY-MM-DDTHH:MM)
     const formattedTime = new Date(visitTime).toISOString().slice(0, 16);
@@ -521,7 +525,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
           name: formValues.name,
           time: formValues.time,
           participants: editSelectedParticipants,
-        }
+        },
       )
       .then((req) => {});
     toast.promise(axiosPromise, {
@@ -624,7 +628,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                   <input
                                     type="checkbox"
                                     checked={selectedParticipants.includes(
-                                      Number(user.userid)
+                                      Number(user.userid),
                                     )}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -635,8 +639,8 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                       } else {
                                         setSelectedParticipants(
                                           selectedParticipants.filter(
-                                            (id) => id !== Number(user.userid)
-                                          )
+                                            (id) => id !== Number(user.userid),
+                                          ),
                                         );
                                       }
                                     }}
@@ -742,7 +746,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                   <input
                                     type="checkbox"
                                     checked={editSelectedParticipants.includes(
-                                      Number(user.userid)
+                                      Number(user.userid),
                                     )}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -753,8 +757,8 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                       } else {
                                         setEditSelectedParticipants(
                                           editSelectedParticipants.filter(
-                                            (id) => id !== Number(user.userid)
-                                          )
+                                            (id) => id !== Number(user.userid),
+                                          ),
                                         );
                                       }
                                     }}
@@ -835,14 +839,18 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                         orientation="top"
                         tooltipText={rep.username}
                       >
-                        <a href={`https://www.roblox.com/users/${rep.userid}/profile`} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={`https://www.roblox.com/users/${rep.userid}/profile`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <div
                             className={`w-8 h-8 p-0.5 rounded-full flex items-center justify-center ${getRandomBg(
-                              rep.userid
+                              rep.userid,
                             )} border-2 ${
                               (props as any).missingReps?.some(
                                 (m: any) =>
-                                  Number(m.userid) === Number(rep.userid)
+                                  Number(m.userid) === Number(rep.userid),
                               )
                                 ? "border-amber-400 opacity-70"
                                 : "border-white"
@@ -965,7 +973,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                           />
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                              user.userid
+                              user.userid,
                             )} overflow-hidden`}
                           >
                             <img
@@ -997,7 +1005,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                             />
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                                String(m.userid)
+                                String(m.userid),
                               )} overflow-hidden opacity-70`}
                             >
                               <img
@@ -1028,11 +1036,17 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                           key={`rep-${index}`}
                           className="text-sm text-zinc-700 dark:text-zinc-300"
                         >
-                          • <a href={`https://www.roblox.com/users/${rep.userid}/profile`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline">
+                          •{" "}
+                          <a
+                            href={`https://www.roblox.com/users/${rep.userid}/profile`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:text-primary/80 underline"
+                          >
                             {rep.username}
                           </a>
                           {(props as any).missingReps?.some(
-                            (m: any) => Number(m.userid) === Number(rep.userid)
+                            (m: any) => Number(m.userid) === Number(rep.userid),
                           ) && (
                             <span className="ml-2 text-xs text-amber-500">
                               (not in workspace)
@@ -1196,9 +1210,12 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                         >
                           {notes[index]}
                         </p>
-                        {((canEditNotes || (canAddNotes && newNotes.includes(index))) || canDeleteNotes) && (
+                        {(canEditNotes ||
+                          (canAddNotes && newNotes.includes(index)) ||
+                          canDeleteNotes) && (
                           <div className="flex items-center gap-2">
-                            {(canEditNotes || (canAddNotes && newNotes.includes(index))) && (
+                            {(canEditNotes ||
+                              (canAddNotes && newNotes.includes(index))) && (
                               <button
                                 onClick={() => noteEdit(index)}
                                 className="p-1 text-zinc-400 hover:text-primary transition-colors"
@@ -1301,7 +1318,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                           <div className="flex items-center gap-2 mt-2">
                             <div
                               className={`w-6 h-6 p-0.5 rounded-full flex items-center justify-center ${getRandomBg(
-                                visit.hostId
+                                visit.hostId,
                               )} border-2 border-white`}
                             >
                               <img
@@ -1339,7 +1356,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                     .map((participantId: number) => {
                                       const participant = users.find(
                                         (u: any) =>
-                                          Number(u.userid) === participantId
+                                          Number(u.userid) === participantId,
                                       );
                                       return participant ? (
                                         <span
@@ -1368,7 +1385,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                     visit.id,
                                     visit.name,
                                     visit.time,
-                                    visit.participants
+                                    visit.participants,
                                   )
                                 }
                                 className="p-1 text-zinc-400 hover:text-primary transition-colors"

@@ -10,18 +10,18 @@ import prisma from "@/utils/database";
 import type { wallPost } from "@prisma/client";
 
 type WallPostWithAuthor = wallPost & {
-	author: {
-		userid: string;
-		username: string | null;
-		picture: string | null;
-		rankId?: number | null;
-		rankName?: string | null;
-		departments?: Array<{
-			id: string;
-			name: string;
-			color: string | null;
-		}>;
-	};
+  author: {
+    userid: string;
+    username: string | null;
+    picture: string | null;
+    rankId?: number | null;
+    rankName?: string | null;
+    departments?: Array<{
+      id: string;
+      name: string;
+      color: string | null;
+    }>;
+  };
 };
 import moment from "moment";
 import { withSessionSsr } from "@/lib/withSession";
@@ -51,9 +51,9 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
   async ({ query, req }) => {
     const workspaceGroupId = parseInt(query.id as string);
     const workspace = await prisma.workspace.findUnique({
-      where: { groupId: workspaceGroupId }
+      where: { groupId: workspaceGroupId },
     });
-    
+
     const posts = await prisma.wallPost.findMany({
       where: {
         workspaceGroupId: workspaceGroupId,
@@ -69,12 +69,12 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
             picture: true,
             ranks: {
               where: {
-                workspaceGroupId: workspaceGroupId
-              }
+                workspaceGroupId: workspaceGroupId,
+              },
             },
             workspaceMemberships: {
               where: {
-                workspaceGroupId: workspaceGroupId
+                workspaceGroupId: workspaceGroupId,
               },
               include: {
                 departmentMembers: {
@@ -83,13 +83,13 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
                       select: {
                         id: true,
                         name: true,
-                        color: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
+                        color: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -97,9 +97,9 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
 
     const roleIdToInfoMap = new Map<number, { rank: number; name: string }>();
     const rolesByRank: any[] = [];
-    
+
     if (workspace) {
-      const noblox = require('noblox.js');
+      const noblox = require("noblox.js");
       const roles = await noblox.getRoles(workspace.groupId);
       roles.sort((a: any, b: any) => a.rank - b.rank);
       rolesByRank.push(...roles);
@@ -107,11 +107,11 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
         roleIdToInfoMap.set(role.id, { rank: role.rank, name: role.name });
       });
     }
-    
-    const postsWithDetails = posts.map(post => {
+
+    const postsWithDetails = posts.map((post) => {
       const rank = post.author.ranks?.[0];
       let rankName = null;
-      
+
       if (rank) {
         const storedValue = Number(rank.rankId);
         if (storedValue > 255) {
@@ -121,9 +121,12 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
           rankName = role?.name || null;
         }
       }
-      
-      const departments = post.author.workspaceMemberships?.[0]?.departmentMembers?.map(dm => dm.department) || [];
-      
+
+      const departments =
+        post.author.workspaceMemberships?.[0]?.departmentMembers?.map(
+          (dm) => dm.department,
+        ) || [];
+
       return {
         ...post,
         author: {
@@ -132,8 +135,8 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
           picture: post.author.picture,
           rankId: rank ? Number(rank.rankId) : null,
           rankName,
-          departments
-        }
+          departments,
+        },
       };
     });
 
@@ -157,14 +160,14 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
       props: {
         posts: JSON.parse(
           JSON.stringify(postsWithDetails, (key, value) =>
-            typeof value === "bigint" ? value.toString() : value
-          )
+            typeof value === "bigint" ? value.toString() : value,
+          ),
         ) as WallPostWithAuthor[],
         userPermissions,
         userIsAdmin,
       },
     };
-  }
+  },
 );
 
 type pageProps = {
@@ -242,7 +245,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
       .catch((error) => {
         console.error(error);
         toast.error(
-          error.response?.data?.error || "Could not post wall message."
+          error.response?.data?.error || "Could not post wall message.",
         );
         setLoading(false);
       });
@@ -261,7 +264,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       toast.error(
-        "Invalid file type. Only JPEG, PNG, GIF, and WEBP are supported."
+        "Invalid file type. Only JPEG, PNG, GIF, and WEBP are supported.",
       );
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -302,22 +305,22 @@ const Wall: pageWithLayout<pageProps> = (props) => {
   };
 
   const BG_COLORS = [
-    "bg-rose-300",
-    "bg-lime-300",
-    "bg-teal-200",
-    "bg-amber-300",
-    "bg-rose-200",
-    "bg-lime-200",
-    "bg-green-100",
-    "bg-red-100",
-    "bg-yellow-200",
     "bg-amber-200",
-    "bg-emerald-300",
-    "bg-green-300",
     "bg-red-300",
+    "bg-lime-200",
+    "bg-emerald-300",
+    "bg-rose-200",
+    "bg-green-100",
+    "bg-teal-200",
+    "bg-yellow-200",
+    "bg-red-100",
+    "bg-green-300",
+    "bg-lime-300",
     "bg-emerald-200",
-    "bg-green-200",
+    "bg-rose-300",
+    "bg-amber-300",
     "bg-red-200",
+    "bg-green-200",
   ];
 
   function getRandomBg(userid: string, username?: string) {
@@ -349,242 +352,255 @@ const Wall: pageWithLayout<pageProps> = (props) => {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <div className="pagePadding">
-      <Toaster position="bottom-center" />
+        <Toaster position="bottom-center" />
 
-      <div className="flex items-center gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">
-            Group Wall
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            Share updates and announcements with your team
-          </p>
+        <div className="flex items-center gap-3 mb-6">
+          <div>
+            <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">
+              Group Wall
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Share updates and announcements with your team
+            </p>
+          </div>
         </div>
-      </div>
 
-      {canPostOnWall() && (
-        <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-4 mb-8">
-          <div className="flex items-start gap-4">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${getRandomBg(
-                login.userId.toString()
-              )}`}
-            >
-              <img
-                src={login.thumbnail}
-                alt="Your avatar"
-                className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-800"
-                style={{ background: "transparent" }}
-              />
-            </div>
-            <div className="flex-1">
-              <textarea
-                className="w-full border-0 focus:ring-0 resize-none bg-transparent placeholder-gray-400 dark:placeholder-gray-500 text-zinc-900 dark:text-white"
-                placeholder="What's on your mind?"
-                value={wallMessage}
-                onChange={(e) => setWallMessage(e.target.value)}
-                rows={3}
-                maxLength={10000}
-              />
-              {selectedImage && (
-                <div className="relative mt-2">
-                  <img
-                    src={selectedImage}
-                    alt="Selected"
-                    className="max-h-64 rounded-lg object-contain"
-                  />
-                  <button
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+        {canPostOnWall() && (
+          <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-4 mb-8">
+            <div className="flex items-start gap-4">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${getRandomBg(
+                  login.userId.toString(),
+                )}`}
+              >
+                <img
+                  src={login.thumbnail}
+                  alt="Your avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-800"
+                  style={{ background: "transparent" }}
+                />
+              </div>
+              <div className="flex-1">
+                <textarea
+                  className="w-full border-0 focus:ring-0 resize-none bg-transparent placeholder-gray-400 dark:placeholder-gray-500 text-zinc-900 dark:text-white"
+                  placeholder="What's on your mind?"
+                  value={wallMessage}
+                  onChange={(e) => setWallMessage(e.target.value)}
+                  rows={3}
+                  maxLength={10000}
+                />
+                {selectedImage && (
+                  <div className="relative mt-2">
+                    <img
+                      src={selectedImage}
+                      alt="Selected"
+                      className="max-h-64 rounded-lg object-contain"
+                    />
+                    <button
+                      onClick={removeImage}
+                      className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+                    >
+                      <IconX size={16} />
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-700">
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleImageSelect}
+                    />
+                    {canAddPhotos() && (
+                      <button
+                        className="p-2 text-zinc-500 hover:text-primary rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <IconPhoto size={20} />
+                      </button>
+                    )}
+                    <div className="relative z-10">
+                      <button
+                        className="p-2 text-zinc-500 hover:text-primary rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      >
+                        <IconMoodSmile size={20} />
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="absolute top-full left-0 mt-2 z-10">
+                          <EmojiPicker
+                            onEmojiClick={onEmojiClick}
+                            theme={
+                              document.documentElement.classList.contains(
+                                "dark",
+                              )
+                                ? Theme.DARK
+                                : Theme.LIGHT
+                            }
+                            width={350}
+                            height={400}
+                            lazyLoadEmojis={true}
+                            searchPlaceholder="Search emojis..."
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    classoverride="bg-primary hover:bg-primary/90 text-white dark:text-white px-6 dark:bg-primary dark:hover:bg-primary/80"
+                    workspace
+                    onPress={sendPost}
+                    loading={loading}
+                    disabled={!wallMessage.trim() && !selectedImage}
                   >
-                    <IconX size={16} />
-                  </button>
+                    <IconSend size={18} className="mr-2" />
+                    Post
+                  </Button>
                 </div>
-              )}
-              <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-700">
-                <div className="flex items-center gap-4">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
-                    onChange={handleImageSelect}
-                  />
-                  {canAddPhotos() && (
-                    <button
-                      className="p-2 text-zinc-500 hover:text-primary rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <IconPhoto size={20} />
-                    </button>
-                  )}
-                  <div className="relative z-10">
-                    <button
-                      className="p-2 text-zinc-500 hover:text-primary rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    >
-                      <IconMoodSmile size={20} />
-                    </button>
-                    {showEmojiPicker && (
-                      <div className="absolute top-full left-0 mt-2 z-10">
-                        <EmojiPicker
-                          onEmojiClick={onEmojiClick}
-                          theme={
-                            document.documentElement.classList.contains("dark")
-                              ? Theme.DARK
-                              : Theme.LIGHT
-                          }
-                          width={350}
-                          height={400}
-                          lazyLoadEmojis={true}
-                          searchPlaceholder="Search emojis..."
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {posts.length < 1 ? (
+            <div className="bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-8 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <IconInbox className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
+                No posts yet
+              </h3>
+              <p className="text-zinc-500 dark:text-zinc-400">
+                Be the first to share something with your team!
+              </p>
+            </div>
+          ) : (
+            posts.map((post: any) => (
+              <div
+                key={post.id}
+                className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${getRandomBg(
+                      post.author.userid,
+                    )}`}
+                  >
+                    <img
+                      alt="avatar headshot"
+                      src={post.author.picture}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-zinc-800"
+                      style={{ background: "transparent" }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-zinc-900 dark:text-white">
+                            {post.author.username}
+                          </h3>
+                          {post.author.departments &&
+                            post.author.departments.length > 0 && (
+                              <span
+                                className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
+                                style={{
+                                  backgroundColor:
+                                    post.author.departments[0].color ||
+                                    "#3b82f6",
+                                }}
+                              >
+                                {post.author.departments[0].name}
+                              </span>
+                            )}
+                        </div>
+                        {post.author.rankName && (
+                          <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-0.5">
+                            {post.author.rankName}
+                          </p>
+                        )}
+                      </div>
+                      {(() => {
+                        const isAuthor =
+                          String(post.authorId) === String(login.userId);
+                        const hasManageWall =
+                          userPermissions.includes("delete_wall_posts");
+                        const canDelete = isAuthor || hasManageWall;
+
+                        return canDelete ? (
+                          <button
+                            onClick={() => {
+                              setPostToDelete(post.id);
+                              setShowDeleteModal(true);
+                            }}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          >
+                            <IconTrash size={18} />
+                          </button>
+                        ) : null;
+                      })()}
+                    </div>
+                    <div className="prose text-zinc-800 dark:text-zinc-200 dark:prose-invert max-w-none mt-3">
+                      <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                        {post.content}
+                      </ReactMarkdown>
+                    </div>
+                    {post.image && (
+                      <div className="mt-4">
+                        <img
+                          src={post.image}
+                          alt="Post image"
+                          className="max-h-96 rounded-lg object-contain"
+                          style={{
+                            minHeight: "100px",
+                            backgroundColor: "#f0f0f0",
+                          }}
                         />
                       </div>
                     )}
-                  </div>
-                </div>
-                <Button
-                  classoverride="bg-primary hover:bg-primary/90 text-white dark:text-white px-6 dark:bg-primary dark:hover:bg-primary/80"
-                  workspace
-                  onPress={sendPost}
-                  loading={loading}
-                  disabled={!wallMessage.trim() && !selectedImage}
-                >
-                  <IconSend size={18} className="mr-2" />
-                  Post
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        {posts.length < 1 ? (
-          <div className="bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-              <IconInbox className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
-              No posts yet
-            </h3>
-            <p className="text-zinc-500 dark:text-zinc-400">
-              Be the first to share something with your team!
-            </p>
-          </div>
-        ) : (
-          posts.map((post: any) => (
-            <div
-              key={post.id}
-              className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start gap-4">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center ${getRandomBg(
-                    post.author.userid
-                  )}`}
-                >
-                  <img
-                    alt="avatar headshot"
-                    src={post.author.picture}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-zinc-800"
-                    style={{ background: "transparent" }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-zinc-900 dark:text-white">
-                          {post.author.username}
-                        </h3>
-                        {post.author.departments && post.author.departments.length > 0 && (
-                          <span 
-                            className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
-                            style={{ backgroundColor: post.author.departments[0].color || '#3b82f6' }}
-                          >
-                            {post.author.departments[0].name}
-                          </span>
-                        )}
-                      </div>
-                      {post.author.rankName && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-0.5">
-                          {post.author.rankName}
-                        </p>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
+                      {moment(post.createdAt).format(
+                        "MMMM D, YYYY [at] h:mm A",
                       )}
-                    </div>
-                    {(() => {
-                      const isAuthor =
-                        String(post.authorId) === String(login.userId);
-                      const hasManageWall =
-                        userPermissions.includes("delete_wall_posts");
-                      const canDelete = isAuthor || hasManageWall;
-
-                      return canDelete ? (
-                        <button
-                          onClick={() => {
-                            setPostToDelete(post.id);
-                            setShowDeleteModal(true);
-                          }}
-                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        >
-                          <IconTrash size={18} />
-                        </button>
-                      ) : null;
-                    })()}
+                    </p>
                   </div>
-                  <div className="prose text-zinc-800 dark:text-zinc-200 dark:prose-invert max-w-none mt-3">
-                    <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
-                      {post.content}
-                    </ReactMarkdown>
-                  </div>
-                  {post.image && (
-                    <div className="mt-4">
-                      <img
-                        src={post.image}
-                        alt="Post image"
-                        className="max-h-96 rounded-lg object-contain"
-                        style={{ minHeight: '100px', backgroundColor: '#f0f0f0' }}
-                      />
-                    </div>
-                  )}
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
-                    {moment(post.createdAt).format(
-                      "MMMM D, YYYY [at] h:mm A"
-                    )}
-                  </p>
                 </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
-              Confirm Deletion
-            </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
-              Are you sure you want to delete this post?</p> 
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-6">This action cannot be undone.</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 rounded-md bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              >
-                Delete
-              </button>
+            ))
+          )}
+        </div>
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
+                Confirm Deletion
+              </h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                Are you sure you want to delete this post?
+              </p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-6">
+                This action cannot be undone.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 rounded-md bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
