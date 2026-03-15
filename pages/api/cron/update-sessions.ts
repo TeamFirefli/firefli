@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     let updatedStatus = 0;
 
     for (const s of candidates) {
-      const duration = (s as any).duration || 30;
+      const duration = s.duration;
       const endTime = new Date(new Date(s.date).getTime() + duration * 60 * 1000);
 
       if (endTime <= now) {
@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         if (s.discordMessageId) {
           const statues = (s.sessionType as any).statues || [];
           const currentStatus = getSessionStatus(s.date, duration, statues);
-          if (currentStatus && currentStatus !== (s as any).lastDiscordStatus) {
+          if (currentStatus && currentStatus !== s.lastDiscordStatus) {
             editSessionNotification(s.id, currentStatus).catch(() => {});
             updatedStatus++;
           }

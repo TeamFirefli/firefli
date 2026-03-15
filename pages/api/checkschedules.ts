@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '@/utils/database';
 import { withSessionRoute } from '@/lib/withSession'
+import { sendSessionNotification } from '@/utils/session-notification';
 type Data = {
 	success: boolean
 	error?: string
@@ -65,6 +66,15 @@ export async function handler(
 				startedAt: new Date()
 			}
 		});
+		sendSessionNotification(session.sessionType.workspaceGroupId, 'start', {
+			id: session.id,
+			name: session.name || '',
+			type: session.type || 'other',
+			date: session.date,
+			duration: session.duration,
+			hostUserId: Number(session.ownerId),
+			sessionTypeName: session.sessionType.name,
+		}).catch(() => {});
 	}
 	
 
