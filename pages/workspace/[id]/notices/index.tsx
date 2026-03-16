@@ -516,11 +516,11 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                     {activeNotices.map((notice) => (
                       <div
                         key={notice.id}
-                        className="flex flex-col items-center gap-2 bg-zinc-50 dark:bg-zinc-800/60 rounded-lg p-4 shadow-sm"
+                        className="flex flex-col items-center gap-1 p-2"
                       >
                         <div
                           className={`w-16 h-16 rounded-full flex items-center justify-center ${getRandomBg(
