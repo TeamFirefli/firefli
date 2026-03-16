@@ -496,7 +496,7 @@ const Login: NextPage = () => {
       <div className="relative min-h-screen px-4 py-6 sm:px-6 lg:px-10 lg:py-0 lg:pr-0" style={{ zIndex: 1 }}>
         <div className="pointer-events-none absolute left-10 top-8 hidden lg:block">
           <img
-            src="/logo.svg"
+            src="/wlogo.svg"
             alt="Firefli"
             className="h-12 w-auto drop-shadow-[0_8px_24px_rgba(15,23,42,0.18)]"
           />
@@ -513,7 +513,13 @@ const Login: NextPage = () => {
                 <ThemeToggle />
               </div>
               <div className="w-full lg:my-auto">
-
+              <div className="-mt-6 mb-5 flex justify-center">
+                <img
+                  src="/logo.svg"
+                  alt="Firefli logo"
+                  className="h-10 w-auto sm:h-12"
+                />
+              </div>
               {suspendedMessage && (
                 <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
                   <p className="text-center text-sm font-medium text-red-800 dark:text-red-200">
