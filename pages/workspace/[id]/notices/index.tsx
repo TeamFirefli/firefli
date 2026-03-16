@@ -54,6 +54,29 @@ function getRandomBg(userid: string, username?: string) {
   return BG_COLORS[index];
 }
 
+function getAvatarSrc(
+  workspaceId: string | string[] | undefined,
+  userData: any
+) {
+  const picture = userData?.picture;
+  if (typeof picture === "string" && picture.trim().length > 0) {
+    return picture;
+  }
+
+  const avatar = userData?.avatar;
+  if (typeof avatar === "string" && avatar.trim().length > 0) {
+    return avatar;
+  }
+
+  const userId = userData?.userid?.toString?.();
+  const workspace = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
+  if (workspace && userId) {
+    return `/api/workspace/${workspace}/avatar/${userId}`;
+  }
+
+  return "/default-avatar.jpg";
+}
+
 type NoticeWithUser = inactivityNotice & {
   user: user & {
     workspaceMemberships?: Array<{
@@ -493,7 +516,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {activeNotices.map((notice) => (
                       <div
                         key={notice.id}
@@ -505,9 +528,12 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                           )} ring-2 ring-white dark:ring-zinc-700 overflow-hidden`}
                         >
                           <img
-                            src={notice.user?.picture ?? "/default-avatar.jpg"}
+                            src={getAvatarSrc(id, notice.user)}
                             alt={notice.user?.username ?? "User"}
                             className="w-16 h-16 object-cover rounded-full"
+                            onError={(e) => {
+                              e.currentTarget.src = "/default-avatar.jpg";
+                            }}
                           />
                         </div>
                         <div className="text-center">
@@ -700,13 +726,34 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                         key={notice.id}
                         className="bg-white dark:bg-zinc-700 rounded-xl p-5 shadow-sm"
                       >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                        <div className="flex items-center justify-between mb-3 gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={`w-9 h-9 rounded-full flex items-center justify-center ${getRandomBg(
+                                notice.user?.userid?.toString() ?? ""
+                              )} ring-2 ring-transparent overflow-hidden shrink-0`}
+                            >
+                              <img
+                                src={getAvatarSrc(id, notice.user)}
+                                alt={notice.user?.username ?? "User"}
+                                className="w-9 h-9 object-cover rounded-full border-2 border-white"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/default-avatar.jpg";
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                                {notice.user?.username || "User"}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300">
                             <IconCalendarTime className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
                             <span>
                               {moment(notice.startTime!).format("MMM Do")} -{" "}
                               {moment(notice.endTime!).format("MMM Do YYYY")}
                             </span>
+                              </div>
+                            </div>
                           </div>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -764,9 +811,12 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                             )} ring-2 ring-transparent hover:ring-primary transition overflow-hidden`}
                           >
                             <img
-                              src={notice.user?.picture ?? "/default-avatar.jpg"}
+                              src={getAvatarSrc(id, notice.user)}
                               alt={notice.user?.username ?? "User"}
                               className="w-10 h-10 object-cover rounded-full border-2 border-white"
+                              onError={(e) => {
+                                e.currentTarget.src = "/default-avatar.jpg";
+                              }}
                             />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -832,19 +882,19 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                 <div className="mb-8">
                   <button
                     onClick={() => setIsActiveExpanded(!isActiveExpanded)}
-                    className="flex items-center justify-between w-full text-left mb-4 group"
+                    className="flex items-start sm:items-center justify-between w-full text-left mb-4 group gap-3"
                   >
-                    <h3 className="text-lg font-medium text-zinc-900 dark:text-white">
+                    <h3 className="min-w-0 flex-1 text-base sm:text-lg leading-tight font-medium text-zinc-900 dark:text-white break-words">
                       Currently Active Notices ({activeNotices.length})
                     </h3>
                     {isActiveExpanded ? (
-                      <IconChevronUp className="w-5 h-5 text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" />
+                      <IconChevronUp className="w-5 h-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" />
                     ) : (
-                      <IconChevronDown className="w-5 h-5 text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" />
+                      <IconChevronDown className="w-5 h-5 shrink-0 text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" />
                     )}
                   </button>
                   {isActiveExpanded && (
-                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 shadow-sm">
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 sm:p-6 shadow-sm">
                       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                         {activeNotices.map((notice) => (
                           <div
@@ -858,9 +908,12 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                                 )} ring-2 ring-transparent hover:ring-primary transition overflow-hidden`}
                               >
                                 <img
-                                  src={notice.user?.picture ?? "/default-avatar.jpg"}
+                                  src={getAvatarSrc(id, notice.user)}
                                   alt={notice.user?.username ?? "User"}
                                   className="w-10 h-10 object-cover rounded-full border-2 border-white"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/default-avatar.jpg";
+                                  }}
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -888,14 +941,14 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                             </div>
 
                             <div className="bg-zinc-50 dark:bg-zinc-600 rounded-lg p-3 mb-3">
-                              <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 mb-1">
-                                <IconCalendarTime className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                              <div className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-300 mb-1">
+                                <IconCalendarTime className="w-4 h-4 shrink-0 mt-0.5 text-zinc-600 dark:text-zinc-300" />
                                 <span>
                                   {moment(notice.startTime!).format("MMM Do")} -{" "}
                                   {moment(notice.endTime!).format("MMM Do YYYY")}
                                 </span>
                               </div>
-                              <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                              <p className="text-sm text-zinc-600 dark:text-zinc-300 break-words whitespace-pre-wrap">
                                 {notice.reason}
                               </p>
                             </div>
@@ -947,9 +1000,12 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                               )} ring-2 ring-transparent hover:ring-primary transition overflow-hidden`}
                             >
                               <img
-                                src={notice.user?.picture ?? "/default-avatar.jpg"}
+                                src={getAvatarSrc(id, notice.user)}
                                 alt={notice.user?.username ?? "User"}
                                 className="w-10 h-10 object-cover rounded-full border-2 border-white"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/default-avatar.jpg";
+                                }}
                               />
                             </div>
                             <div className="flex-1 min-w-0">
