@@ -4,6 +4,7 @@ import { fetchworkspace, getConfig, setConfig } from "@/utils/configEngine";
 import prisma from "@/utils/database";
 import { withSessionRoute } from "@/lib/withSession";
 import { withPermissionCheck } from "@/utils/permissionsManager";
+import { getResetStart } from "@/utils/activityrest";
 
 import {
   getUsername,
@@ -29,62 +30,44 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const workspaceGroupId = Number(req.query.id as string);
 
   try {
-    const lastReset = await prisma.activityReset.findFirst({
-      where: { workspaceGroupId },
-      orderBy: { resetAt: "desc" },
-      select: { resetAt: true },
-    });
-
-    let periodStart: Date;
-    if (lastReset) {
-      periodStart = lastReset.resetAt;
-    } else {
-      const earliestSession = await prisma.activitySession.findFirst({
-        where: { workspaceGroupId },
-        orderBy: { startTime: "asc" },
-        select: { startTime: true },
-      });
-
-      const earliestAdjustment = await prisma.activityAdjustment.findFirst({
-        where: { workspaceGroupId },
-        orderBy: { createdAt: "asc" },
-        select: { createdAt: true },
-      });
-      periodStart = new Date();
-      if (earliestSession && earliestAdjustment) {
-        periodStart =
-          earliestSession.startTime < earliestAdjustment.createdAt
-            ? earliestSession.startTime
-            : earliestAdjustment.createdAt;
-      } else if (earliestSession) {
-        periodStart = earliestSession.startTime;
-      } else if (earliestAdjustment) {
-        periodStart = earliestAdjustment.createdAt;
-      }
-    }
+    const periodStart = await getResetStart(workspaceGroupId);
 
     const periodEnd = new Date();
     
     console.log(`[RESET] Period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`);
     
-    const workspaceMembers = await prisma.workspaceMember.findMany({
-      where: { workspaceGroupId },
-      include: {
-        user: {
-          include: {
+    const workspaceUsers = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
             roles: {
-              where: { workspaceGroupId },
-              include: { quotaRoles: { include: { quota: true } } },
+              some: { workspaceGroupId },
             },
           },
+          {
+            workspaceMemberships: {
+              some: { workspaceGroupId },
+            },
+          },
+        ],
+      },
+      include: {
+        roles: {
+          where: { workspaceGroupId },
+          include: { quotaRoles: { include: { quota: true } } },
         },
-        departmentMembers: {
+        workspaceMemberships: {
+          where: { workspaceGroupId },
           include: {
-            department: {
+            departmentMembers: {
               include: {
-                quotaDepartments: {
+                department: {
                   include: {
-                    quota: true,
+                    quotaDepartments: {
+                      include: {
+                        quota: true,
+                      },
+                    },
                   },
                 },
               },
@@ -94,7 +77,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       },
     });
     
-    console.log(`[RESET] Found ${workspaceMembers.length} workspace members`);
+    console.log(`[RESET] Found ${workspaceUsers.length} workspace-accessible users`);
     
     const quotas = await prisma.quota.findMany({
       where: { workspaceGroupId },
@@ -113,8 +96,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       quotaProgress: any;
     }[] = [];
 
-    for (const member of workspaceMembers) {
-      const userId = member.userId;
+    for (const user of workspaceUsers) {
+      const userId = user.userid;
+      const membership = user.workspaceMemberships[0];
+      const departmentMembers = membership?.departmentMembers || [];
       const sessions = await prisma.activitySession.findMany({
         where: {
           userId,
@@ -271,11 +256,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       const totalWallPosts = wallPosts.length;
 
       const quotaProgress: any = {};
-      const roleQuotas = member.user.roles
+      const roleQuotas = user.roles
         .flatMap((role) => role.quotaRoles)
         .map((qr) => qr.quota);
       
-      const departmentQuotas = member.departmentMembers
+      const departmentQuotas = departmentMembers
         .flatMap((dm) => dm.department.quotaDepartments)
         .map((qd) => qd.quota);
 

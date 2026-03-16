@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/utils/database";
 import { getConfig } from "@/utils/configEngine";
+import { getResetStart } from "@/utils/activityrest";
 
 type ResetResult = {
   workspaceId: number;
@@ -139,60 +140,41 @@ export default async function handler(
 }
 
 async function performReset(workspaceGroupId: number) {
-  const lastReset = await prisma.activityReset.findFirst({
-    where: { workspaceGroupId },
-    orderBy: { resetAt: "desc" },
-    select: { resetAt: true },
-  });
-
-  let periodStart: Date;
-  if (lastReset) {
-    periodStart = lastReset.resetAt;
-  } else {
-    const earliestSession = await prisma.activitySession.findFirst({
-      where: { workspaceGroupId },
-      orderBy: { startTime: "asc" },
-      select: { startTime: true },
-    });
-
-    const earliestAdjustment = await prisma.activityAdjustment.findFirst({
-      where: { workspaceGroupId },
-      orderBy: { createdAt: "asc" },
-      select: { createdAt: true },
-    });
-
-    periodStart = new Date();
-    if (earliestSession && earliestAdjustment) {
-      periodStart =
-        earliestSession.startTime < earliestAdjustment.createdAt
-          ? earliestSession.startTime
-          : earliestAdjustment.createdAt;
-    } else if (earliestSession) {
-      periodStart = earliestSession.startTime;
-    } else if (earliestAdjustment) {
-      periodStart = earliestAdjustment.createdAt;
-    }
-  }
+  const periodStart = await getResetStart(workspaceGroupId);
 
   const periodEnd = new Date();
-  const workspaceMembers = await prisma.workspaceMember.findMany({
-    where: { workspaceGroupId },
-    include: {
-      user: {
-        include: {
+  const workspaceUsers = await prisma.user.findMany({
+    where: {
+      OR: [
+        {
           roles: {
-            where: { workspaceGroupId },
-            include: { quotaRoles: { include: { quota: true } } },
+            some: { workspaceGroupId },
           },
         },
+        {
+          workspaceMemberships: {
+            some: { workspaceGroupId },
+          },
+        },
+      ],
+    },
+    include: {
+      roles: {
+        where: { workspaceGroupId },
+        include: { quotaRoles: { include: { quota: true } } },
       },
-      departmentMembers: {
+      workspaceMemberships: {
+        where: { workspaceGroupId },
         include: {
-          department: {
+          departmentMembers: {
             include: {
-              quotaDepartments: {
+              department: {
                 include: {
-                  quota: true,
+                  quotaDepartments: {
+                    include: {
+                      quota: true,
+                    },
+                  },
                 },
               },
             },
@@ -216,8 +198,10 @@ async function performReset(workspaceGroupId: number) {
     quotaProgress: any;
   }[] = [];
 
-  for (const member of workspaceMembers) {
-    const userId = member.userId;
+  for (const user of workspaceUsers) {
+    const userId = user.userid;
+    const membership = user.workspaceMemberships[0];
+    const departmentMembers = membership?.departmentMembers || [];
     const sessions = await prisma.activitySession.findMany({
       where: {
         userId,
@@ -290,7 +274,7 @@ async function performReset(workspaceGroupId: number) {
     });
 
     const quotaProgress: any = {};
-    const userRoles = member.user.roles;
+    const userRoles = user.roles;
     const allQuotas: any[] = [];
     
     for (const role of userRoles) {
@@ -310,7 +294,7 @@ async function performReset(workspaceGroupId: number) {
       }
     }
 
-    for (const departmentMember of member.departmentMembers) {
+    for (const departmentMember of departmentMembers) {
       for (const quotaDepartment of departmentMember.department.quotaDepartments) {
         const quota = quotaDepartment.quota;
         if (!quotaProgress[quota.id]) {
