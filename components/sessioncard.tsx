@@ -94,6 +94,38 @@ const SessionModal: React.FC<SessionModalProps> = ({
   const router = useRouter();
   const login = useRecoilValue(loginState);
   const workspace = useRecoilValue(workspacestate);
+  const workspaceId =
+    (router.query.id as string) ||
+    (workspace?.groupId ? String(workspace.groupId) : "");
+
+  const getAvatarUrlForUser = (userId?: string | null, picture?: string | null) => {
+    if (picture) return picture;
+    if (!userId || !workspaceId) return "/default-avatar.jpg";
+    return `/api/workspace/${workspaceId}/avatar/${userId}`;
+  };
+
+  const normalizeUser = (userLike: any) => {
+    const userId =
+      userLike?.userid?.toString?.() ||
+      userLike?.userId?.toString?.() ||
+      userLike?.id?.toString?.();
+    if (!userId) return null;
+
+    const username =
+      userLike?.username ||
+      userLike?.user?.username ||
+      `User ${userId}`;
+
+    return {
+      ...userLike,
+      userid: userId,
+      username,
+      picture: getAvatarUrlForUser(
+        userId,
+        userLike?.picture || userLike?.user?.picture || null
+      ),
+    };
+  };
 
   const defaultColors: SessionColors = {
     recurring: "bg-blue-500",
@@ -132,9 +164,37 @@ const SessionModal: React.FC<SessionModalProps> = ({
 
   useEffect(() => {
     if (isOpen && session) {
-      setAvailableUsers(workspaceMembers);
+      const merged = new Map<string, any>();
+
+      for (const member of workspaceMembers || []) {
+        const normalized = normalizeUser(member);
+        if (!normalized) continue;
+        merged.set(normalized.userid, normalized);
+      }
+
+      const ownerNormalized = normalizeUser(session.owner);
+      if (ownerNormalized) {
+        merged.set(ownerNormalized.userid, ownerNormalized);
+      } else if (session.ownerId) {
+        const ownerId = session.ownerId.toString();
+        if (!merged.has(ownerId)) {
+          merged.set(ownerId, {
+            userid: ownerId,
+            username: `User ${ownerId}`,
+            picture: getAvatarUrlForUser(ownerId, null),
+          });
+        }
+      }
+
+      for (const assigned of session.users || []) {
+        const normalized = normalizeUser(assigned?.user || assigned);
+        if (!normalized) continue;
+        merged.set(normalized.userid, normalized);
+      }
+
+      setAvailableUsers(Array.from(merged.values()));
     }
-  }, [isOpen, session, workspaceMembers, login.userId]);
+  }, [isOpen, session, workspaceMembers, login.userId, workspaceId]);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -407,6 +467,33 @@ const SessionModal: React.FC<SessionModalProps> = ({
   };
   
   const currentStatus = getCurrentStatus();
+  const getAvatarFallback = (userId?: string | null, picture?: string | null) => {
+    return getAvatarUrlForUser(userId, picture);
+  };
+
+  const getAssignedDisplay = (assignedUser: any) => {
+    if (!assignedUser) {
+      return { username: "", picture: null as string | null, userId: undefined as string | undefined };
+    }
+
+    const assignedUserId = assignedUser.userid?.toString();
+    const workspaceMember = availableUsers.find(
+      (user: any) => user.userid?.toString() === assignedUserId
+    );
+
+    const username =
+      workspaceMember?.username ||
+      assignedUser.user?.username ||
+      (assignedUserId ? `User ${assignedUserId}` : "");
+
+    const picture =
+      workspaceMember?.picture ||
+      assignedUser.user?.picture ||
+      getAvatarFallback(assignedUserId, null) ||
+      null;
+
+    return { username, picture, userId: assignedUserId };
+  };
 
   return (
     <div 
@@ -513,7 +600,10 @@ const SessionModal: React.FC<SessionModalProps> = ({
                   </span>
                   <div className="flex-1">
                     <HostButton
-                      currentValue={session.owner?.username || ""}
+                      currentValue={
+                        session.owner?.username ||
+                        (session.ownerId ? `User ${session.ownerId.toString()}` : "")
+                      }
                       onValueChange={handleHostClaim}
                       isSubmitting={isSubmitting}
                       canEdit={
@@ -525,7 +615,10 @@ const SessionModal: React.FC<SessionModalProps> = ({
                       currentUserId={login.userId}
                       currentUserPicture={login.thumbnail}
                       currentUserUsername={login.username}
-                      assignedUserPicture={session.owner?.picture}
+                      assignedUserPicture={getAvatarFallback(
+                        session.ownerId?.toString(),
+                        session.owner?.picture
+                      )}
                       assignedUserId={session.owner?.userid?.toString()}
                       workspace={workspace}
                       isHostRole={true}
@@ -553,25 +646,15 @@ const SessionModal: React.FC<SessionModalProps> = ({
                         </h4>
                         <div className="space-y-2">
                           {Array.from(Array(slotData.slots)).map((_, i) => {
-                            const key = `${slotData.id}-${i}`;
                             const assignedUser = session.users?.find(
                               (u: any) =>
                                 u.roleID === slotData.id && u.slot === i
                             );
-                            const username = assignedUser
-                              ? availableUsers.find(
-                                  (user: any) =>
-                                    user.userid ===
-                                    assignedUser.userid.toString()
-                                )?.username
-                              : null;
-                            const userPicture = assignedUser
-                              ? availableUsers.find(
-                                  (user: any) =>
-                                    user.userid ===
-                                    assignedUser.userid.toString()
-                                )?.picture
-                              : null;
+                            const {
+                              username,
+                              picture: userPicture,
+                              userId: assignedUserId,
+                            } = getAssignedDisplay(assignedUser);
                             return (
                               <div key={i} className="flex items-center gap-2">
                                 <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">
@@ -597,7 +680,7 @@ const SessionModal: React.FC<SessionModalProps> = ({
                                     currentUserPicture={login.thumbnail}
                                     currentUserUsername={login.username}
                                     assignedUserPicture={userPicture}
-                                    assignedUserId={assignedUser?.userid?.toString()}
+                                    assignedUserId={assignedUserId}
                                     workspace={workspace}
                                     isHostRole={slotData.name === "Host" || slotData.name.toLowerCase() === "co-host"}
                                     sessionType={session.type}
