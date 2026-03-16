@@ -5,6 +5,33 @@ import { logAudit } from "@/utils/logs";
 import sanitizeHtml from "sanitize-html";
 import { getConfig } from "@/utils/configEngine";
 
+async function getActorAccess(userId: number, workspaceGroupId: number) {
+  const user = await prisma.user.findUnique({
+    where: { userid: BigInt(userId) },
+    include: {
+      roles: {
+        where: { workspaceGroupId },
+      },
+      workspaceMemberships: {
+        where: { workspaceGroupId },
+      },
+    },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  return {
+    isAdmin: user.workspaceMemberships[0]?.isAdmin || false,
+    permissions: user.roles[0]?.permissions || [],
+  };
+}
+
+function hasAnyPermission(userPermissions: string[], required: string[]) {
+  return required.some((permission) => userPermissions.includes(permission));
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const workspaceGroupId = parseInt(req.query.id as string);
   const recId = req.query.recId as string;
@@ -15,6 +42,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === "GET") {
+    const userId = req.session.userid;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Not logged in" });
+    }
+
+    const actorAccess = await getActorAccess(Number(userId), workspaceGroupId);
+    if (!actorAccess) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    if (
+      !actorAccess.isAdmin &&
+      !hasAnyPermission(actorAccess.permissions, [
+        "view_recommendations",
+        "manage_recommendations",
+      ])
+    ) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
     const recommendation = await prisma.recommendation.findFirst({
       where: { id: recId, workspaceGroupId },
       include: {
@@ -42,6 +89,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const userId = req.session.userid;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Not logged in" });
+    }
+
+    const actorAccess = await getActorAccess(Number(userId), workspaceGroupId);
+    if (!actorAccess) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    if (!actorAccess.isAdmin && !actorAccess.permissions.includes("manage_recommendations")) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
     const { reason } = req.body;
@@ -107,6 +163,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const userId = req.session.userid;
     if (!userId) {
       return res.status(401).json({ success: false, error: "Not logged in" });
+    }
+
+    const actorAccess = await getActorAccess(Number(userId), workspaceGroupId);
+    if (!actorAccess) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    if (!actorAccess.isAdmin && !actorAccess.permissions.includes("delete_recommendations")) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
     const existing = await prisma.recommendation.findFirst({

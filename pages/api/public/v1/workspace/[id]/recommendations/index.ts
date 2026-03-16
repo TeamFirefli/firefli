@@ -108,6 +108,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         })
       }
 
+      const existingRecommendation = await prisma.recommendation.findFirst({
+        where: {
+          workspaceGroupId: workspaceId,
+          targetUserId: BigInt(targetUserId),
+          status: {
+            not: "archived",
+          },
+        },
+      })
+
+      if (existingRecommendation) {
+        return res.status(409).json({
+          success: false,
+          error: "This user already has an active recommendation. Archive or delete it before creating a new one",
+        })
+      }
+
       const recommendation = await prisma.recommendation.create({
         data: {
           workspaceGroupId: workspaceId,
