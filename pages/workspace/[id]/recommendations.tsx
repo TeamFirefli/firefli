@@ -26,6 +26,7 @@ import {
   IconBan,
   IconInbox,
   IconPencil,
+  IconTrash,
   IconSortDescending,
   IconSortAscending,
 } from "@tabler/icons-react";
@@ -230,6 +231,8 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
     userIsAdmin || userPermissions.includes("comment_recommendations");
   const canManage =
     userIsAdmin || userPermissions.includes("manage_recommendations");
+  const canDelete =
+    userIsAdmin || userPermissions.includes("delete_recommendations");
 
   const loadRecommendations = async (status: string) => {
     setTabLoading(true);
@@ -454,6 +457,16 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
       toast.success("Recommendation updated");
     } catch {
       toast.error("Failed to update");
+    }
+  };
+
+  const deleteRecommendation = async (recId: string) => {
+    try {
+      await axios.delete(`/api/workspace/${id}/recommendations/${recId}`);
+      setRecommendations((prev) => prev.filter((r) => r.id !== recId));
+      toast.success("Recommendation deleted!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete recommendation.");
     }
   };
 
@@ -874,7 +887,7 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
                           )}
                         </button>
 
-                        {canManage && (
+                        {(canManage || canDelete) && (
                           <div className="relative">
                             <button
                               onClick={(e) => {
@@ -896,58 +909,73 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
                             </button>
                             {openDropdown === rec.id && (
                               <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-50">
-                                <button
-                                  onClick={() => {
-                                    setEditingId(rec.id);
-                                    setEditReason(rec.reason);
-                                    setOpenDropdown(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-t-lg"
-                                >
-                                  <IconPencil size={14} /> Edit Reason
-                                </button>
-                                {rec.status !== "active" && (
-                                  <button
-                                    onClick={() => {
-                                      changeStatus(rec.id, "active");
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-                                  >
-                                    <IconInbox size={14} /> Move to Active
-                                  </button>
+                                {canManage && (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setEditingId(rec.id);
+                                        setEditReason(rec.reason);
+                                        setOpenDropdown(null);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-t-lg"
+                                    >
+                                      <IconPencil size={14} /> Edit Reason
+                                    </button>
+                                    {rec.status !== "active" && (
+                                      <button
+                                        onClick={() => {
+                                          changeStatus(rec.id, "active");
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                                      >
+                                        <IconInbox size={14} /> Move to Active
+                                      </button>
+                                    )}
+                                    {rec.status !== "approved" && (
+                                      <button
+                                        onClick={() => {
+                                          changeStatus(rec.id, "approved");
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                                      >
+                                        <IconCheck size={14} /> Approve
+                                      </button>
+                                    )}
+                                    {rec.status !== "rejected" && (
+                                      <button
+                                        onClick={() => {
+                                          changeStatus(rec.id, "rejected");
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                                      >
+                                        <IconBan size={14} /> Reject
+                                      </button>
+                                    )}
+                                    {rec.status !== "archived" && (
+                                      <button
+                                        onClick={() => {
+                                          changeStatus(rec.id, "archived");
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                                      >
+                                        <IconArchive size={14} /> Archive
+                                      </button>
+                                    )}
+                                  </>
                                 )}
-                                {rec.status !== "approved" && (
+                                {canDelete && (
                                   <button
                                     onClick={() => {
-                                      changeStatus(rec.id, "approved");
+                                      deleteRecommendation(rec.id);
                                       setOpenDropdown(null);
                                     }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-b-lg"
                                   >
-                                    <IconCheck size={14} /> Approve
-                                  </button>
-                                )}
-                                {rec.status !== "rejected" && (
-                                  <button
-                                    onClick={() => {
-                                      changeStatus(rec.id, "rejected");
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-                                  >
-                                    <IconBan size={14} /> Reject
-                                  </button>
-                                )}
-                                {rec.status !== "archived" && (
-                                  <button
-                                    onClick={() => {
-                                      changeStatus(rec.id, "archived");
-                                      setOpenDropdown(null);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-b-lg"
-                                  >
-                                    <IconArchive size={14} /> Archive
+                                    <IconTrash size={14} /> Delete
                                   </button>
                                 )}
                               </div>

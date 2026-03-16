@@ -112,6 +112,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   'comment_recommendations': 'Comment on recommendations',
   'vote_recommendations': 'Vote on recommendations',
   'manage_recommendations': 'Manage recommendations',
+  'delete_recommendations': 'Delete recommendations',
   'admin': 'Admin (Manage workspace)',
   'reset_activity': 'Reset activity',
   'view_audit_logs': 'View audit logs',

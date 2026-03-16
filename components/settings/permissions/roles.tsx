@@ -47,6 +47,9 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
   const [expandedSubcategories, setExpandedSubcategories] = React.useState<Set<string>>(
     new Set()
   );
+  const showRecommendationPermissions = Boolean(
+    workspace?.settings?.recommendationsEnabled
+  );
 
   const sessionTypes = ["shift", "training", "event", "other"];
   const sessionSubcategories: Record<string, Record<string, string>> = {};
@@ -138,6 +141,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       "Comment on recommendations": "comment_recommendations",
       "Vote on recommendations": "vote_recommendations",
       "Manage recommendations": "manage_recommendations",
+      "Delete recommendations": "delete_recommendations",
     },
     Settings: {
       "Admin (Manage workspace)": "admin",
@@ -180,6 +184,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
     }
 
     const categoryData = permissionCategories[category as keyof typeof permissionCategories];
+    if (!categoryData) return;
     let categoryPerms: string[] = [];
     if (categoryData && typeof categoryData === 'object' && '_subcategories' in categoryData) {
       const subcats = (categoryData as any)._subcategories;
@@ -473,7 +478,13 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
                           Manage the permissions assigned to this role
                         </p>
                         <div className="space-y-2">
-                          {Object.entries(permissionCategories).map(([category, perms]) => {
+                          {Object.entries(permissionCategories)
+                            .filter(
+                              ([category]) =>
+                                category !== "Recommendations" ||
+                                showRecommendationPermissions
+                            )
+                            .map(([category, perms]) => {
                             const isExpanded = expandedCategories.has(category);
                             const hasSubcategories = perms && typeof perms === 'object' && '_subcategories' in perms;
                             let categoryPerms: string[] = [];
