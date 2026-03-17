@@ -374,7 +374,7 @@ const workspace: LayoutProps = ({ children }) => {
 			return { title: "Activity", sections, hideHeader: true };
 		}
 
-		const staffPages = ['/views', '/notices', '/recommendations'];
+		const staffPages = ['/views', '/directory', '/notices', '/recommendations'];
 		const isStaffSectionPage = staffPages.some(page => 
 			path.includes(`/workspace/${id}${page}`)
 		);
@@ -409,6 +409,7 @@ const workspace: LayoutProps = ({ children }) => {
 			}));
 
 			const hasViewMembersPermission = workspace.yourPermission?.includes("view_members");
+			const hasViewDirectoryPermission = workspace.yourPermission?.includes("view_directory");
 			const hasNoticesPermission = 
 				workspace.yourPermission?.includes("create_notices") ||
 				workspace.yourPermission?.includes("approve_notices") ||
@@ -448,12 +449,22 @@ const workspace: LayoutProps = ({ children }) => {
 			const staffItems: SecondarySidebarItem[] = [];
 			
 			const isOnRecommendationsPage = path.includes(`/workspace/${id}/recommendations`);
+			const isOnDirectoryPage = path.includes(`/workspace/${id}/directory`);
 			if (hasViewMembersPermission) {
 				staffItems.push({
 					label: "Views",
 					href: `/workspace/${id}/views`,
 					icon: UserMultiple02Icon,
-					active: !isOnNotices && !isOnRecommendationsPage && !currentViewId,
+					active: !isOnNotices && !isOnRecommendationsPage && !isOnDirectoryPage && !currentViewId,
+				});
+			}
+
+			if (hasViewDirectoryPermission) {
+				staffItems.push({
+					label: "Directory",
+					href: `/workspace/${id}/directory`,
+					icon: UserGroupIcon,
+					active: isOnDirectoryPage,
 				});
 			}
 			

@@ -131,6 +131,7 @@ export async function handler(
 		"Add photos to wall posts": "add_wall_photos",
 		...sessionPermissions,
 		"View members": "view_members",
+		"View directory": "view_directory",
 		"Use saved views": "use_views",
 		"Create views": "create_views",
 		"Edit views": "edit_views",

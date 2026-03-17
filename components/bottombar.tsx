@@ -61,6 +61,7 @@ const BottomBar: NextPage = () => {
   const morePages = [
     { name: "Wall", href: `/workspace/${workspace.groupId}/wall`, icon: Comment01Icon, accessible: workspace.yourPermission.includes("view_wall") },
     { name: "Staff", href: `/workspace/${workspace.groupId}/views`, icon: UserMultipleIcon, accessible: workspace.yourPermission.includes("view_members") },
+    { name: "Directory", href: `/workspace/${workspace.groupId}/directory`, icon: UserMultipleIcon, accessible: workspace.yourPermission.includes("view_directory") },
     { name: "Notices", href: `/workspace/${workspace.groupId}/notices`, icon: Beach02Icon, accessible: true },
     ...(alliesEnabled ? [{ name: "Alliances", href: `/workspace/${workspace.groupId}/alliances`, icon: Agreement01Icon, accessible: true }] : []),
     { name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: File02Icon, accessible: true },

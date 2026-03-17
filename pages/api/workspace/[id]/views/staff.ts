@@ -725,5 +725,5 @@ export default withPermissionCheck(
       return res.status(500).json({ error: "Internal server error" });
     }
   },
-  "view_members"
+  ["view_members"]
 );

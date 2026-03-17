@@ -67,6 +67,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   'sessions_other_notes': 'Other Sessions - Add Notes',
   'sessions_other_assign_tag': 'Other Sessions - Assign Tag',
   'view_members': 'View members',
+  'view_directory': 'View directory',
   'use_views': 'Use saved views',
   'create_views': 'Create views',
   'edit_views': 'Edit views',

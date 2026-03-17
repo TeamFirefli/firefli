@@ -228,9 +228,12 @@ const Sidebar: NextPage = () => {
     const docsEnabled = workspace.settings?.guidesEnabled ?? true;
     const hasRecommendationsPermission = workspace.settings?.recommendationsEnabled && (workspace.yourPermission?.includes("view_recommendations") || workspace.isAdmin);
     const hasViewMembersPermission = workspace.yourPermission?.includes("view_members");
-    const showStaffSection = hasViewMembersPermission || hasNoticesPermission || hasRecommendationsPermission;
+    const hasViewDirectoryPermission = workspace.yourPermission?.includes("view_directory");
+    const showStaffSection = hasViewMembersPermission || hasViewDirectoryPermission || hasNoticesPermission || hasRecommendationsPermission;
     const staffHref = hasViewMembersPermission 
       ? `/workspace/${workspace.groupId}/views` 
+      : hasViewDirectoryPermission
+        ? `/workspace/${workspace.groupId}/directory`
       : hasNoticesPermission
         ? `/workspace/${workspace.groupId}/notices`
         : `/workspace/${workspace.groupId}/recommendations`;
@@ -289,6 +292,7 @@ const Sidebar: NextPage = () => {
       accessible: true,
       matchPaths: [
         `/workspace/${workspace.groupId}/views`,
+        `/workspace/${workspace.groupId}/directory`,
         `/workspace/${workspace.groupId}/notices`,
         `/workspace/${workspace.groupId}/recommendations`,
       ]
