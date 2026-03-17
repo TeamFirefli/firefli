@@ -50,6 +50,9 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
   const showRecommendationPermissions = Boolean(
     workspace?.settings?.recommendationsEnabled
   );
+  const showPolicyPermissions = Boolean(
+    workspace?.settings?.policiesEnabled
+  );
 
   const sessionTypes = ["shift", "training", "event", "other"];
   const sessionSubcategories: Record<string, Record<string, string>> = {};
@@ -80,28 +83,31 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
     Sessions: {
       _subcategories: sessionSubcategories
     },
-    Views: {
+    Staff: {
       "View members": "view_members",
+      "View directory": "view_directory",
       "Use saved views": "use_views",
       "Create views": "create_views",
       "Edit views": "edit_views",
       "Delete views": "delete_views",
+      "Create notices": "create_notices",
+      "Approve notices": "approve_notices",
+      "Manage notices": "manage_notices",
+      "View recommendations": "view_recommendations",
+      "Post recommendations": "post_recommendations",
+      "Comment on recommendations": "comment_recommendations",
+      "Vote on recommendations": "vote_recommendations",
+      "Manage recommendations": "manage_recommendations",
+      "Delete recommendations": "delete_recommendations",
     },
     Docs: {
       "Create docs": "create_docs",
       "Edit docs": "edit_docs",
       "Delete docs": "delete_docs",
-    },
-    Policies: {
       "Create policies": "create_policies",
       "Edit policies": "edit_policies",
       "Delete policies": "delete_policies",
-      "View compliance": "view_compliance",
-    },
-    Notices: {
-      "Create notices": "create_notices",
-      "Approve notices": "approve_notices",
-      "Manage notices": "manage_notices",
+      "View policy compliance": "view_compliance",
     },
     Quotas: {
       "Create quotas": "create_quotas",
@@ -134,14 +140,6 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       "Add visits": "add_alliance_visits",
       "Edit visits": "edit_alliance_visits",
       "Delete visits": "delete_alliance_visits",
-    },
-    Recommendations: {
-      "View recommendations": "view_recommendations",
-      "Post recommendations": "post_recommendations",
-      "Comment on recommendations": "comment_recommendations",
-      "Vote on recommendations": "vote_recommendations",
-      "Manage recommendations": "manage_recommendations",
-      "Delete recommendations": "delete_recommendations",
     },
     Settings: {
       "Admin (Manage workspace)": "admin",
@@ -479,21 +477,32 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
                         </p>
                         <div className="space-y-2">
                           {Object.entries(permissionCategories)
-                            .filter(
-                              ([category]) =>
-                                category !== "Recommendations" ||
-                                showRecommendationPermissions
-                            )
                             .map(([category, perms]) => {
+                            const permsToRender = Object.fromEntries(
+                              Object.entries(perms as Record<string, string>).filter(([, value]) => {
+                                if (!showRecommendationPermissions && String(value).includes("recommendations")) {
+                                  return false;
+                                }
+                                if (!showPolicyPermissions && [
+                                  "create_policies",
+                                  "edit_policies",
+                                  "delete_policies",
+                                  "view_compliance",
+                                ].includes(String(value))) {
+                                  return false;
+                                }
+                                return true;
+                              })
+                            );
                             const isExpanded = expandedCategories.has(category);
-                            const hasSubcategories = perms && typeof perms === 'object' && '_subcategories' in perms;
+                            const hasSubcategories = permsToRender && typeof permsToRender === 'object' && '_subcategories' in permsToRender;
                             let categoryPerms: string[] = [];
                             
                             if (hasSubcategories) {
-                              const subcats = (perms as any)._subcategories;
+                              const subcats = (permsToRender as any)._subcategories;
                               categoryPerms = Object.values(subcats).flatMap((subcat: any) => Object.values(subcat));
                             } else {
-                              categoryPerms = Object.values(perms as Record<string, string>);
+                              categoryPerms = Object.values(permsToRender as Record<string, string>);
                             }
                             
                             const allChecked = categoryPerms.every((perm) =>
@@ -502,6 +511,10 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
                             const someChecked = categoryPerms.some((perm) =>
                               role.permissions.includes(perm)
                             );
+
+                            if (categoryPerms.length === 0) {
+                              return null;
+                            }
 
                             return (
                               <div
@@ -541,7 +554,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
                                 {isExpanded && (
                                   <div className="px-3 py-2 space-y-2 bg-white dark:bg-zinc-800">
                                     {hasSubcategories ? (
-                                      Object.entries((perms as any)._subcategories).map(([subcat, subPerms]: [string, any]) => {
+                                      Object.entries((permsToRender as any)._subcategories).map(([subcat, subPerms]: [string, any]) => {
                                         const subcatKey = `${category}-${subcat}`;
                                         const isSubExpanded = expandedSubcategories.has(subcatKey);
                                         const subcatPerms = Object.values(subPerms);
@@ -626,7 +639,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
                                         );
                                       })
                                     ) : (
-                                      Object.entries(perms as Record<string, string>).map(([label, value]) => (
+                                      Object.entries(permsToRender as Record<string, string>).map(([label, value]) => (
                                         <label
                                           key={value}
                                           className="flex items-center space-x-2 pl-6"
@@ -667,7 +680,19 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
                           Each rank can only be assigned to one role
                         </p>
                         <div className="space-y-2">
-                          {grouproles.map((groupRole) => {
+                          {grouproles
+                            .filter((groupRole) => groupRole.rank !== 0 && groupRole.name.toLowerCase() !== "guest")
+                            .filter((groupRole, index, allRoles) => {
+                              return (
+                                allRoles.findIndex((r) => {
+                                  if (typeof r.rank === "number" && typeof groupRole.rank === "number") {
+                                    return r.rank === groupRole.rank;
+                                  }
+                                  return r.name.toLowerCase() === groupRole.name.toLowerCase();
+                                }) === index
+                              );
+                            })
+                            .map((groupRole) => {
                             const isAssignedElsewhere =
                               aroledoesincludegrouprole(role.id, groupRole);
                             const assignedRole = isAssignedElsewhere
