@@ -2,6 +2,7 @@ import workspace from "@/layouts/workspace";
 import { pageWithLayout } from "@/layoutTypes";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
 import prisma from "@/utils/database";
+import { getConfig } from "@/utils/configEngine";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
@@ -26,6 +27,7 @@ type StaffUser = {
     displayName?: string | null;
     picture: string | null;
   };
+  rankID?: number | null;
   rankName: string | null;
   departments?: string[];
   inactivityNotices?: Array<{
@@ -45,7 +47,7 @@ type PageProps = {
 export const getServerSideProps = withPermissionCheckSsr(async ({ params }) => {
   const workspaceGroupId = parseInt(params?.id as string);
 
-  const departments = await prisma.department.findMany({
+  let departments = await prisma.department.findMany({
     where: { workspaceGroupId },
     select: {
       id: true,
@@ -56,6 +58,25 @@ export const getServerSideProps = withPermissionCheckSsr(async ({ params }) => {
       name: "asc",
     },
   });
+
+  const directoryConfig = (await getConfig("directory", workspaceGroupId)) as
+    | { departmentOrder?: string[] }
+    | null;
+  const departmentOrder = Array.isArray(directoryConfig?.departmentOrder)
+    ? directoryConfig!.departmentOrder
+    : [];
+  if (departmentOrder.length > 0) {
+    const positions = new Map<string, number>();
+    departmentOrder.forEach((deptId, index) => positions.set(deptId, index));
+    departments = [...departments].sort((a, b) => {
+      const posA = positions.get(a.id);
+      const posB = positions.get(b.id);
+      if (posA != null && posB != null) return posA - posB;
+      if (posA != null) return -1;
+      if (posB != null) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }
 
   return {
     props: {
@@ -102,6 +123,9 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize] = useState(50);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [rankSort, setRankSort] = useState<"rank-desc" | "rank-asc">(
+    "rank-desc",
+  );
 
   useEffect(() => {
     const fetchDirectory = async () => {
@@ -142,6 +166,12 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
     );
   }, [departments]);
 
+  const departmentPositionMap = useMemo(() => {
+    return new Map(
+      departments.map((department, index) => [department.name, index]),
+    );
+  }, [departments]);
+
   const groupedUsers = useMemo(() => {
     const groups = new Map<string, StaffUser[]>();
 
@@ -160,10 +190,35 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
       }
     }
 
-    return Array.from(groups.entries()).sort((a, b) => {
-      return a[0].localeCompare(b[0]);
-    });
-  }, [users]);
+    const sortedGroups = Array.from(groups.entries())
+      .map(([departmentName, members]) => {
+        const sortedMembers = [...members].sort((a, b) => {
+          const rankA = Number(a.rankID ?? 0);
+          const rankB = Number(b.rankID ?? 0);
+          if (rankA !== rankB) {
+            return rankSort === "rank-desc" ? rankB - rankA : rankA - rankB;
+          }
+
+          const nameA =
+            a.info.displayName || a.info.username || String(a.info.userId);
+          const nameB =
+            b.info.displayName || b.info.username || String(b.info.userId);
+          return nameA.localeCompare(nameB);
+        });
+
+        return [departmentName, sortedMembers] as [string, StaffUser[]];
+      })
+      .sort((a, b) => {
+        const posA = departmentPositionMap.get(a[0]);
+        const posB = departmentPositionMap.get(b[0]);
+        if (posA != null && posB != null) return posA - posB;
+        if (posA != null) return -1;
+        if (posB != null) return 1;
+        return a[0].localeCompare(b[0]);
+      });
+
+    return sortedGroups;
+  }, [departmentPositionMap, rankSort, users]);
 
   const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
 
@@ -179,9 +234,23 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
               Grouped by department
             </p>
           </div>
-          <div className="hidden md:flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2">
+          <div className="hidden md:flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2">
             <IconUsers className="w-4 h-4" />
             <span>{totalUsers} total staff</span>
+            <span className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <label className="inline-flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Members by rank
+              <select
+                value={rankSort}
+                onChange={(e) =>
+                  setRankSort(e.target.value as "rank-desc" | "rank-asc")
+                }
+                className="px-2 py-1 text-sm rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="rank-desc">Highest to lowest</option>
+                <option value="rank-asc">Lowest to highest</option>
+              </select>
+            </label>
           </div>
         </div>
 
