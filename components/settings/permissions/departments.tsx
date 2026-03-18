@@ -1,6 +1,8 @@
 import React, { FC, useRef } from "react";
 import { Disclosure, Transition } from "@headlessui/react";
 import {
+  IconArrowDown,
+  IconArrowUp,
   IconChevronDown,
   IconPlus,
   IconTrash,
@@ -32,15 +34,83 @@ const DepartmentsManager: FC<Props> = ({ departments, setDepartments }) => {
   const router = useRouter();
   const saveTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
+  const applyOrder = (items: Department[], order: string[]) => {
+    if (!Array.isArray(order) || order.length === 0) {
+      return items;
+    }
+
+    const position = new Map<string, number>();
+    order.forEach((deptId, index) => position.set(deptId, index));
+
+    return [...items].sort((a, b) => {
+      const posA = position.get(a.id);
+      const posB = position.get(b.id);
+      if (posA != null && posB != null) return posA - posB;
+      if (posA != null) return -1;
+      if (posB != null) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  };
+
+  const saveDepartmentOrder = async (orderedDepartments: Department[]) => {
+    const order = orderedDepartments.map((d) => d.id);
+    try {
+      await axios.post(
+        `/api/workspace/${workspace.groupId}/settings/departments/order`,
+        { order },
+      );
+    } catch {
+      toast.error("Failed to save department order");
+    }
+  };
+
+  React.useEffect(() => {
+    const fetchDepartmentOrder = async () => {
+      try {
+        const res = await axios.get(
+          `/api/workspace/${workspace.groupId}/settings/departments/order`,
+        );
+        const order = Array.isArray(res.data?.order) ? res.data.order : [];
+        if (order.length > 0) {
+          setDepartments((current) => applyOrder(current, order));
+        }
+      } catch {
+        // Keep existing order if config is unavailable.
+      }
+    };
+
+    if (workspace?.groupId) {
+      fetchDepartmentOrder();
+    }
+  }, [workspace?.groupId]);
+
   const newDepartment = async () => {
     const res = await axios.post(
       `/api/workspace/${workspace.groupId}/settings/departments/new`,
       {}
     );
     if (res.status === 200) {
-      setDepartments([...departments, res.data.department]);
+      const updatedDepartments = [...departments, res.data.department];
+      setDepartments(updatedDepartments);
+      await saveDepartmentOrder(updatedDepartments);
       toast.success("New department created");
     }
+  };
+
+  const moveDepartment = async (departmentId: string, direction: "up" | "down") => {
+    const currentIndex = departments.findIndex((d) => d.id === departmentId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= departments.length) return;
+
+    const reordered = [...departments];
+    const [item] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, item);
+
+    setDepartments(reordered);
+    await saveDepartmentOrder(reordered);
+    toast.success("Department order updated");
   };
 
   const updateDepartment = async (value: string, id: string) => {
@@ -140,12 +210,43 @@ const DepartmentsManager: FC<Props> = ({ departments, setDepartments }) => {
                         {department.name}
                       </span>
                     </div>
-                    <IconChevronDown
-                      className={clsx(
-                        "w-5 h-5 text-zinc-500 transition-transform",
-                        open ? "transform rotate-180" : ""
-                      )}
-                    />
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            moveDepartment(department.id, "up");
+                          }}
+                          disabled={departments[0]?.id === department.id}
+                          className="p-1 rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          aria-label="Move department up"
+                        >
+                          <IconArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            moveDepartment(department.id, "down");
+                          }}
+                          disabled={
+                            departments[departments.length - 1]?.id ===
+                            department.id
+                          }
+                          className="p-1 rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          aria-label="Move department down"
+                        >
+                          <IconArrowDown className="w-4 h-4" />
+                        </button>
+                        <IconChevronDown
+                          className={clsx(
+                            "w-5 h-5 text-zinc-500 transition-transform",
+                            open ? "transform rotate-180" : ""
+                          )}
+                        />
+                      </div>
                   </div>
                 </Disclosure.Button>
 
