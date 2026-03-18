@@ -35,7 +35,7 @@ export default function Error() {
               <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-200">Page not found</h1>
               <p className="mt-3 text-zinc-400 max-w-xl">
                 Looks like you've ventured into uncharted space. The page you're
-                looking for doesn't exist (or moved). No worries — here are a few
+                looking for doesn't exist (or moved). No worries - here are a few
                 options to get back on course.
               </p>
 
@@ -59,18 +59,7 @@ export default function Error() {
                 >
                   Go back
                 </motion.button>
-
-                <Link
-                  href="https://github.com/TeamFirefli/firefli/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-zinc-300 hover:text-white border border-zinc-700"
-                >
-                  Report an issue
-                </Link>
               </div>
-
-              <p className="mt-4 text-sm text-zinc-500">Or try searching from the sidebar.</p>
             </div>
           </div>
         </motion.div>

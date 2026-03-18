@@ -7,7 +7,7 @@ export default function Error() {
   return (
     <>
       <Head>
-        <title>500 - Internal Server Error</title>
+        <title>403 - Access Denied</title>
         <meta name="robots" content="noindex" />
       </Head>
 
@@ -27,15 +27,15 @@ export default function Error() {
                 className="text-7xl font-extrabold text-firefli"
                 aria-hidden
               >
-                500
+                403
               </motion.div>
             </div>
 
             <div className="text-left flex-1">
-              <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-200">Internal server error</h1>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-200">Access denied</h1>
               <p className="mt-3 text-zinc-400 max-w-xl">
-                Sorry.. something went wrong on our end. 
-                The team has been notified, but you can try the options below to continue.
+                Looks like you don't have permission to access this page. 
+                If you believe this is an error, please contact your administrator.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3">
@@ -52,11 +52,11 @@ export default function Error() {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => location.reload()}
+                  onClick={() => Router.back()}
                   className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-800/90 transition"
-                  aria-label="Retry"
+                  aria-label="Go back"
                 >
-                  Retry
+                  Go back
                 </motion.button>
 
                 <Link
@@ -68,8 +68,6 @@ export default function Error() {
                   Report an issue
                 </Link>
               </div>
-
-              <p className="mt-4 text-sm text-zinc-500">If this keeps happening, contact the workspace admin or try again later.</p>
             </div>
           </div>
         </motion.div>
