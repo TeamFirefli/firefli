@@ -33,6 +33,12 @@ import {
   IconUserCheck,
   IconEdit,
   IconExternalLink,
+  IconCopy,
+  IconAlertTriangle,
+  IconAlertOctagon,
+  IconSearch,
+  IconLoader2,
+  IconX,
 } from "@tabler/icons-react";
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -89,6 +95,24 @@ export const getServerSideProps = withPermissionCheckSsr(
 
     let infoAlly = ally;
     infoAlly.reps = infoReps;
+    const infoTheirReps = await Promise.all(
+      (ally.theirReps || []).map(async (rep: string) => {
+        try {
+          const parsed = JSON.parse(rep);
+          if (parsed.userId) {
+            const userId = BigInt(parsed.userId);
+            const username = parsed.username || (await getUsername(userId));
+            return {
+              userId: String(parsed.userId),
+              username,
+              thumbnail: getThumbnail(userId),
+            };
+          }
+        } catch {}
+        return { userId: null, username: rep, thumbnail: null };
+      }),
+    );
+
     const eligibleIds = new Set(infoUsers.map((u: any) => Number(u.userid)));
     const repIds = new Set(infoReps.map((r: any) => Number(r.userid)));
     const allDbIdsRaw = await prisma.user.findMany({
@@ -199,6 +223,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         infoUsers,
         infoAlly,
         infoVisits,
+        infoTheirReps,
         missingReps,
         canEditAllianceDetails: hasEditAllianceDetails,
         canAddNotes: hasAddNotes,
@@ -223,14 +248,43 @@ type Rep = {
 type Visit = {
   name: string;
   time: Date;
+  eventType?: string;
+  description?: string;
+  hostRole?: string;
   participants?: string[];
 };
 
 type EditVisit = {
   name: string;
   time: string;
+  eventType?: string;
+  description?: string;
+  hostRole?: string;
   participants?: string[];
 };
+
+type NoteItem = {
+  type: 'note' | 'warning' | 'strike';
+  content: string;
+};
+
+type TheirRepItem = {
+  userId: string | null;
+  username: string;
+  thumbnail: string | null;
+};
+
+function parseNote(raw: string): NoteItem {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.type && parsed.content !== undefined) return parsed as NoteItem;
+  } catch {}
+  return { type: 'note', content: raw };
+}
+
+function serializeNote(note: NoteItem): string {
+  return JSON.stringify(note);
+}
 
 type pageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 const ManageAlly: pageWithLayout<pageProps> = (props) => {
@@ -287,19 +341,11 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     }),
   );
 
-  const handleCheckboxChange = (event: any) => {
-    const { value } = event.target;
-    let numberVal = parseInt(value);
-    if (reps.includes(numberVal)) {
-      setReps(reps.filter((r: any) => r !== numberVal));
-    } else {
-      setReps([...reps, numberVal]);
-    }
-  };
-
   const saveNotes = async () => {
     const axiosPromise = axios
-      .patch(`/api/workspace/${id}/allies/${ally.id}/notes`, { notes: notes })
+      .patch(`/api/workspace/${id}/allies/${ally.id}/notes`, {
+        notes: notes.map(serializeNote),
+      })
       .then((req) => {
         setEditNotes([]);
         setNewNotes([]);
@@ -314,7 +360,13 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
   };
 
   const saveAllianceInfo = async () => {
-    const filteredTheirReps = theirReps.filter((rep: string) => rep.trim());
+    const filteredTheirReps = theirReps
+      .filter((rep: TheirRepItem) => rep.username?.trim())
+      .map((rep: TheirRepItem) =>
+        rep.userId
+          ? JSON.stringify({ userId: rep.userId, username: rep.username })
+          : rep.username,
+      );
 
     // Save alliance info
     const allianceInfoPromise = axios.post(
@@ -347,12 +399,21 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
       error: "Alliance information was not saved due to an unknown error.",
     });
   };
-  const [notes, setNotes] = useState(ally.notes || [""]);
+  const [notes, setNotes] = useState<NoteItem[]>(
+    (ally.notes || []).map(parseNote),
+  );
   const [editNotes, setEditNotes] = useState<any[]>([]);
   const [newNotes, setNewNotes] = useState<number[]>([]);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [discordServer, setDiscordServer] = useState(ally.discordServer || "");
-  const [theirReps, setTheirReps] = useState<string[]>(ally.theirReps || [""]);
+  const [theirReps, setTheirReps] = useState<TheirRepItem[]>(
+    ((props.infoTheirReps as TheirRepItem[]) || []).filter(
+      (r: TheirRepItem) => r.username?.trim(),
+    ),
+  );
+  const [theirRepSearch, setTheirRepSearch] = useState("");
+  const [theirRepSearchResults, setTheirRepSearchResults] = useState<any[]>([]);
+  const [isSearchingTheirReps, setIsSearchingTheirReps] = useState(false);
 
   const updateReps = async () => {
     const axiosPromise = axios
@@ -369,6 +430,28 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setEditOpen] = useState(false);
+  const [ourRepSearch, setOurRepSearch] = useState("");
+  const [ourRepSearchFocused, setOurRepSearchFocused] = useState(false);
+  const ourRepSearchRef = useRef<HTMLInputElement>(null);
+
+  const filteredOurRepSuggestions = users
+    ? users.filter(
+        (u: any) =>
+          !reps.includes(Number(u.userid)) &&
+          (ourRepSearch.trim() === "" ||
+            u.username.toLowerCase().includes(ourRepSearch.toLowerCase())),
+      )
+    : [];
+
+  const addOurRep = (userid: number) => {
+    if (!reps.includes(userid)) setReps([...reps, userid]);
+    setOurRepSearch("");
+    ourRepSearchRef.current?.focus();
+  };
+
+  const removeOurRep = (userid: number) => {
+    setReps(reps.filter((r: any) => r !== userid));
+  };
   const [selectedParticipants, setSelectedParticipants] = useState<number[]>(
     [],
   );
@@ -380,6 +463,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     name: "",
     time: "",
     id: "",
+    eventType: "visit",
+    description: "",
+    hostRole: "host",
     participants: [] as number[],
   });
 
@@ -400,24 +486,63 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     index: number,
   ) => {
     const newValue = e.target.value;
-    let updateNote = [...notes];
-    updateNote[index] = newValue;
-    setNotes(updateNote);
+    const updated = [...notes];
+    updated[index] = { ...updated[index], content: newValue };
+    setNotes(updated);
     return true;
   };
 
-  const addTheirRep = () => {
-    setTheirReps([...theirReps, ""]);
+  const handleNoteTypeChange = (index: number, type: NoteItem["type"]) => {
+    const updated = [...notes];
+    updated[index] = { ...updated[index], type };
+    setNotes(updated);
   };
 
   const removeTheirRep = (index: number) => {
     setTheirReps(theirReps.filter((_, i) => i !== index));
   };
 
-  const updateTheirRep = (index: number, value: string) => {
-    const updated = [...theirReps];
-    updated[index] = value;
-    setTheirReps(updated);
+  const searchTheirRepsExternally = async () => {
+    if (!theirRepSearch.trim()) return;
+    setIsSearchingTheirReps(true);
+    try {
+      const response = await axios.post("/api/roblox/id", {
+        keyword: theirRepSearch.trim(),
+      });
+      if (response.data?.data?.length > 0) {
+        const users = response.data.data.map((user: any) => ({
+          userId: String(user.id),
+          username: user.name,
+          displayName: user.displayName,
+          thumbnail: `/api/workspace/${id}/avatar/${user.id}`,
+        }));
+        setTheirRepSearchResults(users);
+      } else {
+        setTheirRepSearchResults([]);
+        toast.error("No Roblox users found");
+      }
+    } catch {
+      toast.error("Failed to search Roblox");
+      setTheirRepSearchResults([]);
+    }
+    setIsSearchingTheirReps(false);
+  };
+
+  const addTheirRepFromSearch = (user: {
+    userId: string;
+    username: string;
+    thumbnail: string;
+  }) => {
+    if (theirReps.some((r) => r.userId === user.userId)) {
+      toast.error("This user is already added");
+      return;
+    }
+    setTheirReps([
+      ...theirReps,
+      { userId: user.userId, username: user.username, thumbnail: user.thumbnail },
+    ]);
+    setTheirRepSearch("");
+    setTheirRepSearchResults([]);
   };
 
   const handleNoteBlur = async () => {
@@ -426,9 +551,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
   const createNote = () => {
     const newNoteIndex = notes.length;
-    setNotes([...notes, ""]);
+    setNotes([...notes, { type: "note", content: "" }]);
     setEditNotes([...editNotes, newNoteIndex]);
-    setNewNotes([...newNotes, newNoteIndex]); // Track this as a new note
+    setNewNotes([...newNotes, newNoteIndex]);
   };
 
   const deleteNote = async (index: any) => {
@@ -441,7 +566,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
     const axiosPromise = axios
       .patch(`/api/workspace/${id}/allies/${ally.id}/notes`, {
-        notes: noteClone,
+        notes: noteClone.map(serializeNote),
       })
       .then((req) => {
         setEditNotes([]);
@@ -465,17 +590,26 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
   };
   const visitform = useForm<Visit>();
   const notesform = useForm<Notes>({
-    defaultValues: notes.reduce((acc: Notes, note: string, index: number) => {
-      acc[`note-${index}`] = note;
+    defaultValues: notes.reduce((acc: Notes, note: NoteItem, index: number) => {
+      acc[`note-${index}`] = note.content;
       return acc;
     }, {} as Notes),
   });
 
-  const createVisit: SubmitHandler<Visit> = async ({ name, time }) => {
+  const createVisit: SubmitHandler<Visit> = async ({
+    name,
+    time,
+    eventType,
+    description,
+    hostRole,
+  }) => {
     const axiosPromise = axios
       .post(`/api/workspace/${id}/allies/${ally.id}/visits`, {
         name: name,
         time: time,
+        eventType: eventType || "visit",
+        description: description || "",
+        hostRole: hostRole || "host",
         participants: selectedParticipants,
       })
       .then((req) => {});
@@ -494,6 +628,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     visitId: any,
     visitName: any,
     visitTime: any,
+    visitEventType?: string,
+    visitDescription?: string,
+    visitHostRole?: string,
     visitParticipants?: number[],
   ) => {
     // Format the time for datetime-local input (YYYY-MM-DDTHH:MM)
@@ -503,6 +640,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
       name: visitName,
       time: formattedTime,
       id: visitId,
+      eventType: visitEventType || "visit",
+      description: visitDescription || "",
+      hostRole: visitHostRole || "host",
       participants: visitParticipants || [],
     });
     setEditSelectedParticipants(visitParticipants || []);
@@ -511,6 +651,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     editform.reset({
       name: visitName,
       time: formattedTime,
+      eventType: visitEventType || "visit",
+      description: visitDescription || "",
+      hostRole: visitHostRole || "host",
     });
 
     setEditOpen(true);
@@ -524,6 +667,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
         {
           name: formValues.name,
           time: formValues.time,
+          eventType: formValues.eventType || "visit",
+          description: formValues.description || "",
+          hostRole: formValues.hostRole || "host",
           participants: editSelectedParticipants,
         },
       )
@@ -557,6 +703,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
     defaultValues: {
       name: editContent.name,
       time: editContent.time,
+      eventType: editContent.eventType,
+      description: editContent.description,
+      hostRole: editContent.hostRole,
     },
   });
 
@@ -599,25 +748,62 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                     as="h3"
                     className="text-lg font-medium text-zinc-900 mb-4 dark:text-white"
                   >
-                    Create New Visit
+                    Create Scheduled Event
                   </Dialog.Title>
 
                   <div className="mt-2">
                     <FormProvider {...visitform}>
                       <form onSubmit={visitform.handleSubmit(createVisit)}>
                         <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                              Event Type
+                            </label>
+                            <select
+                              {...visitform.register("eventType")}
+                              defaultValue="visit"
+                              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                              <option value="visit">Alliance Visit</option>
+                              <option value="event">Alliance Event</option>
+                            </select>
+                          </div>
                           <Input
-                            label="Visit Title"
+                            label="Title"
                             {...visitform.register("name", { required: true })}
                           />
                           <Input
-                            label="Visit Time"
+                            label="Date & Time"
                             type="datetime-local"
                             {...visitform.register("time", { required: true })}
                           />
                           <div>
                             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                              Participants
+                              Description (optional)
+                            </label>
+                            <textarea
+                              {...visitform.register("description")}
+                              rows={2}
+                              placeholder="Briefly describe the event..."
+                              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                              Our Role
+                            </label>
+                            <select
+                              {...visitform.register("hostRole")}
+                              defaultValue="host"
+                              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                              <option value="host">Host</option>
+                              <option value="attending">Attending</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                              Attendees
                             </label>
                             <div className="max-h-48 overflow-y-auto border border-zinc-200 dark:border-zinc-600 rounded-lg p-2 bg-white dark:bg-zinc-700">
                               {users.map((user: any) => (
@@ -672,7 +858,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                       className="flex-1 justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
                       onClick={visitform.handleSubmit(createVisit)}
                     >
-                      Create Visit
+                      Create Event
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -717,25 +903,60 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                     as="h3"
                     className="text-lg font-medium dark:text-white text-zinc-900 mb-4"
                   >
-                    Edit Visit
+                    Edit Scheduled Event
                   </Dialog.Title>
 
                   <div className="mt-2">
                     <FormProvider {...editform}>
                       <form>
                         <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                              Event Type
+                            </label>
+                            <select
+                              {...editform.register("eventType")}
+                              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                              <option value="visit">Alliance Visit</option>
+                              <option value="event">Alliance Event</option>
+                            </select>
+                          </div>
                           <Input
-                            label="Visit Title"
+                            label="Title"
                             {...editform.register("name")}
                           />
                           <Input
-                            label="Visit Time"
+                            label="Date & Time"
                             type="datetime-local"
                             {...editform.register("time")}
                           />
                           <div>
                             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                              Participants
+                              Description (optional)
+                            </label>
+                            <textarea
+                              {...editform.register("description")}
+                              rows={2}
+                              placeholder="Briefly describe the event..."
+                              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                              Our Role
+                            </label>
+                            <select
+                              {...editform.register("hostRole")}
+                              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                              <option value="host">Host</option>
+                              <option value="attending">Attending</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                              Attendees
                             </label>
                             <div className="max-h-48 overflow-y-auto border border-zinc-200 dark:border-zinc-600 rounded-lg p-2 bg-white dark:bg-zinc-700">
                               {users.map((user: any) => (
@@ -792,7 +1013,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                         updateVisit();
                       }}
                     >
-                      Update Visit
+                      Update Event
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -954,104 +1175,164 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                   Our Representatives
                 </label>
                 {isEditingInfo ? (
-                  <>
-                    <p className="text-sm text-zinc-500 mb-2">
-                      {reps.length} Reps Selected (Minimum 1)
-                    </p>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {users.map((user: any) => (
-                        <label
-                          key={user.userid}
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            value={user.userid}
-                            checked={reps.includes(user.userid)}
-                            onChange={handleCheckboxChange}
-                            className="rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                              user.userid,
-                            )} overflow-hidden`}
-                          >
-                            <img
-                              src={user.thumbnail}
-                              className="w-full h-full object-cover"
-                              alt={user.username}
-                              style={{ background: "transparent" }}
-                            />
-                          </div>
-                          <span className="text-sm text-zinc-900 dark:text-white">
-                            {user.username}
-                          </span>
-                        </label>
-                      ))}
-
-                      {(props as any).missingReps
-                        ?.filter((m: any) => reps.includes(Number(m.userid)))
-                        .map((m: any) => (
-                          <label
-                            key={`missing-${m.userid}`}
-                            className="flex items-center gap-3 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              value={m.userid}
-                              checked={reps.includes(Number(m.userid))}
-                              onChange={handleCheckboxChange}
-                              className="rounded border-gray-300 text-primary focus:ring-primary"
-                            />
+                  <div className="space-y-2">
+                    {reps.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {reps.map((userid: any) => {
+                          const user = users.find(
+                            (u: any) => Number(u.userid) === userid,
+                          );
+                          const missing = (props as any).missingReps?.find(
+                            (m: any) => Number(m.userid) === userid,
+                          );
+                          const displayUser = user || missing;
+                          if (!displayUser) return null;
+                          return (
                             <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                                String(m.userid),
-                              )} overflow-hidden opacity-70`}
+                              key={userid}
+                              className={`flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full ${
+                                missing
+                                  ? "bg-amber-100 dark:bg-amber-900/30"
+                                  : "bg-primary/10"
+                              }`}
                             >
                               <img
-                                src={m.thumbnail || "/default-avatar.jpg"}
-                                className="w-full h-full object-cover"
-                                alt={m.username}
-                                style={{ background: "transparent" }}
+                                src={
+                                  displayUser.thumbnail ||
+                                  "/default-avatar.jpg"
+                                }
+                                alt={displayUser.username}
+                                className="w-5 h-5 rounded-full"
                                 onError={(e) =>
                                   (e.currentTarget.src = "/default-avatar.jpg")
                                 }
                               />
-                            </div>
-                            <span className="text-sm text-zinc-900 dark:text-white">
-                              {m.username}
-                              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
-                                (not in workspace)
+                              <span
+                                className={`text-xs font-medium ${
+                                  missing
+                                    ? "text-amber-700 dark:text-amber-400"
+                                    : "text-primary"
+                                }`}
+                              >
+                                {displayUser.username}
+                                {missing && (
+                                  <span className="ml-1 opacity-70">
+                                    (not in workspace)
+                                  </span>
+                                )}
                               </span>
-                            </span>
-                          </label>
-                        ))}
+                              <button
+                                type="button"
+                                onClick={() => removeOurRep(userid)}
+                                className={`${
+                                  missing
+                                    ? "text-amber-500/60 hover:text-amber-500"
+                                    : "text-primary/60 hover:text-primary"
+                                }`}
+                              >
+                                <IconX className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="relative">
+                      <div className="relative">
+                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+                        <input
+                          ref={ourRepSearchRef}
+                          type="text"
+                          value={ourRepSearch}
+                          onChange={(e) => setOurRepSearch(e.target.value)}
+                          onFocus={() => setOurRepSearchFocused(true)}
+                          onBlur={() =>
+                            setTimeout(() => setOurRepSearchFocused(false), 150)
+                          }
+                          placeholder="Search by username..."
+                          className="w-full pl-9 pr-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                      </div>
+                      {ourRepSearchFocused &&
+                        filteredOurRepSuggestions.length > 0 && (
+                          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {filteredOurRepSuggestions.map((user: any) => (
+                              <button
+                                key={user.userid}
+                                type="button"
+                                onMouseDown={() =>
+                                  addOurRep(Number(user.userid))
+                                }
+                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition text-left"
+                              >
+                                <img
+                                  src={user.thumbnail}
+                                  alt={user.username}
+                                  className="w-8 h-8 rounded-full"
+                                />
+                                <span className="text-sm text-zinc-900 dark:text-white">
+                                  {user.username}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      {ourRepSearchFocused &&
+                        filteredOurRepSuggestions.length === 0 &&
+                        ourRepSearch.trim() !== "" && (
+                          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg px-3 py-2">
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                              No matching representatives found
+                            </p>
+                          </div>
+                        )}
                     </div>
-                  </>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {reps.length} selected, minimum 1 required.
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-1">
                     {ally.reps && ally.reps.length > 0 ? (
                       ally.reps.map((rep: any, index: number) => (
                         <div
                           key={`rep-${index}`}
-                          className="text-sm text-zinc-700 dark:text-zinc-300"
+                          className="flex items-center gap-3 py-1.5"
                         >
-                          •{" "}
-                          <a
-                            href={`https://www.roblox.com/users/${rep.userid}/profile`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80 underline"
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
+                              String(rep.userid),
+                            )} overflow-hidden flex-shrink-0`}
                           >
+                            <img
+                              src={rep.thumbnail}
+                              className="w-full h-full object-cover"
+                              alt={rep.username}
+                              style={{ background: "transparent" }}
+                            />
+                          </div>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">
                             {rep.username}
-                          </a>
-                          {(props as any).missingReps?.some(
-                            (m: any) => Number(m.userid) === Number(rep.userid),
-                          ) && (
-                            <span className="ml-2 text-xs text-amber-500">
-                              (not in workspace)
-                            </span>
-                          )}
+                            {(props as any).missingReps?.some(
+                              (m: any) =>
+                                Number(m.userid) === Number(rep.userid),
+                            ) && (
+                              <span className="ml-2 text-xs text-amber-500">
+                                (not in workspace)
+                              </span>
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            title="Copy username"
+                            className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(rep.username);
+                              toast.success("Copied to clipboard");
+                            }}
+                          >
+                            <IconCopy className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ))
                     ) : (
@@ -1068,56 +1349,140 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     Their Representatives
                   </label>
-                  {isEditingInfo && (
-                    <button
-                      onClick={addTheirRep}
-                      className="text-primary hover:text-primary/80"
-                    >
-                      <IconPlus className="w-4 h-4" />
-                    </button>
-                  )}
                 </div>
                 {isEditingInfo ? (
                   <div className="space-y-2">
-                    {theirReps.map((rep, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={rep}
-                          onChange={(e) =>
-                            updateTheirRep(index, e.target.value)
-                          }
-                          placeholder="Roblox username"
-                          className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
+                    {/* External Roblox search */}
+                    <div className="relative">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            value={theirRepSearch}
+                            onChange={(e) => setTheirRepSearch(e.target.value)}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && searchTheirRepsExternally()
+                            }
+                            placeholder="Search by Roblox username..."
+                            className="w-full pl-9 pr-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                        </div>
                         <button
+                          type="button"
+                          onClick={searchTheirRepsExternally}
+                          disabled={isSearchingTheirReps}
+                          className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm flex items-center gap-1 disabled:opacity-50 transition-colors"
+                        >
+                          {isSearchingTheirReps ? (
+                            <IconLoader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <IconSearch className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                      {theirRepSearchResults.length > 0 && (
+                        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {theirRepSearchResults.map((u: any) => (
+                            <button
+                              key={u.userId}
+                              type="button"
+                              onClick={() => addTheirRepFromSearch(u)}
+                              className="w-full flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition text-left"
+                            >
+                              <img
+                                src={u.thumbnail}
+                                alt=""
+                                className="w-8 h-8 rounded-full"
+                              />
+                              <div>
+                                <span className="text-sm text-zinc-900 dark:text-white">
+                                  {u.username}
+                                </span>
+                                {u.displayName && u.displayName !== u.username && (
+                                  <span className="text-xs text-zinc-400 ml-1">
+                                    ({u.displayName})
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {theirReps.map((rep, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-2 bg-zinc-50 dark:bg-zinc-700 rounded-lg"
+                      >
+                        {rep.thumbnail ? (
+                          <img
+                            src={rep.thumbnail}
+                            alt={rep.username}
+                            className="w-8 h-8 rounded-full flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-600 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs text-zinc-500">
+                              {rep.username?.[0]?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-sm text-zinc-900 dark:text-white flex-1">
+                          {rep.username}
+                        </span>
+                        <button
+                          type="button"
                           onClick={() => removeTheirRep(index)}
-                          className="p-2 text-red-400 hover:text-red-500"
+                          className="p-1 text-red-400 hover:text-red-500"
                         >
                           <IconTrash className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
                     {theirReps.length === 0 && (
-                      <button
-                        onClick={addTheirRep}
-                        className="w-full py-2 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors"
-                      >
-                        Add their representative
-                      </button>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+                        Search above to add their representatives
+                      </p>
                     )}
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {theirReps.filter((rep) => rep.trim()).length > 0 ? (
+                    {theirReps.filter((rep) => rep.username?.trim()).length >
+                    0 ? (
                       theirReps
-                        .filter((rep) => rep.trim())
+                        .filter((rep) => rep.username?.trim())
                         .map((rep, index) => (
                           <div
                             key={index}
-                            className="text-sm text-zinc-700 dark:text-zinc-300"
+                            className="flex items-center gap-3 py-1.5"
                           >
-                            • {rep}
+                            {rep.thumbnail ? (
+                              <img
+                                src={rep.thumbnail}
+                                alt={rep.username}
+                                className="w-8 h-8 rounded-full flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-600 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xs text-zinc-500">
+                                  {rep.username?.[0]?.toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">
+                              {rep.username}
+                            </span>
+                            {rep.userId && (
+                              <a
+                                href={`https://www.roblox.com/users/${rep.userId}/profile`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-zinc-400 hover:text-primary transition-colors"
+                              >
+                                <IconExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
                           </div>
                         ))
                     ) : (
@@ -1135,7 +1500,13 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                     onClick={() => {
                       setIsEditingInfo(false);
                       setDiscordServer(ally.discordServer || "");
-                      setTheirReps(ally.theirReps || [""]);
+                      setTheirReps(
+                        (
+                          (props.infoTheirReps as TheirRepItem[]) || []
+                        ).filter((r: TheirRepItem) => r.username?.trim()),
+                      );
+                      setTheirRepSearch("");
+                      setTheirRepSearchResults([]);
                       setReps(ally.reps.map((r: any) => r.userid));
                     }}
                     className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition-colors"
@@ -1183,7 +1554,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
               {notes.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="bg-zinc-50 dark:bg-zinc-700 rounded-xl p-6 max-w-md mx-auto">
+                  <div className="rounded-xl p-6 max-w-md mx-auto">
                     <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
                       <IconClipboardList className="w-6 h-6 text-primary" />
                     </div>
@@ -1197,23 +1568,67 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {notes.map((note: any, index: any) => (
+                  {notes.map((note: NoteItem, index: any) => (
                     <div
                       key={index}
-                      className="bg-zinc-50 dark:bg-zinc-700 rounded-lg p-4"
+                      className={`rounded-lg p-4 ${
+                        note.type === "strike"
+                          ? "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                          : note.type === "warning"
+                          ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
+                          : "bg-zinc-50 dark:bg-zinc-700"
+                      }`}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <p
-                          className={`text-sm text-zinc-700 dark:text-white ${
-                            editNotes.includes(index) ? "hidden" : null
-                          }`}
-                        >
-                          {notes[index]}
-                        </p>
+                      {/* Header row — type title/pills on left, action buttons on right */}
+                      <div className="flex items-center justify-between mb-2">
+                        {editNotes.includes(index) ? (
+                          <div className="flex gap-2">
+                            {(["note", "warning", "strike"] as const).map((t) => (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() => handleNoteTypeChange(index, t)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
+                                  notes[index]?.type === t
+                                    ? t === "strike"
+                                      ? "bg-red-500 text-white"
+                                      : t === "warning"
+                                      ? "bg-amber-500 text-white"
+                                      : "bg-primary text-white"
+                                    : "bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-500"
+                                }`}
+                              >
+                                {t === "note"
+                                  ? "Note"
+                                  : t === "warning"
+                                  ? "⚠ Warning"
+                                  : "✕ Strike"}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              note.type === "strike"
+                                ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400"
+                                : note.type === "warning"
+                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
+                                : "bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300"
+                            }`}
+                          >
+                            {note.type === "warning" && <IconAlertTriangle className="w-3 h-3" />}
+                            {note.type === "strike" && <IconAlertOctagon className="w-3 h-3" />}
+                            {note.type === "warning"
+                              ? "Warning"
+                              : note.type === "strike"
+                              ? "Strike"
+                              : "Note"}
+                          </span>
+                        )}
                         {(canEditNotes ||
                           (canAddNotes && newNotes.includes(index)) ||
                           canDeleteNotes) && (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             {(canEditNotes ||
                               (canAddNotes && newNotes.includes(index))) && (
                               <button
@@ -1234,18 +1649,21 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                           </div>
                         )}
                       </div>
-                      <div
-                        className={editNotes.includes(index) ? "" : "hidden"}
-                      >
+                      {/* Body */}
+                      {editNotes.includes(index) ? (
                         <textarea
                           className="w-full p-3 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                          value={notes[index]}
+                          value={notes[index]?.content ?? ""}
                           onChange={(e) => handleNoteChange(e, index)}
                           onBlur={handleNoteBlur}
                           rows={3}
                           placeholder="Enter your note here..."
                         />
-                      </div>
+                      ) : (
+                        <p className="text-sm text-zinc-700 dark:text-white">
+                          {note.content}
+                        </p>
+                      )}
                     </div>
                   ))}
                   {(canAddNotes || canEditNotes) && (
@@ -1271,10 +1689,10 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                   </div>
                   <div>
                     <h2 className="text-lg font-medium text-zinc-900 dark:text-white">
-                      Visits
+                      Scheduled Events
                     </h2>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Schedule and manage alliance visits
+                      Schedule and manage alliance visits and events
                     </p>
                   </div>
                 </div>
@@ -1284,7 +1702,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <IconPlus className="w-4 h-4" />
-                    <span className="text-sm font-medium">New Visit</span>
+                    <span className="text-sm font-medium">New Event</span>
                   </button>
                 )}
               </div>
@@ -1296,10 +1714,10 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                       <IconCalendar className="w-6 h-6 text-primary" />
                     </div>
                     <h3 className="text-sm font-medium text-zinc-900 mb-1 dark:text-white">
-                      No Visits
+                      No Scheduled Events
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      You haven't scheduled any visits yet
+                      You haven't scheduled any events yet
                     </p>
                   </div>
                 </div>
@@ -1312,9 +1730,36 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-sm font-medium dark:text-white text-zinc-900">
-                            {visit.name}
-                          </h3>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="text-sm font-medium dark:text-white text-zinc-900">
+                              {visit.name}
+                            </h3>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                visit.eventType === "event"
+                                  ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400"
+                                  : "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400"
+                              }`}
+                            >
+                              {visit.eventType === "event" ? "Event" : "Visit"}
+                            </span>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                visit.hostRole === "attending"
+                                  ? "bg-zinc-100 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-300"
+                                  : "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
+                              }`}
+                            >
+                              {visit.hostRole === "attending"
+                                ? "Attending"
+                                : "Hosting"}
+                            </span>
+                          </div>
+                          {visit.description && (
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">
+                              {visit.description}
+                            </p>
+                          )}
                           <div className="flex items-center gap-2 mt-2">
                             <div
                               className={`w-6 h-6 p-0.5 rounded-full flex items-center justify-center ${getRandomBg(
@@ -1329,7 +1774,10 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                               />
                             </div>
                             <p className="text-xs dark:text-zinc-400 text-zinc-500">
-                              Hosted by {visit.hostUsername}
+                              {visit.hostRole === "attending"
+                                ? "Attending"
+                                : "Hosted by"}{" "}
+                              {visit.hostUsername}
                             </p>
                           </div>
                           <p className="text-xs dark:text-zinc-400 text-zinc-500 mt-1">
@@ -1385,6 +1833,9 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                     visit.id,
                                     visit.name,
                                     visit.time,
+                                    visit.eventType,
+                                    visit.description,
+                                    visit.hostRole,
                                     visit.participants,
                                   )
                                 }

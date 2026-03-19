@@ -76,7 +76,7 @@ export async function handler(
 	if (!req.session.userid) return res.status(401).json({ success: false, error: 'Not logged in' });
 	if (!req.query.aid) return res.status(400).json({ success: false, error: 'Missing ally id' });
 	if (typeof req.query.aid !== 'string') return res.status(400).json({ success: false, error: 'Invalid ally id' })
-	const { name, time, participants } = req.body
+	const { name, time, participants, eventType, description, hostRole } = req.body
 	if(!name || !time) return res.status(400).json({ success: false, error: 'Missing content' })
 
 
@@ -87,6 +87,9 @@ export async function handler(
 				allyId: req.query.aid,
 				name: name,
 				time: new Date(time),
+				eventType: eventType || 'visit',
+				description: description || '',
+				hostRole: hostRole || 'host',
 				participants: participants ? participants.map((p: number) => BigInt(p)) : []
 			}
 		})

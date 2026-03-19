@@ -107,17 +107,25 @@ export async function handler(
 			if (req.body.participants !== undefined) {
 				updateData.participants = req.body.participants.map((p: number) => BigInt(p));
 			}
+			if (req.body.eventType !== undefined) {
+				updateData.eventType = req.body.eventType;
+			}
+			if (req.body.description !== undefined) {
+				updateData.description = req.body.description;
+			}
+			if (req.body.hostRole !== undefined) {
+				updateData.hostRole = req.body.hostRole;
+			}
 
 			// @ts-ignore
-			const visit = await prisma.allyVisit.update({
+			await prisma.allyVisit.update({
 				where: {
 					// @ts-ignore
 					id: req.query.vid
 				},
 				data: updateData
 			})
-			
-	
+
 			return res.status(200).json({ success: true });
 		} catch (error) {
 			console.error(error);

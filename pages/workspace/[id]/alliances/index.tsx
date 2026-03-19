@@ -3,7 +3,7 @@ import { pageWithLayout } from "@/layoutTypes";
 import { loginState, workspacestate } from "@/state";
 import axios from "axios";
 import { useRouter } from "next/router";
-import { useState, Fragment, useMemo } from "react";
+import { useState, Fragment, useMemo, useRef, useEffect } from "react";
 import randomText from "@/utils/randomText";
 import { useRecoilState } from "recoil";
 import toast, { Toaster } from "react-hot-toast";
@@ -15,7 +15,6 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import Input from "@/components/input";
 import prisma from "@/utils/database";
 import { getUsername, getThumbnail } from "@/utils/userinfoEngine";
-import Checkbox from "@/components/checkbox";
 import Tooltip from "@/components/tooltip";
 import {
   IconUsers,
@@ -23,6 +22,8 @@ import {
   IconTrash,
   IconClipboardList,
   IconArrowLeft,
+  IconSearch,
+  IconX,
 } from "@tabler/icons-react";
 
 type Form = {
@@ -125,15 +126,19 @@ const Allies: pageWithLayout<pageProps> = (props) => {
     setSelectedRoles(roles);
   };
 
-  const [reps, setReps] = useState<string[]>([]);
+  const [reps, setReps] = useState<number[]>([]);
+  const [repSearch, setRepSearch] = useState("");
+  const [repSearchFocused, setRepSearchFocused] = useState(false);
+  const repSearchRef = useRef<HTMLInputElement>(null);
 
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, checked } = event.target;
-    if (checked) {
-      setReps([...reps, value]);
-    } else {
-      setReps(reps.filter((r) => r !== value));
-    }
+  const addRep = (userid: number) => {
+    if (!reps.includes(userid)) setReps([...reps, userid]);
+    setRepSearch("");
+    repSearchRef.current?.focus();
+  };
+
+  const removeRep = (userid: number) => {
+    setReps(reps.filter((r) => r !== userid));
   };
 
   const onSubmit: SubmitHandler<Form> = async ({ group, notes }) => {
@@ -227,6 +232,15 @@ const Allies: pageWithLayout<pageProps> = (props) => {
 
   const allies: any = props.infoAllies;
   const users: any = props.infoUsers;
+
+  const filteredRepSuggestions = users
+    ? users.filter(
+        (u: any) =>
+          !reps.includes(Number(u.userid)) &&
+          (repSearch.trim() === "" ||
+            u.username.toLowerCase().includes(repSearch.toLowerCase())),
+      )
+    : [];
 
   return (
     <>
@@ -435,43 +449,103 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                                   You don't have anyone who can represent yet
                                 </p>
                               ) : (
-                                <>
-                                  <p className="text-sm text-zinc-500 mb-2">
-                                    {reps.length} Reps Selected (Minimum 1)
-                                  </p>
-                                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {users.map((user: any) => (
-                                      <label
-                                        key={user.userid}
-                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 cursor-pointer"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          value={user.userid}
-                                          onChange={handleCheckboxChange}
-                                          className="rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                        <div
-                                          className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                                            user.userid,
-                                          )} overflow-hidden`}
-                                        >
-                                          <img
-                                            src={user.thumbnail}
-                                            className="w-full h-full object-cover"
-                                            alt={user.username}
-                                            style={{
-                                              background: "transparent",
-                                            }}
-                                          />
+                                <div className="space-y-2">
+                                  {reps.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {reps.map((userid) => {
+                                        const user = users.find(
+                                          (u: any) =>
+                                            Number(u.userid) === userid,
+                                        );
+                                        if (!user) return null;
+                                        return (
+                                          <div
+                                            key={userid}
+                                            className="flex items-center gap-1.5 pl-1 pr-2 py-1 bg-primary/10 rounded-full"
+                                          >
+                                            <img
+                                              src={user.thumbnail}
+                                              alt={user.username}
+                                              className="w-5 h-5 rounded-full"
+                                            />
+                                            <span className="text-xs text-primary font-medium">
+                                              {user.username}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => removeRep(userid)}
+                                              className="text-primary/60 hover:text-primary"
+                                            >
+                                              <IconX className="w-3 h-3" />
+                                            </button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                  <div className="relative">
+                                    <div className="flex items-center gap-2 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 focus-within:ring-2 focus-within:ring-primary">
+                                      <IconSearch className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+                                      <input
+                                        ref={repSearchRef}
+                                        type="text"
+                                        value={repSearch}
+                                        onChange={(e) =>
+                                          setRepSearch(e.target.value)
+                                        }
+                                        onFocus={() =>
+                                          setRepSearchFocused(true)
+                                        }
+                                        onBlur={() =>
+                                          setTimeout(
+                                            () => setRepSearchFocused(false),
+                                            150,
+                                          )
+                                        }
+                                        placeholder="Search by username..."
+                                        className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none"
+                                      />
+                                    </div>
+                                    {repSearchFocused &&
+                                      filteredRepSuggestions.length > 0 && (
+                                        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                          {filteredRepSuggestions.map(
+                                            (user: any) => (
+                                              <button
+                                                key={user.userid}
+                                                type="button"
+                                                onMouseDown={() =>
+                                                  addRep(Number(user.userid))
+                                                }
+                                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition text-left"
+                                              >
+                                                <img
+                                                  src={user.thumbnail}
+                                                  alt={user.username}
+                                                  className="w-7 h-7 rounded-full"
+                                                />
+                                                <span className="text-sm text-zinc-900 dark:text-white">
+                                                  {user.username}
+                                                </span>
+                                              </button>
+                                            ),
+                                          )}
                                         </div>
-                                        <span className="text-sm text-zinc-900 dark:text-white">
-                                          {user.username}
-                                        </span>
-                                      </label>
-                                    ))}
+                                      )}
+                                    {repSearchFocused &&
+                                      filteredRepSuggestions.length === 0 &&
+                                      repSearch.trim() !== "" && (
+                                        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg px-3 py-2">
+                                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                            No matching representatives found
+                                          </p>
+                                        </div>
+                                      )}
                                   </div>
-                                </>
+                                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                    {reps.length} selected, Minimum 1 required.
+                                  </p>
+                                </div>
                               )}
                             </div>
                           </div>

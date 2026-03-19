@@ -501,6 +501,9 @@ model allyVisit {
   hostId       BigInt
   time         DateTime
   name         String
+  eventType    String   @default("visit")
+  description  String?
+  hostRole     String   @default("host")
   participants BigInt[]
   ally         Ally     @relation(fields: [allyId], references: [id])
   host         user     @relation(fields: [hostId], references: [userid])
