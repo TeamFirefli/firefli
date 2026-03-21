@@ -266,6 +266,10 @@ type EditVisit = {
 type NoteItem = {
   type: 'note' | 'warning' | 'strike';
   content: string;
+  postedBy?: string;
+  postedAt?: string;
+  editedBy?: string;
+  editedAt?: string;
 };
 
 type TheirRepItem = {
@@ -342,11 +346,19 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
   );
 
   const saveNotes = async () => {
+    const now = new Date().toISOString();
+    const updatedNotes = notes.map((note, index) => {
+      if (editNotes.includes(index) && !newNotes.includes(index)) {
+        return { ...note, editedBy: login.username, editedAt: now };
+      }
+      return note;
+    });
     const axiosPromise = axios
       .patch(`/api/workspace/${id}/allies/${ally.id}/notes`, {
-        notes: notes.map(serializeNote),
+        notes: updatedNotes.map(serializeNote),
       })
       .then((req) => {
+        setNotes(updatedNotes);
         setEditNotes([]);
         setNewNotes([]);
       });
@@ -551,7 +563,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
 
   const createNote = () => {
     const newNoteIndex = notes.length;
-    setNotes([...notes, { type: "note", content: "" }]);
+    setNotes([...notes, { type: "note", content: "", postedBy: login.username, postedAt: new Date().toISOString() }]);
     setEditNotes([...editNotes, newNoteIndex]);
     setNewNotes([...newNotes, newNoteIndex]);
   };
@@ -1663,6 +1675,29 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                         <p className="text-sm text-zinc-700 dark:text-white">
                           {note.content}
                         </p>
+                      )}
+                      {/* Posted / edited metadata */}
+                      {(note.postedBy || note.editedBy) && (
+                        <div className="mt-2 flex flex-col gap-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                          {note.postedBy && (
+                            <span>
+                              Posted by{" "}
+                              <span className="font-medium text-zinc-500 dark:text-zinc-400">{note.postedBy}</span>
+                              {note.postedAt && (
+                                <> &middot; {moment(note.postedAt).format("MMM D, YYYY [at] h:mm A")}</>
+                              )}
+                            </span>
+                          )}
+                          {note.editedBy && (
+                            <span>
+                              Last edited by{" "}
+                              <span className="font-medium text-zinc-500 dark:text-zinc-400">{note.editedBy}</span>
+                              {note.editedAt && (
+                                <> &middot; {moment(note.editedAt).format("MMM D, YYYY [at] h:mm A")}</>
+                              )}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}
