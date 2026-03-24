@@ -11,6 +11,7 @@ const nextConfig = {
 	},
 	env: {
 	  NEXT_PUBLIC_DATABASE_CHECK: process.env.DATABASE_URL ? 'true' : '',
+	  NEXT_PUBLIC_EZ_BUGS_ENABLED: process.env.EZ_BUGS ? 'true' : '',
 	},
 	async headers() {
 	  return [

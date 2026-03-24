@@ -11,11 +11,17 @@ import {
   IconLoader2,
   IconX,
   IconCoffee,
+  IconCheck,
 } from "@tabler/icons-react";
 import packageJson from "../package.json";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeRaw from "rehype-raw";
+import { useCsrfToken } from "@/hooks/useCsrfToken";
+import { useRecoilValue } from "recoil";
+import { loginState } from "@/state";
+
+const EZ_BUGS_ENABLED = process.env.NEXT_PUBLIC_EZ_BUGS_ENABLED === "true";
 
 interface ChangelogItem {
   title: string;
@@ -28,6 +34,54 @@ const HelpWidget = () => {
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogItems, setChangelogItems] = useState<ChangelogItem[]>([]);
   const [changelogLoading, setChangelogLoading] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [bugTitle, setBugTitle] = useState("");
+  const [bugDescription, setBugDescription] = useState("");
+  const [bugSeverity, setBugSeverity] = useState("medium");
+  const [bugSubmitting, setBugSubmitting] = useState(false);
+  const [bugSubmitted, setBugSubmitted] = useState(false);
+  const [bugError, setBugError] = useState<string | null>(null);
+  const { token: csrfToken } = useCsrfToken();
+  const login = useRecoilValue(loginState);
+  const isLoggedIn = !!login.username;
+
+  function resetBugForm() {
+    setBugTitle("");
+    setBugDescription("");
+    setBugSeverity("medium");
+    setBugSubmitted(false);
+    setBugError(null);
+  }
+
+  async function submitBugReport() {
+    setBugSubmitting(true);
+    setBugError(null);
+    try {
+      const res = await fetch("/api/bug-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken || "",
+        },
+        body: JSON.stringify({
+          title: bugTitle,
+          description: bugDescription,
+          severity: bugSeverity,
+          page: typeof window !== "undefined" ? window.location.pathname : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBugSubmitted(true);
+      } else {
+        setBugError(data.error || "Failed to submit. Please try again.");
+      }
+    } catch {
+      setBugError("Network error. Please try again.");
+    } finally {
+      setBugSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     if (showChangelog && changelogItems.length === 0) {
@@ -111,15 +165,25 @@ const HelpWidget = () => {
                   <IconBrandGithub className="w-4 h-4 text-zinc-500" />
                   <span className="text-sm">GitHub</span>
                 </a>
-                <a
-                  href="https://feedback.firefli.net/bugs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200"
-                >
-                  <IconBug className="w-4 h-4 text-zinc-500" />
-                  <span className="text-sm">Bug Reports</span>
-                </a>
+                {EZ_BUGS_ENABLED && isLoggedIn ? (
+                  <button
+                    onClick={() => { resetBugForm(); setShowBugReport(true); }}
+                    className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200 w-full"
+                  >
+                    <IconBug className="w-4 h-4 text-zinc-500" />
+                    <span className="text-sm">Report a Bug</span>
+                  </button>
+                ) : (
+                  <a
+                    href="https://feedback.firefli.net/bugs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200"
+                  >
+                    <IconBug className="w-4 h-4 text-zinc-500" />
+                    <span className="text-sm">Bug Reports</span>
+                  </a>
+                )}
                 <a
                   href="https://discord.gg/WtEkchUKqe"
                   target="_blank"
@@ -153,6 +217,139 @@ const HelpWidget = () => {
         </>
         )}
       </Popover>
+
+      <Transition appear show={showBugReport} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-[10000]"
+          onClose={() => setShowBugReport(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-zinc-900 dark:text-white flex items-center gap-2"
+                  >
+                    <IconBug className="w-5 h-5" />
+                    Report a Bug
+                  </Dialog.Title>
+
+                  {bugSubmitted ? (
+                    <div className="mt-6 flex flex-col items-center gap-3 py-4">
+                      <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <IconCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white">Report submitted!</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                        Thanks for the report. We&apos;ll look into it shortly.
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-2 inline-flex justify-center rounded-md border border-transparent bg-zinc-100 dark:bg-zinc-700 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-600"
+                        onClick={() => setShowBugReport(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                          Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={150}
+                          value={bugTitle}
+                          onChange={(e) => setBugTitle(e.target.value)}
+                          placeholder="Brief summary of the issue"
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                          Description <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          maxLength={1500}
+                          rows={4}
+                          value={bugDescription}
+                          onChange={(e) => setBugDescription(e.target.value)}
+                          placeholder="Steps to reproduce, expected vs actual behavior..."
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500 resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                          Severity
+                        </label>
+                        <select
+                          value={bugSeverity}
+                          onChange={(e) => setBugSeverity(e.target.value)}
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                        >
+                          <option value="low">(Low) Minor visual issue</option>
+                          <option value="medium">(Medium) Feature not working properly</option>
+                          <option value="high">(High) Major functionality broken</option>
+                          <option value="critical">(Critical) Data loss / security issue</option>
+                        </select>
+                      </div>
+
+                      {bugError && (
+                        <p className="text-xs text-red-500 dark:text-red-400">{bugError}</p>
+                      )}
+
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-md border border-transparent bg-zinc-100 dark:bg-zinc-700 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-600"
+                          onClick={() => setShowBugReport(false)}
+                          disabled={bugSubmitting}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={submitBugReport}
+                          disabled={bugSubmitting || !bugTitle.trim() || !bugDescription.trim()}
+                        >
+                          {bugSubmitting && <IconLoader2 className="w-4 h-4 animate-spin" />}
+                          {bugSubmitting ? "Submitting..." : "Submit Report"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
       <Transition appear show={showCopyright} as={Fragment}>
         <Dialog
