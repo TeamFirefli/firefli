@@ -100,11 +100,11 @@ export default async function handler(
             (now.getTime() - lastAutoReset.resetAt.getTime()) / (1000 * 60 * 60 * 24)
           );
 
-          if (schedule.frequency === "weekly" && daysSinceLastAutoReset >= 7) {
+          if (schedule.frequency === "weekly" && daysSinceLastAutoReset >= 6) {
             shouldReset = true;
-          } else if (schedule.frequency === "biweekly" && daysSinceLastAutoReset >= 14) {
+          } else if (schedule.frequency === "biweekly" && daysSinceLastAutoReset >= 13) {
             shouldReset = true;
-          } else if (schedule.frequency === "monthly" && daysSinceLastAutoReset >= 28) {
+          } else if (schedule.frequency === "monthly" && daysSinceLastAutoReset >= 27) {
             shouldReset = true;
           }
         }
