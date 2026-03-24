@@ -723,10 +723,12 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
 
         {!tabLoading && recommendations.length === 0 && (
           <div className="text-center py-16">
-            <IconInbox
-              size={48}
-              className="mx-auto text-zinc-300 dark:text-zinc-600 mb-3"
-            />
+            <div className="mx-auto mb-3 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <IconInbox
+                size={32}
+                className="text-primary"
+              />
+            </div>
             <p className="text-zinc-500 dark:text-zinc-400 text-sm">
               No {activeTab} recommendations
             </p>

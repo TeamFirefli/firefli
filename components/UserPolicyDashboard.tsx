@@ -181,8 +181,8 @@ const UserPolicyDashboard: FC<UserPolicyDashboardProps> = ({ workspaceId, classN
 			{/* Empty State */}
 			{totalPolicies === 0 && (
 				<div className="px-6 py-12 text-center">
-					<div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center">
-						<IconFileText className="w-8 h-8 text-zinc-400" />
+					<div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+						<IconFileText className="w-8 h-8 text-primary" />
 					</div>
 					<h4 className="text-base font-medium text-zinc-900 dark:text-white mb-2">No Policies Assigned</h4>
 					<p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
