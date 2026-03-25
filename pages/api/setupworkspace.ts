@@ -57,7 +57,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     });
   }
 
-  const { groupid, username, password, color, robloxApiKey } = req.body;
+  let { groupid, username, password, color, robloxApiKey } = req.body;
+  if (typeof robloxApiKey === "string") {
+    robloxApiKey = robloxApiKey.trim();
+    if (!robloxApiKey) robloxApiKey = undefined;
+  }
   if (!groupid || !username || !password || !color) {
     console.error("Missing required fields:", {
       groupid,

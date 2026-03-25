@@ -210,19 +210,20 @@ const Login: NextPage = () => {
 			return;
 		}
 		setIsLoading(true);
-		let request: { data: { success: boolean; workspaceGroupId?: number; user?: any } } | undefined;
+		let request: { data: { success: boolean; workspaceGroupId?: number; user?: any; error?: string } } | undefined;
 		
 		try {
 			if (useCreateWs) {
+				const trimmedApiKey = robloxApiKey.trim();
 				request = await Promise.race([
 					axios.post('/api/createws', {
 						groupId: Number(methods.getValues("groupid")),
-						robloxApiKey,
+						robloxApiKey: trimmedApiKey,
 					}),
 					new Promise((_, reject) => 
 						setTimeout(() => reject(new Error('Request timeout')), 30000)
 					)
-				]) as { data: { success: boolean; workspaceGroupId?: number } };
+				]) as { data: { success: boolean; workspaceGroupId?: number; error?: string } };
 
 				if (request?.data.success && request.data.workspaceGroupId) {
 					toast.success('Workspace created successfully!');
@@ -235,15 +236,19 @@ const Login: NextPage = () => {
 					}
 					Router.push(`/workspace/${request.data.workspaceGroupId}?new=true`);
 					return;
+				} else {
+					toast.error(request?.data?.error || 'Failed to create workspace.');
+					return;
 				}
 			} else {
+				const trimmedApiKey = robloxApiKey.trim();
 				request = await Promise.race([
 					axios.post('/api/setupworkspace', {
 						groupid: methods.getValues("groupid"),
 						username: signupform.getValues("username"),
 						password: signupform.getValues("password"),
 						color: selectedColor,
-						robloxApiKey,
+						robloxApiKey: trimmedApiKey,
 					}),
 					new Promise((_, reject) => 
 						setTimeout(() => reject(new Error('Request timeout')), 30000)
@@ -275,6 +280,7 @@ const Login: NextPage = () => {
 					type: "custom", 
 					message: "You must be at least rank 25 in this group" 
 				});
+				toast.error('You must be at least rank 25 in this group');
 			} else if (e?.message === 'Request timeout') {
 				toast.error('Request timed out. Please try again.');
 			} else {

@@ -41,8 +41,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     return res
       .status(405)
       .json({ success: false, error: "Method not allowed" });
-  // Accept groupId as number or numeric string; optional color (currently unused beyond default)
   let { groupId, robloxApiKey } = req.body || {};
+  if (typeof robloxApiKey === "string") {
+    robloxApiKey = robloxApiKey.trim();
+    if (!robloxApiKey) robloxApiKey = undefined;
+  }
   if (!req.session.userid)
     return res.status(401).json({ success: false, error: "Not logged in" });
   const dbuser = await prisma.user.findUnique({
@@ -53,7 +56,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   if (!dbuser)
     return res.status(401).json({ success: false, error: "Not logged in" });
-  // Validate and normalize groupId
   if (groupId === undefined || groupId === null)
     return res.status(400).json({ success: false, error: "Missing groupId" });
   if (typeof groupId === "string") {
@@ -191,6 +193,13 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           },
         ],
       });
+
+      if (robloxApiKey && typeof robloxApiKey === "string") {
+        await tx.workspaceExternalServices.create({
+          data: { workspaceGroupId: groupId, robloxApiKey },
+        });
+      }
+
       return ws;
     });
   } catch (err: any) {
@@ -203,18 +212,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     return res
       .status(500)
       .json({ success: false, error: "Failed to create workspace" });
-  }
-
-  if (robloxApiKey && typeof robloxApiKey === "string") {
-    try {
-      await prisma.workspaceExternalServices.upsert({
-        where: { workspaceGroupId: groupId },
-        update: { robloxApiKey },
-        create: { workspaceGroupId: groupId, robloxApiKey },
-      });
-    } catch (err) {
-      console.error("[createws] Failed to save Roblox API key:", err);
-    }
   }
 
   if (process.env.DISCORD_WELCOME) {
