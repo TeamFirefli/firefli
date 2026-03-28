@@ -128,6 +128,7 @@ const workspace: LayoutProps = ({ children }) => {
 	const [login] = useRecoilState(loginState);
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
+	const [newFeatsDone, setNewFeatsDone] = useState(false);
 	const [savedViews, setSavedViews] = useState<Array<{id: string; name: string; color?: string; icon?: string}>>([]);
 	const [localViews, setLocalViews] = useState<Array<{id: string; name: string; color?: string; icon?: string}>>([]);
 	const [savedViewsLoaded, setSavedViewsLoaded] = useState(false);
@@ -713,10 +714,10 @@ const workspace: LayoutProps = ({ children }) => {
 							</div>
 						)}
 						{children}
-						{router.query.id && (
+						{newFeatsDone && router.query.id && (
 							<WorkspaceBirthdayPrompt workspaceId={router.query.id as string} />
 						)}
-						<NewFeatures />
+						<NewFeatures onReady={() => setNewFeatsDone(true)} />
 					</main>
 				</div>
 				<BottomBar />

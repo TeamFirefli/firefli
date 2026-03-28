@@ -13,7 +13,11 @@ interface ChangelogEntry {
 
 const PREFIX = "_";
 
-const newFeatures = () => {
+interface NewFeaturesProps {
+  onReady?: () => void;
+}
+
+const newFeatures = ({ onReady }: NewFeaturesProps = {}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [latestEntry, setLatestEntry] = useState<ChangelogEntry | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,10 +36,13 @@ const newFeatures = () => {
           if (!hasSeen) {
             setLatestEntry(latest);
             setIsOpen(true);
+            return;
           }
         }
+        onReady?.();
       } catch (error) {
         console.error("Failed to fetch changelog:", error);
+        onReady?.();
       } finally {
         setLoading(false);
       }
@@ -50,6 +57,7 @@ const newFeatures = () => {
       localStorage.setItem(entryKey, "true");
     }
     setIsOpen(false);
+    onReady?.();
   };
 
   if (loading || !latestEntry) return null;
