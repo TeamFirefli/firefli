@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import hexRgb from "hex-rgb";
 import * as colors from "tailwindcss/colors";
 import WorkspaceBirthdayPrompt from '@/components/bdayprompt';
+import NewFeatures from '@/components/newfeats';
 import { useEffect, useState, useMemo, useCallback } from "react";
 import clsx from 'clsx';
 import SecondarySidebar, { SecondarySidebarSection, SecondarySidebarItem } from "@/components/tabs";
@@ -715,6 +716,7 @@ const workspace: LayoutProps = ({ children }) => {
 						{router.query.id && (
 							<WorkspaceBirthdayPrompt workspaceId={router.query.id as string} />
 						)}
+						<NewFeatures />
 					</main>
 				</div>
 				<BottomBar />
