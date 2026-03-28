@@ -417,7 +417,7 @@ const Color: FC<props> = (props) => {
           >
             <IconLayoutGrid size={18} />
             <span className="text-sm font-medium">
-              {showLayoutEditor ? "Hide" : "Show"} Layout Editor
+              {showLayoutEditor ? "Hide" : "Show"} Layout Preview
             </span>
           </button>
         </div>

@@ -31,7 +31,7 @@ export default function LayoutEditor({ layout, onLayoutChange, widgetTitles }: L
   if (!mounted) {
     return (
       <div className="text-center text-zinc-500 dark:text-zinc-400 py-8">
-        Initializing layout editor...
+        Initialising layout editor...
       </div>
     );
   }
