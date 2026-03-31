@@ -33,7 +33,7 @@ const nextConfig = {
 			},
 			{
 			  key: 'Referrer-Policy',
-			  value: 'origin-when-cross-origin',
+			  value: 'strict-origin-when-cross-origin',
 			},
 			{
 			  key: 'X-Frame-Options',
@@ -41,7 +41,7 @@ const nextConfig = {
 			},
 			{
 			  key: 'Content-Security-Policy',
-			  value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://widget.intercom.io https://js.intercomcdn.com https://cdn.posthog.com https://js.posthog.com https://cdn.intercom.com https://uploads.intercomcdn.com https://m.firefli.net; script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com/ https://*.posthog.com https://widget.intercom.io https://js.intercomcdn.com https://cdn.posthog.com https://js.posthog.com https://cdn.intercom.com https://uploads.intercomcdn.com https://m.firefli.net; script-src-attr 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://fonts.intercomcdn.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.intercom.io https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://us.i.posthog.com https://us-assets.i.posthog.com https://apis.roblox.com https://thumbnails.roblox.com https://users.roblox.com wss://*.intercom.io https://m.firefli.net; media-src 'self' https://audio-ssl.itunes.apple.com https://cdn.freesound.org; frame-src 'self' https://widget.intercom.io; frame-ancestors 'self'; base-uri 'self'; form-action 'self';",
+			  value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://m.firefli.net https://cdn.posthog.com https://js.posthog.com https://cdn.intercom.com https://uploads.intercomcdn.com https://js.intercomcdn.com https://widget.intercom.io; script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com/ https://*.posthog.com https://m.firefli.net https://cdn.posthog.com https://js.posthog.com https://cdn.intercom.com https://uploads.intercomcdn.com https://js.intercomcdn.com https://widget.intercom.io; script-src-attr 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://fonts.intercomcdn.com; img-src 'self' data: https: blob:; connect-src 'self' https://m.firefli.net https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://us.i.posthog.com https://us-assets.i.posthog.com https://apis.roblox.com https://thumbnails.roblox.com https://users.roblox.com https://api-iam.intercom.io https://api-iam.eu.intercom.io https://api-iam.au.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io wss://*.intercom.io; media-src 'self' https://audio-ssl.itunes.apple.com https://cdn.freesound.org; frame-src 'self' https://www.youtube.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';",
 			},
 		  ],
 		},
