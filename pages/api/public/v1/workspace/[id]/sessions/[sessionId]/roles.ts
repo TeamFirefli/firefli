@@ -102,6 +102,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         roleId: slot.id,
         roleName: slot.name,
         maxSlots: slot.number || 1,
+        weight: slot.weight ?? 0,
+        categoryId: slot.categoryId ?? null,
+        categoryName: slot.categoryName ?? null,
+        categoryWeight: slot.categoryWeight ?? 0,
         assignments,
       };
     });

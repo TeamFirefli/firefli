@@ -18,7 +18,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const showArchived = req.query.archived === "1";
     const categories = await prisma.sessionRoleCategory.findMany({
       where: { workspaceGroupId, archived: showArchived },
-      orderBy: { name: "asc" },
+      orderBy: [{ weight: "asc" }, { name: "asc" }],
     });
     return res.status(200).json({ success: true, categories });
   }

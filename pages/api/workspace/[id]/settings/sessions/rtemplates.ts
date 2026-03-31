@@ -23,7 +23,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const templates = await prisma.sessionRoleTemplate.findMany({
       where: { workspaceGroupId, archived: showArchived },
       include: { category: true },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ weight: "asc" }, { createdAt: "asc" }],
     });
     return res.status(200).json({ success: true, templates });
   }
