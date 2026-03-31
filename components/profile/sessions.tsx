@@ -302,46 +302,75 @@ export function SessionsHistory({
                         <h5 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">
                           Participants {session.users && session.users.length > 0 && `(${session.users.length})`}
                         </h5>
-                        {session.users && session.users.length > 0 ? (
-                          <div className="grid grid-cols-1 gap-2">
-                            {session.users.map((participant: any) => {
-                              const slot = session.sessionType.slots[participant.slot];
-                              const bgColor = getRandomBg(
-                                participant.userid.toString(),
-                                participant.user?.username
-                              );
-                              return (
-                                <div
-                                  key={`${participant.userid}-${participant.slot}`}
-                                  className="flex items-center gap-3 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-700/50"
-                                >
-                                  {participant.user?.picture ? (
-                                    <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                                      <Image
-                                        src={participant.user.picture}
-                                        alt={participant.user.username || "User"}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-zinc-800 dark:text-zinc-900 flex-shrink-0 ${bgColor}`}
-                                    >
-                                      {participant.user?.username?.[0]?.toUpperCase() || "?"}
+                      {session.users && session.users.length > 0 ? (
+                          <div className="space-y-3">
+                            {(() => {
+                              const slots: any[] = Array.isArray(session.sessionType.slots) ? session.sessionType.slots : [];
+                              const UNCATEGORISED = "__uncategorised__";
+                              const map = new Map<string, { catName: string | null; participants: any[] }>();
+                              for (const participant of session.users) {
+                                const slot = slots[participant.slot];
+                                const key = slot?.categoryId || UNCATEGORISED;
+                                if (!map.has(key)) {
+                                  map.set(key, { catName: slot?.categoryName || null, participants: [] });
+                                }
+                                map.get(key)!.participants.push({ participant, slot });
+                              }
+                              const grouped = [...map.entries()].sort(([a], [b]) => {
+                                if (a === UNCATEGORISED) return 1;
+                                if (b === UNCATEGORISED) return -1;
+                                return (map.get(a)!.catName ?? "").localeCompare(map.get(b)!.catName ?? "");
+                              });
+                              return grouped.map(([catKey, { catName, participants }]) => (
+                                <div key={catKey}>
+                                  {catName && (
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{catName}</span>
+                                      <div className="flex-1 border-t border-zinc-200 dark:border-zinc-700" />
                                     </div>
                                   )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
-                                      {participant.user?.username || "Unknown"}
-                                    </p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                      {slot?.name || participant.roleID}
-                                    </p>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {participants.map(({ participant, slot }: any) => {
+                                      const bgColor = getRandomBg(
+                                        participant.userid.toString(),
+                                        participant.user?.username
+                                      );
+                                      return (
+                                        <div
+                                          key={`${participant.userid}-${participant.slot}`}
+                                          className="flex items-center gap-3 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-700/50"
+                                        >
+                                          {participant.user?.picture ? (
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                                              <Image
+                                                src={participant.user.picture}
+                                                alt={participant.user.username || "User"}
+                                                fill
+                                                className="object-cover"
+                                              />
+                                            </div>
+                                          ) : (
+                                            <div
+                                              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-zinc-800 dark:text-zinc-900 flex-shrink-0 ${bgColor}`}
+                                            >
+                                              {participant.user?.username?.[0]?.toUpperCase() || "?"}
+                                            </div>
+                                          )}
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                                              {participant.user?.username || "Unknown"}
+                                            </p>
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                              {slot?.name || participant.roleID}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
-                              );
-                            })}
+                              ));
+                            })()}
                           </div>
                         ) : (
                           <p className="text-sm text-zinc-500 dark:text-zinc-400 italic py-2">

@@ -18,6 +18,11 @@ export const sessionTypeStatusSchema = z.object({
 export const sessionTypeSlotSchema = z.object({
   name: z.string().min(1).max(100),
   slots: z.number().int().min(0).max(100),
+  id: z.string().optional(),
+  categoryId: z.string().nullable().optional(),
+  categoryName: z.string().nullable().optional(),
+  hostRole: z.enum(["primary", "secondary"]).nullable().optional(),
+  groupRoles: z.array(z.number().int().min(0)).optional(),
 });
 
 const tiptapMarkSchema: z.ZodType<any> = z.object({

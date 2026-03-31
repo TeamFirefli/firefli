@@ -156,19 +156,6 @@ export const getServerSideProps = withPermissionCheckSsr(
       });
 
       const startDate = lastReset?.resetAt || new Date("2025-01-01");
-      const ownedSessions = await prisma.session.findMany({
-        where: {
-          ownerId: userId,
-          sessionType: {
-            workspaceGroupId: parseInt(query.id as string),
-          },
-          date: {
-            gte: startDate,
-            lte: currentDate,
-          },
-          archived: { not: true },
-        },
-      });
 
       const allSessionParticipations = await prisma.sessionUser.findMany({
         where: {
@@ -200,36 +187,17 @@ export const getServerSideProps = withPermissionCheckSsr(
         },
       });
 
-      const roleBasedHostedSessions = allSessionParticipations.filter(
-        (participation) => {
-          const slots = participation.session.sessionType.slots as any[];
-          const slotIndex = participation.slot;
-          const slotName = slots[slotIndex]?.name || "";
-          return (
-            participation.roleID.toLowerCase().includes("host") ||
-            participation.roleID.toLowerCase().includes("co-host") ||
-            slotName.toLowerCase().includes("host") ||
-            slotName.toLowerCase().includes("co-host")
-          );
-        }
-      ).length;
+      const sessionsHosted = allSessionParticipations.filter((participation) => {
+          const sessionSlots = participation.session.sessionType.slots as any[];
+          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+        }).length;
 
-      const sessionsHosted = ownedSessions.length + roleBasedHostedSessions;
-      const ownedSessionIds = new Set(ownedSessions.map((s) => s.id));
-      const sessionsAttended = allSessionParticipations.filter(
-        (participation) => {
-          const slots = participation.session.sessionType.slots as any[];
-          const slotIndex = participation.slot;
-          const slotName = slots[slotIndex]?.name || "";
-          const isHosting =
-            participation.roleID.toLowerCase().includes("host") ||
-            participation.roleID.toLowerCase().includes("co-host") ||
-            slotName.toLowerCase().includes("host") ||
-            slotName.toLowerCase().includes("co-host");
-
-          return !isHosting && !ownedSessionIds.has(participation.sessionid);
-        }
-      ).length;
+      const sessionsAttended = allSessionParticipations.filter((participation) => {
+          const sessionSlots = participation.session.sessionType.slots as any[];
+          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          return !matchingSlot?.hostRole;
+        }).length;
 
       userSessionMetrics = {
         sessionsHosted,
@@ -245,6 +213,16 @@ export const getServerSideProps = withPermissionCheckSsr(
           )
         ) as typeof allSessions,
         userSessionMetrics,
+        currentUserRankId: req.session?.userid
+          ? await prisma.rank
+              .findFirst({
+                where: {
+                  userId: BigInt(req.session.userid),
+                  workspaceGroupId: parseInt(query.id as string),
+                },
+              })
+              .then((r) => (r ? Number(r.rankId) : null))
+          : null,
       },
     };
   }
@@ -414,15 +392,19 @@ const WeeklyCalendar: React.FC<{
                   );
                   const isActive = now >= sessionStart && now <= sessionEnd;
                   const isConcluded = now > sessionEnd;
-                  const coHost = session.users?.find((user: any) => {
-                    if (user.roleID?.toLowerCase().includes("co-host"))
-                      return true;
-                    const slots = session.sessionType?.slots || [];
-                    const userSlot = slots[user.slot];
-                    if (userSlot?.name?.toLowerCase().includes("co-host"))
-                      return true;
-                    return false;
-                  });
+                  const sessionSlots = (session.sessionType?.slots || []) as any[];
+                  const primaryHostUser = session.users?.find((u: any) => {
+                    const slot = sessionSlots.find((s: any) => s.id === u.roleID);
+                    return slot?.hostRole === "primary";
+                  }) || null;
+                  const secondaryHostUser = session.users?.find((u: any) => {
+                    const slot = sessionSlots.find((s: any) => s.id === u.roleID);
+                    return slot?.hostRole === "secondary";
+                  }) || null;
+                  const primaryUserId = (primaryHostUser?.user?.userid || primaryHostUser?.userid)?.toString();
+                  const primaryPicture = primaryHostUser?.user?.picture || null;
+                  const secondaryUserId = (secondaryHostUser?.user?.userid || secondaryHostUser?.userid)?.toString();
+                  const secondaryPicture = secondaryHostUser?.user?.picture || null;
 
                   return (
                     <div
@@ -442,17 +424,17 @@ const WeeklyCalendar: React.FC<{
                             </h4>
 
                             <div className="flex items-center gap-1 ml-2 z-10 flex-shrink-0 relative left-2 group-hover:left-0 transition-all">
-                              {session.owner && (
+                              {primaryHostUser && (
                                 <div
                                   className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                                    session.owner.userid.toString()
+                                    primaryUserId!
                                   )}`}
                                 >
                                   <img
                                     src={getSessionUserAvatar(
                                       workspaceId,
-                                      session.owner.userid,
-                                      session.owner.picture
+                                      primaryUserId,
+                                      primaryPicture
                                     )}
                                     className="w-7 h-7 rounded-full object-cover border-2 border-white dark:border-zinc-800"
                                     onError={(e) => {
@@ -463,17 +445,17 @@ const WeeklyCalendar: React.FC<{
                                 </div>
                               )}
 
-                              {coHost && (
+                              {secondaryHostUser && (
                                 <div
                                   className={`w-8 h-8 rounded-full flex items-center justify-center ${getRandomBg(
-                                    (coHost.user?.userid || coHost.userid).toString()
-                                  )} ${session.owner ? "-ml-2" : ""}`}
+                                    secondaryUserId!
+                                  )} ${primaryHostUser ? "-ml-2" : ""}`}
                                 >
                                   <img
                                     src={getSessionUserAvatar(
                                       workspaceId,
-                                      coHost.user?.userid || coHost.userid,
-                                      coHost.user?.picture || null
+                                      secondaryUserId,
+                                      secondaryPicture
                                     )}
                                     className="w-7 h-7 rounded-full object-cover border-2 border-white dark:border-zinc-800"
                                     onError={(e) => {
@@ -537,7 +519,7 @@ const WeeklyCalendar: React.FC<{
                             </div>
                             <div className="flex items-center gap-1">
                               <IconUserCircle className="w-4 h-4" />
-                              {session.owner?.username || "Unclaimed"}
+                              {primaryHostUser?.user?.username || primaryHostUser?.username || "Unclaimed"}
                             </div>
                           </div>
                         </div>
@@ -600,6 +582,7 @@ type pageProps = {
     sessionsHosted: number;
     sessionsAttended: number;
   } | null;
+  currentUserRankId: number | null;
 };
 
 const Home: pageWithLayout<pageProps> = (props) => {
@@ -993,15 +976,19 @@ const Home: pageWithLayout<pageProps> = (props) => {
                 );
                 const isActive = now >= sessionStart && now <= sessionEnd;
                 const isConcluded = now > sessionEnd;
-                const coHost = session.users?.find((user: any) => {
-                  if (user.roleID?.toLowerCase().includes("co-host"))
-                    return true;
-                  const slots = session.sessionType?.slots || [];
-                  const userSlot = slots[user.slot];
-                  if (userSlot?.name?.toLowerCase().includes("co-host"))
-                    return true;
-                  return false;
-                });
+                const sessionSlots = (session.sessionType?.slots || []) as any[];
+                const primaryHostUser = session.users?.find((u: any) => {
+                  const slot = sessionSlots.find((s: any) => s.id === u.roleID);
+                  return slot?.hostRole === "primary";
+                }) || null;
+                const secondaryHostUser = session.users?.find((u: any) => {
+                  const slot = sessionSlots.find((s: any) => s.id === u.roleID);
+                  return slot?.hostRole === "secondary";
+                }) || null;
+                const primaryUserId = (primaryHostUser?.user?.userid || primaryHostUser?.userid)?.toString();
+                const primaryPicture = primaryHostUser?.user?.picture || null;
+                const secondaryUserId = (secondaryHostUser?.user?.userid || secondaryHostUser?.userid)?.toString();
+                const secondaryPicture = secondaryHostUser?.user?.picture || null;
 
                 return (
                   <div className="px-2" key={session.id}>
@@ -1073,7 +1060,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
                             <div className="flex items-center gap-1 min-w-0">
                               <IconUserCircle className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">
-                                {session.owner?.username || "Unclaimed"}
+                                {primaryHostUser?.user?.username || primaryHostUser?.username || "Unclaimed"}
                               </span>
                             </div>
                           </div>
@@ -1081,17 +1068,17 @@ const Home: pageWithLayout<pageProps> = (props) => {
 
                         <div className="relative w-0 h-0">
                           <div className="absolute top-0 right-0 flex items-center gap-1 z-10">
-                            {session.owner && (
+                            {primaryHostUser && (
                               <div
                                 className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center ring-2 ring-white dark:ring-zinc-800 ${getRandomBg(
-                                  session.owner.userid.toString()
+                                  primaryUserId!
                                 )}`}
                               >
                                 <img
                                   src={getSessionUserAvatar(
                                     router.query.id as string,
-                                    session.owner.userid,
-                                    session.owner.picture
+                                    primaryUserId,
+                                    primaryPicture
                                   )}
                                   className="w-7 h-7 rounded-full object-cover"
                                   onError={(e) => {
@@ -1102,17 +1089,17 @@ const Home: pageWithLayout<pageProps> = (props) => {
                               </div>
                             )}
 
-                            {coHost && (
+                            {secondaryHostUser && (
                               <div
                                 className={`w-8 h-8 min-w-[2rem] rounded-full flex items-center justify-center ring-2 ring-white dark:ring-zinc-800 ${getRandomBg(
-                                  (coHost.user?.userid || coHost.userid).toString()
-                                )} ${session.owner ? "-ml-2" : ""}`}
+                                  secondaryUserId!
+                                )} ${primaryHostUser ? "-ml-2" : ""}`}
                               >
                                 <img
                                   src={getSessionUserAvatar(
                                     router.query.id as string,
-                                    coHost.user?.userid || coHost.userid,
-                                    coHost.user?.picture || null
+                                    secondaryUserId,
+                                    secondaryPicture
                                   )}
                                   className="w-7 h-7 rounded-full object-cover"
                                   onError={(e) => {
@@ -1186,6 +1173,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
             canAddNotes={canAddNotes(workspace.yourPermission || [], selectedSession?.type)}
             sessionColors={sessionColors}
             colorsReady={!colorsLoading}
+            currentUserRankId={props.currentUserRankId}
           />
         )}
 

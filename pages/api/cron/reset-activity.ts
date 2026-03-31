@@ -236,18 +236,6 @@ async function performReset(workspaceGroupId: number) {
     );
     const totalMinutes = sessionMinutes + adjustmentMinutes;
 
-    const ownedSessions = await prisma.session.findMany({
-      where: {
-        ownerId: userId,
-        sessionType: { workspaceGroupId },
-        date: {
-          gte: periodStart,
-          lte: periodEnd,
-        },
-        archived: { not: true },
-      },
-    });
-
     const allSessionParticipations = await prisma.sessionUser.findMany({
       where: {
         userid: userId,
@@ -260,7 +248,31 @@ async function performReset(workspaceGroupId: number) {
           archived: { not: true },
         },
       },
+      include: {
+        session: {
+          select: {
+            id: true,
+            sessionType: {
+              select: {
+                slots: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    const sessionsHostedCount = allSessionParticipations.filter((participation) => {
+      const sessionSlots = participation.session.sessionType.slots as any[];
+      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+    }).length;
+
+    const sessionsAttendedCount = allSessionParticipations.filter((participation) => {
+      const sessionSlots = participation.session.sessionType.slots as any[];
+      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+      return !matchingSlot?.hostRole;
+    }).length;
 
     const wallPosts = await prisma.wallPost.findMany({
       where: {
@@ -357,7 +369,6 @@ async function performReset(workspaceGroupId: number) {
     const hasActivity = 
       totalMinutes > 0 ||
       totalMessages > 0 ||
-      ownedSessions.length > 0 ||
       allSessionParticipations.length > 0 ||
       wallPosts.length > 0;
 
@@ -369,8 +380,8 @@ async function performReset(workspaceGroupId: number) {
         periodEnd,
         minutes: totalMinutes,
         messages: totalMessages,
-        sessionsHosted: ownedSessions.length,
-        sessionsAttended: allSessionParticipations.length,
+        sessionsHosted: sessionsHostedCount,
+        sessionsAttended: sessionsAttendedCount,
         idleTime: totalIdleTime,
         wallPosts: wallPosts.length,
         quotaProgress,

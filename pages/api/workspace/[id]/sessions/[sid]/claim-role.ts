@@ -111,7 +111,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const sessionSlots = (session.sessionType as any)?.slots || [];
     const matchingSlot = sessionSlots.find((s: any) => s.id === roleId);
     const slotName = matchingSlot?.name?.toLowerCase() || '';
-    const isHostRole = slotName.includes("host") || slotName.includes("co-host");
+    const isHostRole = !!(matchingSlot?.hostRole);
 
     console.log('[claim-role] Permission check:', {
       sessionType: session.type,
@@ -221,6 +221,25 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           .json({ success: false, error: "User not found" });
       }
 
+      const slotGroupRoles: number[] = Array.isArray((matchingSlot as any)?.groupRoles)
+        ? (matchingSlot as any).groupRoles
+        : [];
+      if (slotGroupRoles.length > 0 && !isAdmin && !hasAssignPermission && isAssigningToSelf) {
+        const targetRank = await prisma.rank.findFirst({
+          where: {
+            userId: BigInt(userId),
+            workspaceGroupId: parseInt(req.query.id as string),
+          },
+        });
+        const targetRankId = targetRank ? Number(targetRank.rankId) : null;
+        if (targetRankId === null || !slotGroupRoles.includes(targetRankId)) {
+          return res.status(403).json({
+            success: false,
+            error: "This user does not meet the rank requirements for this slot",
+          });
+        }
+      }
+
       const existingClaim = await prisma.sessionUser.findFirst({
         where: {
           sessionid: sid as string,
@@ -229,13 +248,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         },
       });
 
-      if (existingClaim && existingClaim.userid.toString() !== userId) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "This slot is already claimed by another user",
-          });
+      if (existingClaim) {
+        if (existingClaim.userid.toString() !== userId) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              error: "This slot is already claimed by another user",
+            });
+        }
+        return res.status(200).json({ success: true });
       }
 
       const result = await prisma.sessionUser.create({

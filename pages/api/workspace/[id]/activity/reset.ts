@@ -136,18 +136,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         0
       );
       const totalMinutes = sessionMinutes + adjustmentMinutes;
-      
-      const ownedSessions = await prisma.session.findMany({
-        where: {
-          ownerId: userId,
-          sessionType: { workspaceGroupId },
-          date: {
-            gte: periodStart,
-            lte: periodEnd,
-          },
-          archived: { not: true },
-        },
-      });
 
       const allSessionParticipations = await prisma.sessionUser.findMany({
         where: {
@@ -165,6 +153,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           session: {
             select: {
               id: true,
+              type: true,
               sessionType: {
                 select: {
                   slots: true,
@@ -176,56 +165,24 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         },
       });
 
-      const roleBasedHostedSessions = allSessionParticipations.filter(
-        (participation) => {
-          const slots = participation.session.sessionType.slots as any[];
-          const slotIndex = participation.slot;
-          const slotName = slots[slotIndex]?.name || "";
-          return (
-            participation.roleID.toLowerCase().includes("co-host") ||
-            slotName.toLowerCase().includes("co-host")
-          );
-        }
-      ).length;
+      const sessionsHosted = allSessionParticipations.filter((participation) => {
+          const sessionSlots = participation.session.sessionType.slots as any[];
+          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+        }).length;
 
-      const sessionsHosted = ownedSessions.length + roleBasedHostedSessions;
-      const ownedSessionIds = new Set(ownedSessions.map((s) => s.id));
-      const sessionsAttended = allSessionParticipations.filter(
-        (participation) => {
-          const slots = participation.session.sessionType.slots as any[];
-          const slotIndex = participation.slot;
-          const slotName = slots[slotIndex]?.name || "";
-          const isCoHost =
-            participation.roleID.toLowerCase().includes("co-host") ||
-            slotName.toLowerCase().includes("co-host");
+      const sessionsAttended = allSessionParticipations.filter((participation) => {
+          const sessionSlots = participation.session.sessionType.slots as any[];
+          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          return !matchingSlot?.hostRole;
+        }).length;
 
-          return !isCoHost && !ownedSessionIds.has(participation.sessionid);
-        }
-      ).length;
-
-      const allUserSessionsIds = new Set([
-        ...ownedSessions.map(s => s.id),
-        ...allSessionParticipations.map(p => p.sessionid)
-      ]);
-      const sessionsLogged = allUserSessionsIds.size;
+      const sessionsLogged = new Set(allSessionParticipations.map(p => p.sessionid)).size;
       const sessionsByType: Record<string, number> = {};
-      const allUserSessions = [
-        ...ownedSessions.map(s => ({ id: s.id, type: s.type })),
-        ...allSessionParticipations.map(p => ({ 
-          id: p.sessionid, 
-          type: (p.session as any).type 
-        }))
-      ];
-      const uniqueSessionsMap = new Map(allUserSessions.map(s => [s.id, s.type]));
-      for (const [, sessionType] of uniqueSessionsMap) {
-        const type = sessionType || 'other';
+      for (const p of allSessionParticipations) {
+        const type = (p.session as any).type || 'other';
         sessionsByType[type] = (sessionsByType[type] || 0) + 1;
       }
-      const cohostSessions = allSessionParticipations.filter((p) => {
-        const slots = p.session.sessionType.slots as any[];
-        const slotName = slots[p.slot]?.name || "";
-        return p.roleID.toLowerCase().includes("co-host") || slotName.toLowerCase().includes("co-host");
-      }).length;
 
       const allianceVisits = await prisma.allyVisit.count({
         where: {

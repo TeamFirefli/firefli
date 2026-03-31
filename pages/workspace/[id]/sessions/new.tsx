@@ -22,6 +22,7 @@ import {
   IconUsers,
   IconClipboardList,
   IconUserPlus,
+  IconFolder,
   IconArrowLeft,
   IconDeviceFloppy,
 } from "@tabler/icons-react";
@@ -114,19 +115,9 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
       id: uuidv4(),
     },
   ]);
-  const [slots, setSlots] = useState<
-    {
-      name: string;
-      slots: number;
-      id: string;
-    }[]
-  >([
-    {
-      name: "Co-Host",
-      slots: 1,
-      id: uuidv4(),
-    },
-  ]);
+  const [roleTemplates, setRoleTemplates] = useState<any[]>([]);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [showOverlapModal, setShowOverlapModal] = useState(false);
   const [overlapMessage, setOverlapMessage] = useState("");
   const [overlapError, setOverlapError] = useState("");
@@ -150,6 +141,22 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
   const canCreateAnyUnscheduled = availableSessionTypes.some(type => 
     canCreateUnscheduled(workspace.yourPermission || [], type.value)
   );
+
+  useEffect(() => {
+    if (!workspace.groupId) return;
+    setIsLoadingTemplates(true);
+    axios
+      .get(`/api/workspace/${workspace.groupId}/settings/sessions/rtemplates`)
+      .then((res) => {
+        if (res.data.success) {
+          const templates = res.data.templates || [];
+          setRoleTemplates(templates);
+          setSelectedTemplateIds(new Set());
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingTemplates(false));
+  }, [workspace.groupId]);
 
   const checkOverlaps = async (sessionDate: Date, duration: number) => {
     try {
@@ -189,6 +196,17 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
       // use the first selected time as the representative schedule time when creating the session type
       const [firstHours, firstMinutes] = selectedTimes[0].split(":").map(Number);
 
+      const selectedSlots = roleTemplates
+        .filter((t) => selectedTemplateIds.has(t.id))
+        .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
+
+      const hasHostRole = selectedSlots.some((s) => s.hostRole === "primary");
+      if (!hasHostRole) {
+        setFormError("At least one host role must be included in the session.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const sessionTypeResponse = await axios.post(
         `/api/workspace/${workspace.groupId}/sessions/manage/new`,
         {
@@ -202,7 +220,7 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
             minutes: firstMinutes,
             allowUnscheduled,
           },
-          slots,
+          slots: selectedSlots,
           statues,
         }
       );
@@ -446,27 +464,26 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
     );
   };
 
-  const newSlot = () => {
-    setSlots((prev) => [
-      ...prev,
-      {
-        name: "Co-Host",
-        slots: 1,
-        id: uuidv4(),
-      },
-    ]);
+  const toggleTemplate = (id: string) => {
+    setSelectedTemplateIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
-  const deleteSlot = (id: string) => {
-    setSlots((prev) => prev.filter((slot) => slot.id !== id));
-  };
-
-  const updateSlot = (id: string, name: string, slotsAvailble: number) => {
-    setSlots((prev) =>
-      prev.map((slot) =>
-        slot.id === id ? { ...slot, slots: slotsAvailble, name } : slot
-      )
-    );
+  const toggleCategory = (ids: string[]) => {
+    setSelectedTemplateIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allSelected) {
+        ids.forEach((id) => next.delete(id));
+      } else {
+        ids.forEach((id) => next.add(id));
+      }
+      return next;
+    });
   };
 
   const addTime = () => {
@@ -495,7 +512,6 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
       label: "Statuses",
       icon: <IconClipboardList size={18} />,
     },
-    { id: "slots", label: "Slots", icon: <IconUserPlus size={18} /> },
   ];
 
   const isFormValid = () => {
@@ -534,7 +550,7 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
   return (
     <div className="pagePadding">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -611,7 +627,8 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                 </div>
               </div>
 
-              <div className="space-y-6 max-w-2xl">
+              <div className="flex gap-8 items-start">
+                <div className="flex-1 min-w-0 space-y-6">
                 <div>
                   <Input
                     {...form.register("name", {
@@ -781,6 +798,105 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                     )}
                   </div>
                 )}
+              </div>
+                <div className="w-64 flex-shrink-0">
+                  <div className="sticky top-4 border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-700/50 border-b border-gray-200 dark:border-zinc-700 flex items-center gap-2">
+                      <IconUserPlus size={14} className="text-primary" />
+                      <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Session Roles</h4>
+                    </div>
+                    <div className="p-3 max-h-[480px] overflow-y-auto">
+                      {isLoadingTemplates ? (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 py-2 text-center">Loading…</p>
+                      ) : roleTemplates.length === 0 ? (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-4 leading-relaxed">
+                          No roles defined yet.<br />
+                          <span className="opacity-70">Configure in Settings → Sessions.</span>
+                        </p>
+                      ) : (
+                        <div className="space-y-1">
+                          {(() => {
+                            const UNCATEGORISED = "__uncategorised__";
+                            const map = new Map<string, typeof roleTemplates>();
+                            for (const t of roleTemplates) {
+                              const key = t.categoryId || UNCATEGORISED;
+                              if (!map.has(key)) map.set(key, []);
+                              map.get(key)!.push(t);
+                            }
+                            type FlatItem =
+                              | { type: "category"; catKey: string; catName: string; roles: typeof roleTemplates }
+                              | { type: "role"; template: (typeof roleTemplates)[0] };
+                            const flat: FlatItem[] = [];
+                            for (const [catKey, roles] of map.entries()) {
+                              if (catKey === UNCATEGORISED) {
+                                for (const t of roles) flat.push({ type: "role", template: t });
+                              } else {
+                                flat.push({ type: "category", catKey, catName: roles[0]?.category?.name ?? catKey, roles });
+                              }
+                            }
+                            flat.sort((a, b) => {
+                              if (a.type === "category" && b.type === "category") return a.catName.localeCompare(b.catName);
+                              if (a.type === "category") return -1;
+                              if (b.type === "category") return 1;
+                              return 0;
+                            });
+                            return flat.map((item) => {
+                              if (item.type === "category") {
+                                const catIds = item.roles.map((t) => t.id);
+                                const allOn = catIds.every((id) => selectedTemplateIds.has(id));
+                                const someOn = !allOn && catIds.some((id) => selectedTemplateIds.has(id));
+                                const hasHost = item.roles.some((t) => t.hostRole === "primary");
+                                return (
+                                  <div key={item.catKey} className="flex items-center justify-between gap-2 py-1">
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate block">{item.catName}</span>
+                                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                        {item.roles.length} role{item.roles.length !== 1 ? "s" : ""}
+                                        {hasHost && <span className="ml-1 text-amber-500">· Host</span>}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleCategory(catIds)}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allOn ? "bg-primary" : someOn ? "bg-primary/40" : "bg-zinc-300 dark:bg-zinc-600"}`}
+                                      role="switch"
+                                      aria-checked={allOn}
+                                    >
+                                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${allOn ? "translate-x-4" : someOn ? "translate-x-2" : "translate-x-0"}`} />
+                                    </button>
+                                  </div>
+                                );
+                              } else {
+                                const template = item.template;
+                                return (
+                                  <div key={template.id} className="flex items-center justify-between gap-2 py-1">
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate block">{template.name}</span>
+                                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                        {template.slots} slot{template.slots !== 1 ? "s" : ""}
+                                        {template.hostRole === "primary" && <span className="ml-1 text-amber-500">· Primary</span>}
+                                        {template.hostRole === "secondary" && <span className="ml-1 text-blue-500">· Secondary</span>}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleTemplate(template.id)}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedTemplateIds.has(template.id) ? "bg-primary" : "bg-zinc-300 dark:bg-zinc-600"}`}
+                                      role="switch"
+                                      aria-checked={selectedTemplateIds.has(template.id)}
+                                    >
+                                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedTemplateIds.has(template.id) ? "translate-x-4" : "translate-x-0"}`} />
+                                    </button>
+                                  </div>
+                                );
+                              }
+                            });
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-8 flex justify-end">
@@ -1165,93 +1281,9 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                   Back
                 </Button>
                 <Button
-                  onPress={() => setActiveTab("slots")}
-                  classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90"
-                >
-                  Continue to Slots
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Slots */}
-          {activeTab === "slots" && (
-            <div className="p-6">
-              <div className="flex items-start mb-6">
-                <div className="bg-primary/10 p-2 rounded-lg mr-4">
-                  <IconUserPlus className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold dark:text-white">
-                    Session Slots
-                  </h2>
-                  <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-                    Define roles and how many people can claim each role
-                  </p>
-                </div>
-              </div>
-
-              <div className="max-w-2xl">
-                <div className="flex justify-between items-center mb-4">
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Each session has one Host by default. Add additional roles
-                    below.
-                  </p>
-                  <Button
-                    onPress={newSlot}
-                    compact
-                    classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90 flex items-center gap-1"
-                  >
-                    <IconPlus size={16} /> Add Slot
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5 dark:bg-primary/10">
-                    <Slot
-                      updateStatus={() => {}}
-                      isPrimary
-                      deleteStatus={() => {}}
-                      data={{
-                        name: "Host",
-                        slots: 1,
-                      }}
-                    />
-                  </div>
-
-                  {slots.map((slot, index) => (
-                    <div
-                      key={slot.id}
-                      className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 bg-white dark:bg-zinc-800 shadow-sm"
-                    >
-                      <Slot
-                        updateStatus={(name, openSlots) =>
-                          updateSlot(slot.id, name, openSlots)
-                        }
-                        deleteStatus={() => deleteSlot(slot.id)}
-                        data={slot}
-                        index={index + 1}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8 flex justify-between w-full">
-                <Button
-                  onPress={() => setActiveTab("statuses")}
-                  classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
-                >
-                  Back
-                </Button>
-                <Button
                   onPress={form.handleSubmit(createSession)}
                   disabled={isSubmitting || !isFormValid()}
-                  classoverride={`flex items-center gap-1 ${
-                    isFormValid()
-                      ? "bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90"
-                      : "bg-zinc-300 text-zinc-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-400"
-                  }`}
+                  classoverride={`flex items-center gap-1 ${isFormValid() ? "bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90" : "bg-zinc-300 text-zinc-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-400"}`}
                 >
                   <IconDeviceFloppy size={16} />{" "}
                   {isSubmitting ? "Creating..." : "Create Session"}
@@ -1412,83 +1444,6 @@ const Status: React.FC<{
         <p className="text-xs text-zinc-500 dark:text-zinc-400 md:col-span-2">
           Status will activate {watch("minutes") || 0} minutes after session
           starts
-        </p>
-      </div>
-    </FormProvider>
-  );
-};
-
-const Slot: React.FC<{
-  data: any;
-  updateStatus: (value: string, slots: number) => void;
-  deleteStatus: () => void;
-  isPrimary?: boolean;
-  index?: number;
-}> = ({ updateStatus, deleteStatus, isPrimary, data, index }) => {
-  const methods = useForm<{
-    slots: number;
-    value: string;
-  }>({
-    defaultValues: {
-      value: data.name,
-      slots: data.slots,
-    },
-  });
-  const { register, watch } = methods;
-
-  useEffect(() => {
-    const subscription = methods.watch((value) => {
-      updateStatus(
-        methods.getValues().value,
-        Number(methods.getValues().slots)
-      );
-    });
-    return () => subscription.unsubscribe();
-  }, [methods, updateStatus]);
-
-  return (
-    <FormProvider {...methods}>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center">
-          {index !== undefined && !isPrimary && (
-            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium mr-2">
-              {index}
-            </span>
-          )}
-          <h3 className="font-medium dark:text-white">
-            {isPrimary ? "Host (Primary)" : watch("value") || "New Slot"}
-          </h3>
-        </div>
-        {!isPrimary && (
-          <Button
-            onPress={deleteStatus}
-            compact
-            classoverride="bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center gap-1"
-          >
-            <IconTrash size={16} /> Delete
-          </Button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          {...register("value")}
-          disabled={isPrimary}
-          label="Role Name"
-          placeholder="Co-Host"
-        />
-        <Input
-          {...register("slots")}
-          disabled={isPrimary}
-          label="Available Slots"
-          type="number"
-          placeholder="2"
-        />
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 md:col-span-2">
-          {isPrimary
-            ? "Primary host role cannot be changed"
-            : `Number of people who can claim this role: ${
-                watch("slots") || 0
-              }`}
         </p>
       </div>
     </FormProvider>

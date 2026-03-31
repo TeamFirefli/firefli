@@ -114,9 +114,14 @@ const SECTIONS = {
   sessions: {
     name: "Sessions",
     icon: IconCalendarEvent,
-    description: "Manage session tags and colors",
-    components: Object.entries(SessionComponents).map(([key, Component]) => ({
-      key,
+    description: "Manage session configuration",
+    components: [
+      SessionComponents.SessionRoles,
+      SessionComponents.SessionTags,
+      SessionComponents.SessionBoard,
+      SessionComponents.SessionColors,
+    ].map((Component) => ({
+      key: Component.name,
       component: Component,
       title: Component.title,
     })),
@@ -132,16 +137,6 @@ const SECTIONS = {
         component: Component,
         title: Component.title,
       })),
-  },
-  api: {
-    name: "Public API",
-    icon: IconKey,
-    description: "Manage API keys and access documentation",
-    components: Object.entries(Api).map(([key, Component]) => ({
-      key,
-      component: Component,
-      title: Component.title,
-    })),
   },
   permissions: {
     name: "Permissions",
@@ -170,6 +165,16 @@ const SECTIONS = {
     icon: IconServer,
     description: "Configure external services and integrations",
     components: Object.entries(Instance).map(([key, Component]) => ({
+      key,
+      component: Component,
+      title: Component.title,
+    })),
+  },
+  api: {
+    name: "Public API",
+    icon: IconKey,
+    description: "Manage API keys and access documentation",
+    components: Object.entries(Api).map(([key, Component]) => ({
       key,
       component: Component,
       title: Component.title,

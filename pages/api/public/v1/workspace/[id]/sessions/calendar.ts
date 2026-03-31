@@ -95,38 +95,10 @@ async function handler(
       },
     });
 
-    const formattedSessions = sessions.map((session) => ({
-      id: session.id,
-      name: session.name,
-      date: session.date,
-      startedAt: session.startedAt,
-      ended: session.ended,
-      type: {
-        id: session.sessionType.id,
-        description: session.sessionType.description,
-        category: session.type,
-        gameId: session.sessionType.gameId
-          ? Number(session.sessionType.gameId)
-          : null,
-        slots: session.sessionType.slots,
-      },
-      tag: session.sessionTag
-        ? {
-            id: session.sessionTag.id,
-            name: session.sessionTag.name,
-            color: session.sessionTag.color,
-          }
-        : null,
-      host: session.owner
-        ? {
-            userId: Number(session.owner.userid),
-            username: session.owner.username,
-            thumbnail: session.owner.picture,
-          }
-        : null,
-      participants: session.users.map((user) => {
-        const slots = (session.sessionType.slots as any[]) || [];
-        const matchingSlot = slots.find((s: any) => s.id === user.roleID);
+    const formattedSessions = sessions.map((session) => {
+      const sessionSlots = (session.sessionType.slots as any[]) || [];
+      const participants = session.users.map((user) => {
+        const matchingSlot = sessionSlots.find((s: any) => s.id === user.roleID);
         return {
           userId: Number(user.user.userid),
           username: user.user.username,
@@ -134,17 +106,69 @@ async function handler(
           slot: user.slot,
           role: user.roleID,
           roleName: matchingSlot?.name || null,
+          hostRole: matchingSlot?.hostRole || null,
+          categoryId: matchingSlot?.categoryId || null,
+          categoryName: matchingSlot?.categoryName || null,
         };
-      }),
-      status: (() => {
-        const statues = (session.sessionType as any).statues || [];
-        const computedStatus = getSessionStatus(session.date, session.duration, statues, session.ended);
-        if (computedStatus) return computedStatus.toLowerCase().replace(/\s+/g, '-');
-        if (session.ended) return 'ended';
-        if (session.startedAt) return 'in-progress';
-        return 'scheduled';
-      })(),
-    }));
+      });
+      const primaryHostParticipant = participants.find(
+        (p) => p.hostRole === "primary" && p.slot === 0
+      ) || participants.find((p) => p.hostRole === "primary") || null;
+
+      return {
+        id: session.id,
+        name: session.name,
+        date: session.date,
+        startedAt: session.startedAt,
+        ended: session.ended,
+        type: {
+          id: session.sessionType.id,
+          description: session.sessionType.description,
+          category: session.type,
+          gameId: session.sessionType.gameId
+            ? Number(session.sessionType.gameId)
+            : null,
+          slots: sessionSlots.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            slots: s.slots,
+            hostRole: s.hostRole || null,
+            categoryId: s.categoryId || null,
+            categoryName: s.categoryName || null,
+          })),
+        },
+        tag: session.sessionTag
+          ? {
+              id: session.sessionTag.id,
+              name: session.sessionTag.name,
+              color: session.sessionTag.color,
+            }
+          : null,
+        host: session.owner
+          ? {
+              userId: Number(session.owner.userid),
+              username: session.owner.username,
+              thumbnail: session.owner.picture,
+            }
+          : null,
+        primaryHost: primaryHostParticipant
+          ? {
+              userId: primaryHostParticipant.userId,
+              username: primaryHostParticipant.username,
+              thumbnail: primaryHostParticipant.thumbnail,
+            }
+          : null,
+        participants,
+        status: (() => {
+          const statues = (session.sessionType as any).statues || [];
+          const computedStatus = getSessionStatus(session.date, session.duration, statues, session.ended);
+          if (computedStatus) return computedStatus.toLowerCase().replace(/\s+/g, '-');
+          if (session.ended) return 'ended';
+          if (session.startedAt) return 'in-progress';
+          return 'scheduled';
+        })(),
+      };
+    });
 
     const sessionsByDate = formattedSessions.reduce(
       (acc: { [key: string]: any[] }, session) => {

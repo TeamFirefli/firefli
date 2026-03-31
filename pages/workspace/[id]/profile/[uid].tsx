@@ -513,20 +513,6 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
-    const ownedSessions = await prisma.session.findMany({
-      where: {
-        ownerId: BigInt(query?.uid as string),
-        sessionType: {
-          workspaceGroupId: parseInt(query.id as string),
-        },
-        date: {
-          gte: startDate,
-          lte: currentDate,
-        },
-        archived: { not: true },
-      },
-    });
-
     const allSessionParticipations = await prisma.sessionUser.findMany({
       where: {
         userid: BigInt(query?.uid as string),
@@ -558,33 +544,17 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
-    const roleBasedHostedSessions = allSessionParticipations.filter(
-      (participation) => {
-        const slots = participation.session.sessionType.slots as any[];
-        const slotIndex = participation.slot;
-        const slotName = slots[slotIndex]?.name || "";
-        return (
-          participation.roleID.toLowerCase().includes("co-host") ||
-          slotName.toLowerCase().includes("co-host")
-        );
-      },
-    ).length;
+    const sessionsHosted = allSessionParticipations.filter((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+    }).length;
 
-    const sessionsHosted = ownedSessions.length + roleBasedHostedSessions;
-    const ownedSessionIds = new Set(ownedSessions.map((s) => s.id));
-    const sessionsAttended = allSessionParticipations.filter(
-      (participation) => {
-        const slots = participation.session.sessionType.slots as any[];
-        const slotIndex = participation.slot;
-        const slotName = slots[slotIndex]?.name || "";
-
-        const isCoHost =
-          participation.roleID.toLowerCase().includes("co-host") ||
-          slotName.toLowerCase().includes("co-host");
-
-        return !isCoHost && !ownedSessionIds.has(participation.sessionid);
-      },
-    ).length;
+    const sessionsAttended = allSessionParticipations.filter((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      return !matchingSlot?.hostRole;
+    }).length;
 
     const allianceVisits = await prisma.allyVisit.count({
       where: {

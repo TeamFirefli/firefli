@@ -69,6 +69,7 @@ interface SessionModalProps {
   canAddNotes?: boolean;
   sessionColors?: SessionColors;
   colorsReady?: boolean | undefined;
+  currentUserRankId?: number | null;
 }
 
 const SessionModal: React.FC<SessionModalProps> = ({
@@ -83,6 +84,7 @@ const SessionModal: React.FC<SessionModalProps> = ({
   canAddNotes,
   sessionColors,
   colorsReady,
+  currentUserRankId,
 }) => {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -590,88 +592,59 @@ const SessionModal: React.FC<SessionModalProps> = ({
               Role Claims
             </h3>
             <div className="space-y-3">
-              <div className="bg-zinc-50 dark:bg-zinc-700/30 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-2">
-                  Host
-                </h4>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">
-                    Slot 1:
-                  </span>
-                  <div className="flex-1">
-                    <HostButton
-                      currentValue={
-                        session.owner?.username ||
-                        (session.ownerId ? `User ${session.ownerId.toString()}` : "")
-                      }
-                      onValueChange={handleHostClaim}
-                      isSubmitting={isSubmitting}
-                      canEdit={
-                        canManage ||
-                        canAssignUsers(workspace.yourPermission, session.type) ||
-                        canHostSession(workspace.yourPermission, session.type) || workspace.yourPermission.includes("admin")
-                      }
-                      availableUsers={availableUsers}
-                      currentUserId={login.userId}
-                      currentUserPicture={login.thumbnail}
-                      currentUserUsername={login.username}
-                      assignedUserPicture={getAvatarFallback(
-                        session.ownerId?.toString(),
-                        session.owner?.picture
-                      )}
-                      assignedUserId={session.owner?.userid?.toString()}
-                      workspace={workspace}
-                      isHostRole={true}
-                      sessionType={session.type}
-                    />
-                  </div>
-                </div>
-              </div>
-
               {session.sessionType.slots &&
                 Array.isArray(session.sessionType.slots) &&
                 session.sessionType.slots.length > 0 &&
-                session.sessionType.slots.map(
-                  (slot: any, slotIndex: number) => {
-                    if (typeof slot !== "object") return null;
-                    const slotData = JSON.parse(JSON.stringify(slot));
+                (() => {
+                  const slots: any[] = session.sessionType.slots;
+                  const UNCATEGORISED = "__uncategorised__";
+                  const catMap = new Map<string, any[]>();
+                  const uncategorised: any[] = [];
+                  for (const slot of slots) {
+                    if (typeof slot !== "object") continue;
+                    if (slot.categoryId) {
+                      if (!catMap.has(slot.categoryId)) catMap.set(slot.categoryId, []);
+                      catMap.get(slot.categoryId)!.push(slot);
+                    } else {
+                      uncategorised.push(slot);
+                    }
+                  }
+                  const sortedCategories = [...catMap.entries()].sort(([, a], [, b]) =>
+                    (a[0]?.categoryName ?? "").localeCompare(b[0]?.categoryName ?? "")
+                  );
 
+                  const renderSlot = (slot: any, slotIdx: number) => {
+                    const slotData = JSON.parse(JSON.stringify(slot));
+                    const slotGroupRoles: number[] = Array.isArray(slotData.groupRoles) ? slotData.groupRoles : [];
+                    const hasRoleRestriction = slotGroupRoles.length > 0;
+                    const currentUserEligible = !hasRoleRestriction || (currentUserRankId != null && slotGroupRoles.includes(currentUserRankId));
                     return (
-                      <div
-                        key={slotIndex}
-                        className="bg-zinc-50 dark:bg-zinc-700/30 rounded-lg p-4"
-                      >
-                        <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-2">
+                      <div key={slotIdx} className="bg-zinc-50 dark:bg-zinc-700/30 rounded-lg p-4 mb-3">
+                        <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
                           {slotData.name}
+                          {hasRoleRestriction && !currentUserEligible && (
+                            <span className="text-xs text-amber-600 dark:text-amber-400 font-normal">(rank restricted)</span>
+                          )}
                         </h4>
                         <div className="space-y-2">
                           {Array.from(Array(slotData.slots)).map((_, i) => {
                             const assignedUser = session.users?.find(
-                              (u: any) =>
-                                u.roleID === slotData.id && u.slot === i
+                              (u: any) => u.roleID === slotData.id && u.slot === i
                             );
-                            const {
-                              username,
-                              picture: userPicture,
-                              userId: assignedUserId,
-                            } = getAssignedDisplay(assignedUser);
+                            const { username, picture: userPicture, userId: assignedUserId } = getAssignedDisplay(assignedUser);
                             return (
                               <div key={i} className="flex items-center gap-2">
-                                <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">
-                                  Slot {i + 1}:
-                                </span>
+                                <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">Slot {i + 1}:</span>
                                 <div className="flex-1">
                                   <RoleButton
                                     currentValue={username || ""}
-                                    onValueChange={(value) =>
-                                      handleSlotClaim(slotData.id, i, value)
-                                    }
+                                    onValueChange={(value) => handleSlotClaim(slotData.id, i, value)}
                                     isSubmitting={isSubmitting}
                                     canEdit={
                                       canManage ||
                                       canAssignUsers(workspace.yourPermission, session.type) ||
                                       workspace.yourPermission.includes("admin") ||
-                                      (slotData.name === "Host" || slotData.name.toLowerCase() === "co-host" 
+                                      (slotData.hostRole
                                         ? canHostSession(workspace.yourPermission, session.type) || workspace.yourPermission.includes("admin")
                                         : canClaimSelf(workspace.yourPermission, session.type) || workspace.yourPermission.includes("admin"))
                                     }
@@ -682,8 +655,10 @@ const SessionModal: React.FC<SessionModalProps> = ({
                                     assignedUserPicture={userPicture}
                                     assignedUserId={assignedUserId}
                                     workspace={workspace}
-                                    isHostRole={slotData.name === "Host" || slotData.name.toLowerCase() === "co-host"}
+                                    isHostRole={!!(slotData.hostRole)}
                                     sessionType={session.type}
+                                    eligibleGroupRoles={slotGroupRoles}
+                                    currentUserRankId={currentUserRankId ?? null}
                                   />
                                 </div>
                               </div>
@@ -692,8 +667,35 @@ const SessionModal: React.FC<SessionModalProps> = ({
                         </div>
                       </div>
                     );
-                  }
-                )}
+                  };
+
+                  return (
+                    <>
+                      {sortedCategories.map(([catId, catSlots]) => (
+                        <div key={catId}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                              {catSlots[0]?.categoryName}
+                            </span>
+                            <div className="flex-1 border-t border-zinc-200 dark:border-zinc-700" />
+                          </div>
+                          {catSlots.map((slot, idx) => renderSlot(slot, idx))}
+                        </div>
+                      ))}
+                      {uncategorised.length > 0 && (
+                        <div>
+                          {sortedCategories.length > 0 && (
+                            <div className="flex items-center gap-2 mb-2 mt-1">
+                              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Other</span>
+                              <div className="flex-1 border-t border-zinc-200 dark:border-zinc-700" />
+                            </div>
+                          )}
+                          {uncategorised.map((slot, idx) => renderSlot(slot, idx))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
             </div>
           </div>
           {(() => {
@@ -847,6 +849,8 @@ const AutocompleteInput: React.FC<{
   isHostRole?: boolean;
   workspace?: any;
   canRemove?: boolean;
+  eligibleGroupRoles?: number[];
+  currentUserRankId?: number | null;
 }> = ({
   currentValue,
   onValueChange,
@@ -863,6 +867,8 @@ const AutocompleteInput: React.FC<{
   workspace,
   canRemove = true,
   sessionType,
+  eligibleGroupRoles = [],
+  currentUserRankId = null,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(currentValue);
@@ -871,6 +877,9 @@ const AutocompleteInput: React.FC<{
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const hasRoleRestriction = eligibleGroupRoles.length > 0;
+  const currentUserEligible = !hasRoleRestriction || (currentUserRankId != null && eligibleGroupRoles.includes(currentUserRankId));
+
   const hasPermissionToEdit = () => {
     if (!workspace) return canEdit;
     const hasAssignPermission = canAssignUsers(workspace.yourPermission, sessionType) || workspace.yourPermission.includes("admin");
@@ -915,7 +924,8 @@ const AutocompleteInput: React.FC<{
     
     if (inputValue.trim() === "") {
       const isCurrentUserAssigned = assignedUserId === currentUserId.toString();
-      if (currentUserUsername && !isCurrentUserAssigned) {
+      // Only show self as a suggestion if they are eligible for this slot
+      if (currentUserUsername && !isCurrentUserAssigned && (currentUserEligible || userHasAssignPermission)) {
         suggestions.push({
           userid: currentUserId.toString(),
           username: currentUserUsername,
@@ -936,6 +946,8 @@ const AutocompleteInput: React.FC<{
         .filter((user) => {
           const matchesInput = user.username.toLowerCase().includes(inputValue.toLowerCase());
           const isAssigned = user.userid.toString() === assignedUserId;
+          const isSelf = user.userid.toString() === currentUserId.toString();
+          if (isSelf && !currentUserEligible && !userHasAssignPermission) return false;
           return matchesInput || isAssigned;
         })
         .map((user) => ({
@@ -960,6 +972,7 @@ const AutocompleteInput: React.FC<{
     assignedUserId,
     currentValue,
     workspace,
+    currentUserEligible,
   ]);
 
   const canAssignToUser = (targetUsername: string) => {
@@ -971,6 +984,12 @@ const AutocompleteInput: React.FC<{
     if (!targetUser) return false;
     const isAssigningToSelf = targetUser.userid.toString() === currentUserId.toString();
     
+    // Eligibility check: non-admins assigning to self must be eligible
+    // Rank restriction only applies to self-claims without assign permission
+    if (isAssigningToSelf && !hasAssignPermission && !currentUserEligible) {
+      return false;
+    }
+
     if (isHostRole) {
       // Host roles require host permission
       if (isAssigningToSelf) {
@@ -1326,6 +1345,8 @@ const RoleButton: React.FC<{
   workspace?: any;
   isHostRole?: boolean;
   sessionType: string;
+  eligibleGroupRoles?: number[];
+  currentUserRankId?: number | null;
 }> = ({
   currentValue,
   onValueChange,
@@ -1340,6 +1361,8 @@ const RoleButton: React.FC<{
   workspace,
   isHostRole = false,
   sessionType,
+  eligibleGroupRoles = [],
+  currentUserRankId = null,
 }) => {
   const filteredUsers = availableUsers;
   const canRemoveRole = workspace ? 
@@ -1378,6 +1401,8 @@ const RoleButton: React.FC<{
       workspace={workspace}
       canRemove={canRemoveRole}
       sessionType={sessionType}
+      eligibleGroupRoles={eligibleGroupRoles}
+      currentUserRankId={currentUserRankId}
     />
   );
 };

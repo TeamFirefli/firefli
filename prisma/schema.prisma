@@ -24,6 +24,8 @@ model workspace {
   savedViews          SavedView[]
   sessionTypes        SessionType[]
   sessionTags         SessionTag[]
+  sessionRoleTemplates SessionRoleTemplate[]
+  sessionRoleCategories SessionRoleCategory[]
   stickyAnnouncements StickyAnnouncement?
   apiKey              apiKey[]
   config              config[]
@@ -241,6 +243,35 @@ model SessionType {
   hostingDepartments department[] @relation("SessionTypeTodepartment")
   hostingRoles       role[]       @relation("SessionTypeTorole")
   sessionTags        SessionTag[] @relation("SessionTagToSessionType")
+}
+
+model SessionRoleTemplate {
+  id               String               @id @unique @default(uuid()) @db.Uuid
+  name             String
+  categoryId       String?              @db.Uuid
+  hostRole         String?
+  slots            Int                  @default(1)
+  groupRoles       Int[]
+  workspaceGroupId Int
+  archived         Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  category         SessionRoleCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  workspace        workspace            @relation(fields: [workspaceGroupId], references: [groupId])
+
+  @@index([workspaceGroupId])
+  @@index([categoryId])
+}
+
+model SessionRoleCategory {
+  id               String                @id @unique @default(uuid()) @db.Uuid
+  name             String
+  workspaceGroupId Int
+  archived         Boolean               @default(false)
+  createdAt        DateTime              @default(now())
+  templates        SessionRoleTemplate[]
+  workspace        workspace             @relation(fields: [workspaceGroupId], references: [groupId])
+
+  @@index([workspaceGroupId])
 }
 
 model SessionTag {

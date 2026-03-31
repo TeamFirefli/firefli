@@ -169,26 +169,6 @@ export const getServerSideProps = withPermissionCheckSsr(
 
     const currentDate = new Date();
 
-    const ownedSessions = await prisma.session.findMany({
-      where: {
-        ownerId: BigInt(userId),
-        sessionType: {
-          workspaceGroupId: workspaceId,
-        },
-        date: {
-          gte: startDate,
-          lte: currentDate,
-        },
-        archived: { not: true },
-      },
-      select: {
-        id: true,
-        type: true,
-        ownerId: true,
-        date: true,
-      },
-    });
-
     const sessionParticipations = await prisma.sessionUser.findMany({
       where: {
         userid: BigInt(userId),
@@ -209,7 +189,6 @@ export const getServerSideProps = withPermissionCheckSsr(
           select: {
             id: true,
             type: true,
-            ownerId: true,
             date: true,
             sessionType: {
               select: {
@@ -221,69 +200,40 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
-    const ownedSessionIds = new Set(ownedSessions.map((s) => s.id));
     const hostedSessionsByType: Record<string, number> = {};
-    ownedSessions.forEach((s) => {
-      const type = s.type || 'other';
-      hostedSessionsByType[type] = (hostedSessionsByType[type] || 0) + 1;
-    });
-    
-    let roleBasedHostedSessions = 0;
-    sessionParticipations.forEach((participation) => {
-      const slots = participation.session.sessionType.slots as any[];
-      const slotIndex = participation.slot;
-      const slotName = slots[slotIndex]?.name || "";
-      const isCoHost =
-        participation.roleID.toLowerCase().includes("co-host") ||
-        slotName.toLowerCase().includes("co-host");
-      if (isCoHost) {
-        roleBasedHostedSessions++;
-        const type = participation.session.type || 'other';
-        hostedSessionsByType[type] = (hostedSessionsByType[type] || 0) + 1;
-      }
-    });
-
-    const sessionsHosted = ownedSessions.length + roleBasedHostedSessions;
     const attendedSessionsByType: Record<string, number> = {};
-    const attendedParticipations = sessionParticipations.filter(
-      (participation) => {
-        const slots = participation.session.sessionType.slots as any[];
-        const slotIndex = participation.slot;
-        const slotName = slots[slotIndex]?.name || "";
-
-        const isCoHost =
-          participation.roleID.toLowerCase().includes("co-host") ||
-          slotName.toLowerCase().includes("co-host");
-
-        return !isCoHost && !ownedSessionIds.has(participation.session.id);
-      }
-    );
-    
-    attendedParticipations.forEach((participation) => {
-      const type = participation.session.type || 'other';
-      attendedSessionsByType[type] = (attendedSessionsByType[type] || 0) + 1;
-    });
-
-    const sessionsAttended = attendedParticipations.length;
-      
-    const sessionsLogged = [
-      ...ownedSessions,
-      ...sessionParticipations.map((sp) => sp.session),
-    ];
-    const totalSessionsLogged = new Set([
-      ...ownedSessions.map(s => s.id),
-      ...sessionParticipations.map(p => p.session.id)
-    ]).size;
-
     const loggedSessionsByType: Record<string, number> = {};
     const seenSessionIds = new Set<string>();
-    [...ownedSessions, ...sessionParticipations.map(sp => sp.session)].forEach((s) => {
-      if (!seenSessionIds.has(s.id)) {
-        seenSessionIds.add(s.id);
-        const type = s.type || 'other';
+
+    sessionParticipations.forEach((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      const type = participation.session.type || 'other';
+      const isHosted = matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+      if (isHosted) {
+        hostedSessionsByType[type] = (hostedSessionsByType[type] || 0) + 1;
+      } else {
+        attendedSessionsByType[type] = (attendedSessionsByType[type] || 0) + 1;
+      }
+      if (!seenSessionIds.has(participation.session.id)) {
+        seenSessionIds.add(participation.session.id);
         loggedSessionsByType[type] = (loggedSessionsByType[type] || 0) + 1;
       }
     });
+
+    const sessionsHosted = sessionParticipations.filter((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
+    }).length;
+
+    const sessionsAttended = sessionParticipations.filter((participation) => {
+      const slots = participation.session.sessionType.slots as any[];
+      const matchingSlot = slots.find((s: any) => s.id === participation.roleID);
+      return !matchingSlot?.hostRole;
+    }).length;
+
+    const totalSessionsLogged = new Set(sessionParticipations.map(p => p.session.id)).size;
 
     const activityConfig = await prisma.config.findFirst({
       where: {

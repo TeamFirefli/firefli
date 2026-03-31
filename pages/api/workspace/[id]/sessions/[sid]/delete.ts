@@ -44,12 +44,16 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     }
 
     if (deleteAll && session.scheduleId) {
+      const affectedSessions = await prisma.session.findMany({
+        where: { scheduleId: session.scheduleId, date: { gte: session.date } },
+        select: { id: true },
+      });
+      const affectedIds = affectedSessions.map((s) => s.id);
+      await prisma.sessionUser.deleteMany({ where: { sessionid: { in: affectedIds } } });
       await prisma.session.deleteMany({
         where: {
           scheduleId: session.scheduleId,
-          date: {
-            gte: session.date,
-          },
+          date: { gte: session.date },
         },
       });
       console.log(
@@ -60,6 +64,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         await logAudit(Number(req.query.id), Number((req as any).session?.userid), 'session.delete.range', `sessionSchedule:${session.scheduleId}`, { from: session.date.toISOString(), scheduleId: session.scheduleId });
       } catch (e) {}
     } else {
+      await prisma.sessionUser.deleteMany({ where: { sessionid: sessionId } });
       await prisma.session.delete({
         where: { id: sessionId },
       });

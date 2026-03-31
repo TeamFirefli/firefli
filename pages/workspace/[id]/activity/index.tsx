@@ -772,10 +772,12 @@ const Activity: pageWithLayout = () => {
                       const userParticipation = item.users?.find(
                         (u: any) => u.userid?.toString() === login.userId?.toString()
                       );
-                      const userRole =
-                        userParticipation && item.sessionType?.slots
-                          ? item.sessionType.slots[userParticipation.slot]
-                          : null;
+                      const slots: any[] = item.sessionType?.slots || [];
+                      const userRole = userParticipation
+                        ? slots.find((s: any) => s.id === userParticipation.roleID) ?? null
+                        : null;
+                      const isHostRole =
+                        userRole?.hostRole === "primary" || userRole?.hostRole === "secondary";
                       return (
                         <div key={`session-entry-${item.id}`}>
                           <li className="mb-6 ml-6">
@@ -792,8 +794,8 @@ const Activity: pageWithLayout = () => {
                                 </time>
                               </div>
                               <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                                {item.ownerId?.toString() === login.userId?.toString()
-                                  ? "You hosted this session"
+                                {isHostRole
+                                  ? `You hosted as ${userRole?.name || "Host"}`
                                   : `You participated${userRole?.name ? ` as ${userRole.name}` : ""}`}
                               </p>
                             </div>

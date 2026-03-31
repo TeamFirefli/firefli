@@ -74,6 +74,12 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     if (!slotsResult.success) {
       return res.status(400).json({ success: false, error: "Invalid slots format" });
     }
+    const hasHostRole = slots.some((s: any) => s.hostRole === "primary");
+    if (!hasHostRole) {
+      return res.status(400).json({ success: false, error: "At least one host role is required" });
+    }
+  } else {
+    return res.status(400).json({ success: false, error: "At least one host role is required" });
   }
 
   try {

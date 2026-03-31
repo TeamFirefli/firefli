@@ -144,12 +144,14 @@ const EditSession: pageWithLayout<
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateAll, setUpdateAll] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
+  const [roleTemplates, setRoleTemplates] = useState<any[]>([]);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
 
   const tabs = [
     { id: "basic", label: "Basic", icon: <IconInfoCircle size={18} /> },
     { id: "scheduling", label: "Scheduling", icon: <IconCalendarEvent size={18} /> },
     { id: "statuses", label: "Statuses", icon: <IconClipboardList size={18} /> },
-    { id: "slots", label: "Slots", icon: <IconUserPlus size={18} /> },
   ];
 
   const goToSection = (id: string) => {
@@ -231,9 +233,62 @@ const EditSession: pageWithLayout<
     loadWorkspaceUsers();
   }, [router.query.id]);
 
+  useEffect(() => {
+    if (!workspace.groupId) return;
+    setIsLoadingTemplates(true);
+    axios
+      .get(`/api/workspace/${workspace.groupId}/settings/sessions/rtemplates`)
+      .then((res) => {
+        if (res.data.success) {
+          const templates = res.data.templates || [];
+          setRoleTemplates(templates);
+          const existingSlotIds = new Set(
+            (session.sessionType.slots || [])
+              .filter((s: any) => typeof s === "object" && s !== null && s.id)
+              .map((s: any) => s.id)
+          );
+          setSelectedTemplateIds(
+            new Set(templates.filter((t: any) => existingSlotIds.has(t.id)).map((t: any) => t.id))
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingTemplates(false));
+  }, [workspace.groupId]);
+
+  const toggleTemplate = (id: string) => {
+    setSelectedTemplateIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCategory = (ids: string[]) => {
+    setSelectedTemplateIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allSelected) {
+        ids.forEach((id) => next.delete(id));
+      } else {
+        ids.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
   const updateSession = async (applyToAll = false) => {
     setIsSubmitting(true);
     setFormError("");
+    if (roleTemplates.length > 0) {
+      const selSlots = roleTemplates.filter((t) => selectedTemplateIds.has(t.id));
+      if (!selSlots.some((t) => t.hostRole === "primary")) {
+        setFormError("At least one primary host role must be included in the session.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const formData = form.getValues();
@@ -292,7 +347,22 @@ const EditSession: pageWithLayout<
 
         toast.success("Session updated successfully");
       }
-      
+
+      if (roleTemplates.length > 0) {
+        const selectedSlots = roleTemplates
+          .filter((t) => selectedTemplateIds.has(t.id))
+          .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
+        await axios.post(
+          `/api/workspace/${workspace.groupId}/sessions/manage/${session.sessionTypeId}/edit`,
+          {
+            name: session.sessionType.name,
+            permissions: (session.sessionType.hostingRoles || []).map((r: any) => r.id),
+            statues: session.sessionType.statues || [],
+            slots: selectedSlots,
+          }
+        );
+      }
+
       router.push(`/workspace/${workspace.groupId}/sessions`);
     } catch (err: any) {
       setFormError(
@@ -358,7 +428,7 @@ const EditSession: pageWithLayout<
   return (
     <div className="pagePadding">
       <Toaster position="bottom-center" />
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -463,33 +533,133 @@ const EditSession: pageWithLayout<
         <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 overflow-hidden">
           {activeTab === "basic" && (
             <div className="p-6" id="basic">
-              <div className="space-y-6 max-w-2xl">
-                <div>
-                  <Input
-                    {...form.register("name", {
-                      required: { value: true, message: "Session name is required" },
-                    })}
-                    label="Session Name"
-                    placeholder="Weekly Training Session"
-                  />
-                  {form.formState.errors.name && (
-                    <p className="mt-1 text-sm text-red-500">{form.formState.errors.name.message as string}</p>
-                  )}
-                </div>
-                <div>
-                  <Input {...form.register("description")} label="Description" textarea placeholder="Describe what this session is about..." />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Session Type</label>
-                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm bg-white dark:bg-zinc-700 text-zinc-700 dark:text-white">
-                    {sessionTypeLabel}
+              <div className="flex gap-8 items-start">
+                <div className="flex-1 min-w-0 space-y-6">
+                  <div>
+                    <Input
+                      {...form.register("name", {
+                        required: { value: true, message: "Session name is required" },
+                      })}
+                      label="Session Name"
+                      placeholder="Weekly Training Session"
+                    />
+                    {form.formState.errors.name && (
+                      <p className="mt-1 text-sm text-red-500">{form.formState.errors.name.message as string}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Input {...form.register("description")} label="Description" textarea placeholder="Describe what this session is about..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Session Type</label>
+                    <div className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm bg-white dark:bg-zinc-700 text-zinc-700 dark:text-white">
+                      {sessionTypeLabel}
+                    </div>
+                  </div>
+                  <div>
+                    <Input {...form.register("gameId")} label="Game ID" placeholder="Optional game ID" />
+                  </div>
+                  <div className="mt-8 flex justify-end">
+                    <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Continue to Scheduling</Button>
                   </div>
                 </div>
-                <div>
-                  <Input {...form.register("gameId")} label="Game ID" placeholder="Optional game ID" />
-                </div>
-                <div className="mt-8 flex justify-end">
-                  <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Continue to Scheduling</Button>
+                <div className="w-64 flex-shrink-0">
+                  <div className="sticky top-4 border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                    <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-700/50 border-b border-gray-200 dark:border-zinc-700 flex items-center gap-2">
+                      <IconUserPlus size={14} className="text-primary" />
+                      <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Session Roles</h4>
+                    </div>
+                    <div className="p-3 max-h-[480px] overflow-y-auto">
+                      {isLoadingTemplates ? (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 py-2 text-center">Loading…</p>
+                      ) : roleTemplates.length === 0 ? (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-4 leading-relaxed">
+                          No roles defined yet.<br />
+                          <span className="opacity-70">Configure in Settings → Sessions.</span>
+                        </p>
+                      ) : (
+                        <div className="space-y-1">
+                          {(() => {
+                            const UNCATEGORISED = "__uncategorised__";
+                            const map = new Map<string, typeof roleTemplates>();
+                            for (const t of roleTemplates) {
+                              const key = t.categoryId || UNCATEGORISED;
+                              if (!map.has(key)) map.set(key, []);
+                              map.get(key)!.push(t);
+                            }
+                            type FlatItem =
+                              | { type: "category"; catKey: string; catName: string; roles: typeof roleTemplates }
+                              | { type: "role"; template: (typeof roleTemplates)[0] };
+                            const flat: FlatItem[] = [];
+                            for (const [catKey, roles] of map.entries()) {
+                              if (catKey === UNCATEGORISED) {
+                                for (const t of roles) flat.push({ type: "role", template: t });
+                              } else {
+                                flat.push({ type: "category", catKey, catName: roles[0]?.category?.name ?? catKey, roles });
+                              }
+                            }
+                            flat.sort((a, b) => {
+                              if (a.type === "category" && b.type === "category") return a.catName.localeCompare(b.catName);
+                              if (a.type === "category") return -1;
+                              if (b.type === "category") return 1;
+                              return 0;
+                            });
+                            return flat.map((item) => {
+                              if (item.type === "category") {
+                                const catIds = item.roles.map((t) => t.id);
+                                const allOn = catIds.every((id) => selectedTemplateIds.has(id));
+                                const someOn = !allOn && catIds.some((id) => selectedTemplateIds.has(id));
+                                const hasHost = item.roles.some((t) => t.hostRole === "primary");
+                                return (
+                                  <div key={item.catKey} className="flex items-center justify-between gap-2 py-1">
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate block">{item.catName}</span>
+                                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                        {item.roles.length} role{item.roles.length !== 1 ? "s" : ""}
+                                        {hasHost && <span className="ml-1 text-amber-500">· Host</span>}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleCategory(catIds)}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allOn ? "bg-primary" : someOn ? "bg-primary/40" : "bg-zinc-300 dark:bg-zinc-600"}`}
+                                      role="switch"
+                                      aria-checked={allOn}
+                                    >
+                                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${allOn ? "translate-x-4" : someOn ? "translate-x-2" : "translate-x-0"}`} />
+                                    </button>
+                                  </div>
+                                );
+                              } else {
+                                const template = item.template;
+                                return (
+                                  <div key={template.id} className="flex items-center justify-between gap-2 py-1">
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate block">{template.name}</span>
+                                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                        {template.slots} slot{template.slots !== 1 ? "s" : ""}
+                                        {template.hostRole === "primary" && <span className="ml-1 text-amber-500">· Primary</span>}
+                                        {template.hostRole === "secondary" && <span className="ml-1 text-blue-500">· Secondary</span>}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleTemplate(template.id)}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedTemplateIds.has(template.id) ? "bg-primary" : "bg-zinc-300 dark:bg-zinc-600"}`}
+                                      role="switch"
+                                      aria-checked={selectedTemplateIds.has(template.id)}
+                                    >
+                                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedTemplateIds.has(template.id) ? "translate-x-4" : "translate-x-0"}`} />
+                                    </button>
+                                  </div>
+                                );
+                              }
+                            });
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -583,72 +753,11 @@ const EditSession: pageWithLayout<
 
               <div className="mt-8 flex justify-between w-full">
                 <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600">Back</Button>
-                <Button onPress={() => setActiveTab("slots")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Continue to Slots</Button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "slots" && (
-            <div className="p-6" id="slots">
-              <h2 className="text-xl font-semibold dark:text-white mb-4">Session Slots (Read-Only)</h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Define roles and how many people can claim each role</p>
-
-              <div className="bg-zinc-50 dark:bg-zinc-700/30 rounded-lg p-4 mb-4">
-                <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Host</h4>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">Slot 1:</span>
-                  <div className="flex-1 px-3 py-2 text-sm bg-white dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-md flex items-center gap-2">
-                    {session.owner?.username ? (
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${getRandomBg(session.owner.userid?.toString(), session.owner.username)}`}>
-                        <img src={session.owner.picture || "/default-avatar.jpg"} alt={session.owner.username} className="w-6 h-6 rounded-full object-cover border border-white" onError={(e) => { e.currentTarget.src = "/default-avatar.jpg"; }} />
-                      </div>
-                    ) : null}
-                    <span className="text-zinc-700 dark:text-white">{session.owner?.username || "Unclaimed"}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 max-w-2xl">
-                {session.sessionType.slots && Array.isArray(session.sessionType.slots) && session.sessionType.slots.length > 0 ? (
-                  session.sessionType.slots.map((slot: any, slotIndex: number) => {
-                    if (typeof slot !== "object") return null;
-                    const slotData = JSON.parse(JSON.stringify(slot));
-                    return (
-                      <div key={slotIndex} className="bg-zinc-50 dark:bg-zinc-700/30 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">{slotData.name}</h4>
-                        <div className="space-y-2">
-                          {Array.from(Array(slotData.slots)).map((_, i) => {
-                            const assignedUser = session.users?.find((u: any) => u.roleID === slotData.id && u.slot === i);
-                            const username = assignedUser ? availableUsers.find((user: any) => user.userid === assignedUser.userid.toString())?.username : null;
-                            const userPicture = assignedUser ? availableUsers.find((user: any) => user.userid === assignedUser.userid.toString())?.picture : null;
-                            return (
-                              <div key={i} className="flex items-center gap-2">
-                                <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">Slot {i + 1}:</span>
-                                <div className="flex-1 px-3 py-2 text-sm bg-white dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-md flex items-center gap-2">
-                                  {username ? (
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${getRandomBg(assignedUser.userid.toString(), username)}`}>
-                                      <img src={userPicture || "/default-avatar.jpg"} alt={username} className="w-6 h-6 rounded-full object-cover border border-white" onError={(e) => { e.currentTarget.src = "/default-avatar.jpg"; }} />
-                                    </div>
-                                  ) : null}
-                                  <span className="text-zinc-700 dark:text-white">{username || "Unclaimed"}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400">No slots defined for this session type</div>
-                )}
-              </div>
-              <div className="mt-8 flex justify-between w-full">
-                <Button onPress={() => setActiveTab("statuses")} classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600">Back</Button>
                 <Button onPress={form.handleSubmit(handleSaveClick)} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">{isSubmitting ? "Saving..." : "Save Changes"}</Button>
               </div>
             </div>
           )}
+
         </div>
       </FormProvider>
 
