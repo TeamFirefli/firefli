@@ -198,7 +198,7 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
 
       const selectedSlots = roleTemplates
         .filter((t) => selectedTemplateIds.has(t.id))
-        .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
+        .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, categoryWeight: t.category?.weight ?? 0, weight: t.weight ?? 0, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
 
       const hasHostRole = selectedSlots.some((s) => s.hostRole === "primary");
       if (!hasHostRole) {

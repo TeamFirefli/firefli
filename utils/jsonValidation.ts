@@ -21,6 +21,8 @@ export const sessionTypeSlotSchema = z.object({
   id: z.string().optional(),
   categoryId: z.string().nullable().optional(),
   categoryName: z.string().nullable().optional(),
+  categoryWeight: z.number().int().min(0).max(9999).optional(),
+  weight: z.number().int().min(0).max(9999).optional(),
   hostRole: z.enum(["primary", "secondary"]).nullable().optional(),
   groupRoles: z.array(z.number().int().min(0)).optional(),
 });

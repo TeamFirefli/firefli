@@ -300,7 +300,7 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
       const time24 = form.getValues().time || "00:00";
       const selectedSlots = roleTemplates
         .filter((t) => selectedTemplateIds.has(t.id))
-        .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
+        .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, categoryWeight: t.category?.weight ?? 0, weight: t.weight ?? 0, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
       await axios.post(
         `/api/workspace/${workspace.groupId}/sessions/manage/${session.id}/edit`,
         {

@@ -248,6 +248,7 @@ model SessionType {
 model SessionRoleTemplate {
   id               String               @id @unique @default(uuid()) @db.Uuid
   name             String
+  weight           Int                  @default(0)
   categoryId       String?              @db.Uuid
   hostRole         String?
   slots            Int                  @default(1)
@@ -265,6 +266,7 @@ model SessionRoleTemplate {
 model SessionRoleCategory {
   id               String                @id @unique @default(uuid()) @db.Uuid
   name             String
+  weight           Int                   @default(0)
   workspaceGroupId Int
   archived         Boolean               @default(false)
   createdAt        DateTime              @default(now())

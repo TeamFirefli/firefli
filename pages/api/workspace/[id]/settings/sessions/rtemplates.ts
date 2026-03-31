@@ -43,7 +43,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     if (!isAdmin && !hasManage) {
       return res.status(403).json({ success: false, error: "Insufficient permissions" });
     }
-    const { name, categoryId, hostRole, slots, groupRoles } = req.body;
+    const { name, categoryId, hostRole, slots, groupRoles, weight } = req.body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ success: false, error: "Name is required" });
@@ -58,6 +58,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
     }
     const slotsCount = Math.max(1, Math.min(100, parseInt(slots) || 1));
+    const resolvedWeight = typeof weight === "number" ? Math.max(0, Math.min(9999, Math.round(weight))) : 0;
     const validGroupRoles = Array.isArray(groupRoles)
       ? groupRoles.filter((r: any) => Number.isInteger(r) && r > 0)
       : [];
@@ -68,6 +69,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         categoryId: resolvedCategoryId,
         hostRole: hostRole || null,
         slots: slotsCount,
+        weight: resolvedWeight,
         groupRoles: validGroupRoles,
         workspaceGroupId,
       },

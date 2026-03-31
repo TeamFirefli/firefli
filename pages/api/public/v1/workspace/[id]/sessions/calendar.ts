@@ -109,6 +109,8 @@ async function handler(
           hostRole: matchingSlot?.hostRole || null,
           categoryId: matchingSlot?.categoryId || null,
           categoryName: matchingSlot?.categoryName || null,
+          categoryWeight: matchingSlot?.categoryWeight ?? 0,
+          weight: matchingSlot?.weight ?? 0,
         };
       });
       const primaryHostParticipant = participants.find(
@@ -135,6 +137,8 @@ async function handler(
             hostRole: s.hostRole || null,
             categoryId: s.categoryId || null,
             categoryName: s.categoryName || null,
+            categoryWeight: s.categoryWeight ?? 0,
+            weight: s.weight ?? 0,
           })),
         },
         tag: session.sessionTag

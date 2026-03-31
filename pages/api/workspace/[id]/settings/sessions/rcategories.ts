@@ -24,14 +24,16 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   if (req.method === "POST") {
-    const { name } = req.body;
+    const { name, weight } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ success: false, error: "Name is required" });
     }
+    const resolvedWeight = typeof weight === "number" ? Math.max(0, Math.min(9999, Math.round(weight))) : 0;
 
     const category = await prisma.sessionRoleCategory.create({
       data: {
         name: name.trim().slice(0, 64),
+        weight: resolvedWeight,
         workspaceGroupId,
       },
     });

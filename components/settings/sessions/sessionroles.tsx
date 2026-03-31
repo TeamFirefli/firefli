@@ -14,18 +14,22 @@ import {
   IconArchive,
   IconArrowBackUp,
   IconChevronDown,
+  IconArrowUp,
+  IconArrowDown,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 
 type RoleCategory = {
   id: string;
   name: string;
+  weight: number;
   archived?: boolean;
 };
 
 type RoleTemplate = {
   id: string;
   name: string;
+  weight: number;
   categoryId: string | null;
   category: RoleCategory | null;
   hostRole: "primary" | "secondary" | null;
@@ -59,10 +63,12 @@ const SessionRoles = () => {
   const [isAddingHostRecords, setIsAddingHostRecords] = useState(false);
   const [hostRecordsCount, setHostRecordsCount] = useState(0);
   const [newCatName, setNewCatName] = useState("");
+  const [newCatWeight, setNewCatWeight] = useState(0);
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [isSavingCat, setIsSavingCat] = useState(false);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
+  const [editCatWeight, setEditCatWeight] = useState(0);
   const [deleteCatConfirmId, setDeleteCatConfirmId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newCategoryId, setNewCategoryId] = useState<string>("");
@@ -76,6 +82,7 @@ const SessionRoles = () => {
   const [editCategoryId, setEditCategoryId] = useState<string>("");
   const [editHostRole, setEditHostRole] = useState<"primary" | "secondary" | "">("");
   const [editSlots, setEditSlots] = useState(1);
+  const [editWeight, setEditWeight] = useState(0);
   const [editGroupRoles, setEditGroupRoles] = useState<number[]>([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -122,13 +129,15 @@ const SessionRoles = () => {
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(t);
     }
-    // named categories alphabetically, uncategorised last
-    const catOrder = new Map(categories.map((c) => [c.id, c.name]));
-    return [...map.entries()].sort(([a], [b]) => {
-      if (a === UNCATEGORISED) return 1;
-      if (b === UNCATEGORISED) return -1;
-      return (catOrder.get(a) ?? "").localeCompare(catOrder.get(b) ?? "");
-    });
+    // sort by weight ascending (heaviest = higher number = bottom); uncategorised always last
+    const catWeightMap = new Map(categories.map((c) => [c.id, c.weight ?? 0]));
+    return [...map.entries()]
+      .map(([catKey, items]) => [catKey, [...items].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0))] as [string, RoleTemplate[]])
+      .sort(([a], [b]) => {
+        if (a === UNCATEGORISED) return 1;
+        if (b === UNCATEGORISED) return -1;
+        return (catWeightMap.get(a) ?? 0) - (catWeightMap.get(b) ?? 0);
+      });
   }, [templates, categories]);
 
   const handleConvert = async () => {
@@ -231,11 +240,12 @@ const SessionRoles = () => {
     try {
       const res = await axios.post(
         `/api/workspace/${router.query.id}/settings/sessions/rcategories`,
-        { name: newCatName.trim() }
+        { name: newCatName.trim(), weight: newCatWeight }
       );
       if (res.data.success) {
-        setCategories((prev) => [...prev, res.data.category].sort((a, b) => a.name.localeCompare(b.name)));
+        setCategories((prev) => [...prev, res.data.category].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0)));
         setNewCatName("");
+        setNewCatWeight(0);
         setIsAddingCat(false);
         toast.success("Category created");
       }
@@ -248,17 +258,17 @@ const SessionRoles = () => {
     try {
       const res = await axios.patch(
         `/api/workspace/${router.query.id}/settings/sessions/rcategories/${editingCatId}`,
-        { name: editCatName.trim() }
+        { name: editCatName.trim(), weight: editCatWeight }
       );
       if (res.data.success) {
         setCategories((prev) =>
           prev.map((c) => (c.id === editingCatId ? res.data.category : c))
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0))
         );
         setEditingCatId(null);
-        toast.success("Category renamed");
+        toast.success("Category updated");
       }
-    } catch { toast.error("Failed to rename category"); }
+    } catch { toast.error("Failed to update category"); }
   };
 
   const handleDeleteCat = async (id: string) => {
@@ -292,6 +302,10 @@ const SessionRoles = () => {
           categoryId: newCategoryId || null,
           hostRole: newHostRole || null,
           slots: newSlots,
+          weight: (() => {
+            const group = templates.filter((t) => (t.categoryId || "") === (newCategoryId || ""));
+            return group.length > 0 ? Math.max(...group.map((t) => t.weight ?? 0)) + 10 : 0;
+          })(),
           groupRoles: newGroupRoles,
         }
       );
@@ -311,6 +325,7 @@ const SessionRoles = () => {
     setEditCategoryId(template.categoryId || "");
     setEditHostRole(template.hostRole || "");
     setEditSlots(template.slots);
+    setEditWeight(template.weight ?? 0);
     setEditGroupRoles(template.groupRoles || []);
   };
 
@@ -325,6 +340,7 @@ const SessionRoles = () => {
           categoryId: editCategoryId || null,
           hostRole: editHostRole || null,
           slots: editSlots,
+          weight: editWeight,
           groupRoles: editGroupRoles,
         }
       );
@@ -350,6 +366,39 @@ const SessionRoles = () => {
       setTemplates((prev) => prev.filter((t) => t.id !== id));
       setDeleteConfirmId(null);
     } catch { toast.error("Failed to delete session role"); }
+  };
+
+  const moveTemplate = async (id: string, direction: "up" | "down") => {
+    const tpl = templates.find((t) => t.id === id);
+    if (!tpl) return;
+    const group = [...templates]
+      .filter((t) => t.categoryId === tpl.categoryId)
+      .sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
+    const idx = group.findIndex((t) => t.id === id);
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= group.length) return;
+    const reordered = [...group];
+    reordered.splice(idx, 1);
+    reordered.splice(newIdx, 0, tpl);
+    const updates = reordered.map((t, i) => ({ ...t, weight: i * 10 }));
+    const changed = updates.filter((u) => {
+      const orig = group.find((g) => g.id === u.id);
+      return orig && (orig.weight ?? 0) !== u.weight;
+    });
+    setTemplates((prev) => prev.map((t) => updates.find((u) => u.id === t.id) ?? t));
+    try {
+      await Promise.all(
+        changed.map((u) =>
+          axios.patch(`/api/workspace/${router.query.id}/settings/sessions/rtemplates/${u.id}`, {
+            name: u.name, categoryId: u.categoryId, hostRole: u.hostRole,
+            slots: u.slots, weight: u.weight, groupRoles: u.groupRoles,
+          })
+        )
+      );
+    } catch {
+      toast.error("Failed to reorder");
+      setTemplates((prev) => prev.map((t) => group.find((g) => g.id === t.id) ?? t));
+    }
   };
 
   const getRoleNames = (groupRoleIds: number[]) => {
@@ -479,7 +528,17 @@ const SessionRoles = () => {
                       maxLength={64}
                       onKeyDown={(e) => { if (e.key === "Enter") handleSaveCatEdit(); if (e.key === "Escape") setEditingCatId(null); }}
                       autoFocus
-                      className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-36"
+                      placeholder="Category name"
+                      className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-28"
+                    />
+                    <input
+                      type="number"
+                      value={editCatWeight}
+                      onChange={(e) => setEditCatWeight(Math.max(0, Math.min(9999, parseInt(e.target.value) || 0)))}
+                      min={0} max={9999}
+                      title="Weight — heavier (higher) sinks to the bottom"
+                      placeholder="Weight"
+                      className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-16"
                     />
                     <button onClick={handleSaveCatEdit} className="p-1 text-primary hover:text-primary/70"><IconCheck size={14} /></button>
                     <button onClick={() => setEditingCatId(null)} className="p-1 text-zinc-400 hover:text-zinc-600"><IconX size={14} /></button>
@@ -493,7 +552,10 @@ const SessionRoles = () => {
                 ) : (
                   <div key={cat.id} className="group flex items-center gap-1 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 text-xs text-zinc-700 dark:text-zinc-200">
                     <span>{cat.name}</span>
-                    <button onClick={() => { setEditingCatId(cat.id); setEditCatName(cat.name); }} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-opacity ml-1"><IconPencil size={12} /></button>
+                    {(cat.weight ?? 0) !== 0 && (
+                      <span className="ml-0.5 text-zinc-400 dark:text-zinc-500" title="Weight">&middot;{cat.weight}</span>
+                    )}
+                    <button onClick={() => { setEditingCatId(cat.id); setEditCatName(cat.name); setEditCatWeight(cat.weight ?? 0); }} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-opacity ml-1"><IconPencil size={12} /></button>
                     <button onClick={() => setDeleteCatConfirmId(cat.id)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-opacity"><IconTrash size={12} /></button>
                   </div>
                 )
@@ -507,11 +569,20 @@ const SessionRoles = () => {
                     maxLength={64}
                     placeholder="Category name"
                     autoFocus
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateCat(); if (e.key === "Escape") { setIsAddingCat(false); setNewCatName(""); } }}
-                    className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-36"
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateCat(); if (e.key === "Escape") { setIsAddingCat(false); setNewCatName(""); setNewCatWeight(0); } }}
+                    className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-28"
+                  />
+                  <input
+                    type="number"
+                    value={newCatWeight}
+                    onChange={(e) => setNewCatWeight(Math.max(0, Math.min(9999, parseInt(e.target.value) || 0)))}
+                    min={0} max={9999}
+                    title="Weight — heavier (higher) sinks to the bottom"
+                    placeholder="Weight"
+                    className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-16"
                   />
                   <button onClick={handleCreateCat} disabled={isSavingCat} className="p-1 text-primary hover:text-primary/70 disabled:opacity-50"><IconCheck size={14} /></button>
-                  <button onClick={() => { setIsAddingCat(false); setNewCatName(""); }} className="p-1 text-zinc-400 hover:text-zinc-600"><IconX size={14} /></button>
+                  <button onClick={() => { setIsAddingCat(false); setNewCatName(""); setNewCatWeight(0); }} className="p-1 text-zinc-400 hover:text-zinc-600"><IconX size={14} /></button>
                 </div>
               )}
             </div>
@@ -543,7 +614,7 @@ const SessionRoles = () => {
                         </div>
                       )}
                       <div className="space-y-3">
-                        {items.map((template) =>
+                        {items.map((template, tplIdx) =>
                           editingId === template.id ? (
                             <div key={template.id} className="p-4 rounded-lg border border-primary/40 bg-primary/5 dark:bg-primary/10 space-y-4">
                               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -617,6 +688,16 @@ const SessionRoles = () => {
                                   </div>
                                 ) : (
                                   <>
+                                    <button onClick={() => moveTemplate(template.id, "up")} disabled={tplIdx === 0}
+                                      className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                      title="Move up">
+                                      <IconArrowUp size={14} />
+                                    </button>
+                                    <button onClick={() => moveTemplate(template.id, "down")} disabled={tplIdx === items.length - 1}
+                                      className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                      title="Move down">
+                                      <IconArrowDown size={14} />
+                                    </button>
                                     <button onClick={() => startEdit(template)} className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Edit">
                                       <IconPencil size={16} />
                                     </button>
@@ -657,14 +738,14 @@ const SessionRoles = () => {
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-700 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary" />
                   </div>
                   <div>
-                  <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">Host type</label>
-                  <select value={newHostRole} onChange={(e) => setNewHostRole(e.target.value as "primary" | "secondary" | "")}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-700 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary">
-                    <option value="">— None —</option>
-                    <option value="primary">Primary Host</option>
-                    <option value="secondary">Secondary Host</option>
-                  </select>
-                </div>
+                    <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">Host type</label>
+                    <select value={newHostRole} onChange={(e) => setNewHostRole(e.target.value as "primary" | "secondary" | "")}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-700 dark:text-white focus:ring-1 focus:ring-primary focus:border-primary">
+                      <option value="">— None —</option>
+                      <option value="primary">Primary Host</option>
+                      <option value="secondary">Secondary Host</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-2">Eligible roles</label>

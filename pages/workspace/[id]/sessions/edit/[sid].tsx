@@ -351,7 +351,7 @@ const EditSession: pageWithLayout<
       if (roleTemplates.length > 0) {
         const selectedSlots = roleTemplates
           .filter((t) => selectedTemplateIds.has(t.id))
-          .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
+          .map((t) => ({ id: t.id, name: t.name, slots: t.slots, categoryId: t.categoryId || null, categoryName: t.category?.name || null, categoryWeight: t.category?.weight ?? 0, weight: t.weight ?? 0, hostRole: t.hostRole || null, groupRoles: t.groupRoles || [] }));
         await axios.post(
           `/api/workspace/${workspace.groupId}/sessions/manage/${session.sessionTypeId}/edit`,
           {

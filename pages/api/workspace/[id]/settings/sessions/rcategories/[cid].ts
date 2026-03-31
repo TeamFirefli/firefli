@@ -24,7 +24,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   if (req.method === "PATCH") {
-    const { name, archived } = req.body;
+    const { name, archived, weight } = req.body;
     if (name !== undefined && (typeof name !== "string" || !name.trim())) {
       return res.status(400).json({ success: false, error: "Name is required" });
     }
@@ -33,6 +33,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       data: {
         ...(name !== undefined && { name: name.trim().slice(0, 64) }),
         ...(archived !== undefined && { archived: Boolean(archived) }),
+        ...(weight !== undefined && { weight: Math.max(0, Math.min(9999, Math.round(parseInt(weight) || 0))) }),
       },
     });
     return res.status(200).json({ success: true, category });

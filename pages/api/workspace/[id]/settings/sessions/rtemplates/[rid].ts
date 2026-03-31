@@ -24,7 +24,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   if (req.method === "PATCH") {
-    const { name, categoryId, hostRole, slots, groupRoles, archived } = req.body;
+    const { name, categoryId, hostRole, slots, groupRoles, archived, weight } = req.body;
 
     if (name !== undefined && (typeof name !== "string" || !name.trim())) {
       return res.status(400).json({ success: false, error: "Name cannot be empty" });
@@ -52,6 +52,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         ...(hostRole !== undefined && { hostRole: hostRole || null }),
         ...(slots !== undefined && { slots: Math.max(1, Math.min(100, parseInt(slots) || 1)) }),
         ...(archived !== undefined && { archived: Boolean(archived) }),
+        ...(weight !== undefined && { weight: Math.max(0, Math.min(9999, Math.round(parseInt(weight) || 0))) }),
         groupRoles: validGroupRoles,
       },
       include: { category: true },

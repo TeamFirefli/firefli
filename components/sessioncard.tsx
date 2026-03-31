@@ -609,9 +609,9 @@ const SessionModal: React.FC<SessionModalProps> = ({
                       uncategorised.push(slot);
                     }
                   }
-                  const sortedCategories = [...catMap.entries()].sort(([, a], [, b]) =>
-                    (a[0]?.categoryName ?? "").localeCompare(b[0]?.categoryName ?? "")
-                  );
+                  const sortedCategories = [...catMap.entries()]
+                    .map(([catId, catSlots]) => [catId, [...catSlots].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0))] as [string, any[]])
+                    .sort(([, a], [, b]) => (a[0]?.categoryWeight ?? 0) - (b[0]?.categoryWeight ?? 0));
 
                   const renderSlot = (slot: any, slotIdx: number) => {
                     const slotData = JSON.parse(JSON.stringify(slot));
@@ -690,7 +690,7 @@ const SessionModal: React.FC<SessionModalProps> = ({
                               <div className="flex-1 border-t border-zinc-200 dark:border-zinc-700" />
                             </div>
                           )}
-                          {uncategorised.map((slot, idx) => renderSlot(slot, idx))}
+                          {[...uncategorised].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0)).map((slot, idx) => renderSlot(slot, idx))}
                         </div>
                       )}
                     </>
