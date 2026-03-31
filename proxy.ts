@@ -14,7 +14,7 @@ export default function proxy(request: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com https://fonts.intercomcdn.com",
       "img-src 'self' data: https: blob:",
-      "connect-src 'self' https://m.firefli.net https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://apis.roblox.com https://thumbnails.roblox.com https://users.roblox.com wss://*.intercom.io",
+      "connect-src 'self' https://m.firefli.net https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://us.i.posthog.com https://us-assets.i.posthog.com https://apis.roblox.com https://thumbnails.roblox.com https://users.roblox.com wss://*.intercom.io",
       "media-src 'self' https://audio-ssl.itunes.apple.com https://cdn.freesound.org",
       "frame-src 'self' https://www.youtube.com",
       "frame-ancestors 'self'",

@@ -8,7 +8,7 @@ import { useRecoilState } from 'recoil';
 
 const INTERCOM_APP_ID = process.env.NEXT_PUBLIC_INTERCOM_APP_ID;
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com';
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
 export default function AuthProvider({
 	loading,

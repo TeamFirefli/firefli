@@ -14,7 +14,7 @@ export default function Document() {
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
             "font-src 'self' https://fonts.gstatic.com; " +
             "img-src 'self' data: https: blob:; " +
-            "connect-src 'self' https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com; " +
+            "connect-src 'self' https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://us.i.posthog.com https://us-assets.i.posthog.com; " +
             "media-src 'self' https://audio-ssl.itunes.apple.com https://cdn.freesound.org; " +
             "frame-src 'self'; " +
             "base-uri 'self'; form-action 'self';"
