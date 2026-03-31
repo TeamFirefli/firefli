@@ -193,13 +193,21 @@ const ForgotPassword: NextPage = () => {
 										required: "This field is required",
 										})}
 									/>
-									<div className="flex justify-end">
+									<div className="mt-7 flex gap-2">
+										<Button
+									type="button"
+									classoverride="flex-1"
+									onPress={() => window.location.href = "/login"}
+								>
+									I remember my password now
+								</Button>
 										<Button
 											type="submit"
 											classoverride="px-6 py-2 text-sm rounded-lg"
 											>
 											Continue
 										</Button>
+										
 									</div>
 								</form>
 							</FormProvider>
