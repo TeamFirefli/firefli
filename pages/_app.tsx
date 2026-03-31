@@ -34,7 +34,8 @@ import { swrConfig } from '@/lib/swr-config';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST =
-  process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com";
+  process.env.NEXT_PUBLIC_POSTHOG_HOST;
+const POSTHOG_API = process.env.NEXT_PUBLIC_POSTHOG_API;
 const INTERCOM_APP_ID = process.env.NEXT_PUBLIC_INTERCOM_APP_ID;
 
 type AppPropsWithLayout = AppProps & {
@@ -252,7 +253,10 @@ function Initializer() {
       try {
         const posthog = (await import("posthog-js")).default;
         if (!mounted) return;
-        posthog.init(POSTHOG_KEY as string, { api_host: POSTHOG_HOST });
+        posthog.init(POSTHOG_KEY as string, {
+            ui_host: POSTHOG_HOST,
+            api_host: POSTHOG_API
+		});
         posthogRef.current = posthog;
       } catch (e) {
         console.error("Failed to init PostHog:", e);
