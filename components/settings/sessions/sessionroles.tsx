@@ -49,8 +49,6 @@ const SessionRoles = () => {
   const [categories, setCategories] = useState<RoleCategory[]>([]);
   const [workspaceRoles, setWorkspaceRoles] = useState<WorkspaceRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // ── Archived state ─────────────────────────────────────────────────────────
   const [archivedTemplates, setArchivedTemplates] = useState<RoleTemplate[]>([]);
   const [archivedCategories, setArchivedCategories] = useState<RoleCategory[]>([]);
   const [showArchived, setShowArchived] = useState(false);
@@ -58,16 +56,14 @@ const SessionRoles = () => {
   const [legacySlotsCount, setLegacySlotsCount] = useState(0);
   const [isPatching, setIsPatching] = useState(false);
   const [patchableCount, setPatchableCount] = useState(0);
-
-  // ── Category management state ──────────────────────────────────────────────
+  const [isAddingHostRecords, setIsAddingHostRecords] = useState(false);
+  const [hostRecordsCount, setHostRecordsCount] = useState(0);
   const [newCatName, setNewCatName] = useState("");
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [isSavingCat, setIsSavingCat] = useState(false);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
   const [deleteCatConfirmId, setDeleteCatConfirmId] = useState<string | null>(null);
-
-  // ── Template management state ──────────────────────────────────────────────
   const [newName, setNewName] = useState("");
   const [newCategoryId, setNewCategoryId] = useState<string>("");
   const [newHostRole, setNewHostRole] = useState<"primary" | "secondary" | "">("");
@@ -75,7 +71,6 @@ const SessionRoles = () => {
   const [newGroupRoles, setNewGroupRoles] = useState<number[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editCategoryId, setEditCategoryId] = useState<string>("");
@@ -107,8 +102,12 @@ const SessionRoles = () => {
       if (archivedTplRes.data.success) setArchivedTemplates(archivedTplRes.data.templates || []);
       if (archivedCatRes.data.success) setArchivedCategories(archivedCatRes.data.categories || []);
       if (convertRes.data.success) setLegacySlotsCount(convertRes.data.importable ?? 0);
-        const patchRes = await axios.get(`/api/workspace/${router.query.id}/settings/sessions/rtemplates/convert?action=patch-host-roles`);
+        const [patchRes, hostRes] = await Promise.all([
+          axios.get(`/api/workspace/${router.query.id}/settings/sessions/rtemplates/convert?action=patch-host-roles`),
+          axios.get(`/api/workspace/${router.query.id}/settings/sessions/rtemplates/convert?action=add-host-records`),
+        ]);
         if (patchRes.data.success) setPatchableCount(patchRes.data.patchable ?? 0);
+        if (hostRes.data.success) setHostRecordsCount(hostRes.data.recordable ?? 0);
     } catch {
       toast.error("Failed to load session roles");
     } finally {
@@ -123,7 +122,7 @@ const SessionRoles = () => {
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(t);
     }
-    // Sort: named categories alphabetically, uncategorised last
+    // named categories alphabetically, uncategorised last
     const catOrder = new Map(categories.map((c) => [c.id, c.name]));
     return [...map.entries()].sort(([a], [b]) => {
       if (a === UNCATEGORISED) return 1;
@@ -132,7 +131,6 @@ const SessionRoles = () => {
     });
   }, [templates, categories]);
 
-  // ── Category CRUD ──────────────────────────────────────────────────────────
   const handleConvert = async () => {
     setIsConverting(true);
     try {
@@ -174,6 +172,28 @@ const SessionRoles = () => {
       toast.error("Failed to patch host roles");
     } finally {
       setIsPatching(false);
+    }
+  };
+
+  const handleAddHostRecords = async () => {
+    setIsAddingHostRecords(true);
+    try {
+      const res = await axios.post(
+        `/api/workspace/${router.query.id}/settings/sessions/rtemplates/convert`,
+        { action: "add-host-records" }
+      );
+      if (res.data.success) {
+        if (res.data.recorded === 0) {
+          toast.success("No missing host records — all session owners already have a host participant record.");
+        } else {
+          toast.success(`Created ${res.data.recorded} missing host record${res.data.recorded !== 1 ? "s" : ""} for session owners.`);
+        }
+        setHostRecordsCount(0);
+      }
+    } catch {
+      toast.error("Failed to add host records");
+    } finally {
+      setIsAddingHostRecords(false);
     }
   };
 
@@ -409,6 +429,17 @@ const SessionRoles = () => {
             >
               <IconRefresh size={14} className={isPatching ? "animate-spin" : ""} />
               {isPatching ? "Patching…" : `Fix host roles on ${patchableCount} active slot${patchableCount !== 1 ? "s" : ""}`}
+            </button>
+          )}
+          {hostRecordsCount > 0 && (
+            <button
+              onClick={handleAddHostRecords}
+              disabled={isAddingHostRecords}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 transition-colors"
+              title="Create missing sessionUser records for session owners so their host quota is tracked"
+            >
+              <IconRefresh size={14} className={isAddingHostRecords ? "animate-spin" : ""} />
+              {isAddingHostRecords ? "Adding…" : `Add host records for ${hostRecordsCount} session${hostRecordsCount !== 1 ? "s" : ""}`}
             </button>
           )}
         </div>

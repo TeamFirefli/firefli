@@ -10,6 +10,8 @@ type Data = {
   templates?: any[];
   patched?: number;
   patchable?: number;
+  recordable?: number;
+  recorded?: number;
 };
 
 export default withPermissionCheck(handler, "manage_features");
@@ -20,6 +22,63 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   const workspaceGroupId = parseInt(req.query.id as string);
+  if (req.query.action === "add-host-records" || (req.method === "POST" && req.body?.action === "add-host-records")) {
+    const sessions = await prisma.session.findMany({
+      where: {
+        sessionType: { workspaceGroupId },
+        ownerId: { not: null },
+        ended: { not: null },
+        archived: { not: true },
+      },
+      select: {
+        id: true,
+        ownerId: true,
+        sessionType: { select: { slots: true } },
+        users: {
+          where: { archived: { not: true } },
+          select: { userid: true, roleID: true },
+        },
+      },
+    });
+
+    const toCreate: { userid: bigint; sessionid: string; roleID: string; slot: number }[] = [];
+    for (const session of sessions) {
+      const slots = (session.sessionType.slots as any[]) || [];
+      const primarySlot = slots.find((s: any) => s?.hostRole === "primary");
+      if (!primarySlot?.id) continue;
+
+      const alreadyHasHost = session.users.some(
+        (u) => u.roleID === primarySlot.id && u.userid === session.ownerId
+      );
+      if (alreadyHasHost) continue;
+
+      toCreate.push({
+        userid: session.ownerId!,
+        sessionid: session.id,
+        roleID: primarySlot.id,
+        slot: 0,
+      });
+    }
+
+    if (req.method === "GET") {
+      return res.status(200).json({ success: true, recordable: toCreate.length });
+    }
+
+    if (toCreate.length > 0) {
+      await prisma.$transaction(
+        toCreate.map((data) =>
+          prisma.sessionUser.upsert({
+            where: { userid_sessionid_roleID_slot: data },
+            create: data,
+            update: {},
+          })
+        )
+      );
+    }
+
+    return res.status(200).json({ success: true, recorded: toCreate.length });
+  }
+
   if (req.query.action === "patch-host-roles" || (req.method === "POST" && req.body?.action === "patch-host-roles")) {
     const templates = await prisma.sessionRoleTemplate.findMany({
       where: { workspaceGroupId, archived: false },
