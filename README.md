@@ -8,7 +8,7 @@
     <img height="40px" src=".github/logo.png"></img>
     <h1>Firefli by Cloudysatrn & Max Croft (Original Orbit Maintainers)</h1>
   </div>
-    <img src="https://img.shields.io/badge/version-v1.1.6-purple"></img>
+    <img src="https://img.shields.io/badge/version-v1.1.7-purple"></img>
   <ul>
     <li><a href="#about">About</a></li>
     <li><a href="#why-consider">Why consider</a></li>
