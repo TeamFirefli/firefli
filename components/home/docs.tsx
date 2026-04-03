@@ -153,8 +153,6 @@ const Docs: React.FC = () => {
           </button>
         </div>
       )}
-
-      {/* External Link Warning Modal */}
       {showExternalLinkModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
           <motion.div
@@ -188,7 +186,7 @@ const Docs: React.FC = () => {
                 <button
                   type="button"
                   onClick={proceedWithLink}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#ff0099] hover:bg-[#ff0099]/95 text-white font-medium shadow-md"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 text-white font-medium shadow-md"
                 >
                   <IconExternalLink size={18} />
                   Continue

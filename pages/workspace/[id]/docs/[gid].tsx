@@ -6,11 +6,9 @@ import prisma from "@/utils/database";
 import { useRecoilState } from "recoil";
 import axios from "axios";
 import Button from "@/components/button";
-import StarterKit from "@tiptap/starter-kit";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { generateHTML } from "@tiptap/html";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import {
@@ -25,6 +23,62 @@ import {
 import { Toaster, toast } from "react-hot-toast";
 import clsx from "clsx";
 import { motion } from "framer-motion";
+
+function escapeHtml(str: string): string {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+function safeHref(href: string): string {
+  try {
+    const url = new URL(href);
+    if (url.protocol === "http:" || url.protocol === "https:") return href;
+  } catch {
+    if (/^\/[^/]/.test(href)) return href;
+  }
+  return "#";
+}
+function marksToHtml(text: string, marks: any[] = []): string {
+  return marks.reduce((acc, mark) => {
+    switch (mark.type) {
+      case "bold": return `<strong>${acc}</strong>`;
+      case "italic": return `<em>${acc}</em>`;
+      case "underline": return `<u>${acc}</u>`;
+      case "code": return `<code>${acc}</code>`;
+      case "strike": return `<s>${acc}</s>`;
+      case "link": {
+        const href = safeHref(mark.attrs?.href || "");
+        return `<a href="${href}" rel="noopener noreferrer">${acc}</a>`;
+      }
+      default: return acc;
+    }
+  }, escapeHtml(text));
+}
+function nodeToHtml(node: any): string {
+  if (!node) return "";
+  if (node.type === "text") return marksToHtml(node.text ?? "", node.marks ?? []);
+  const children = (node.content ?? []).map(nodeToHtml).join("");
+  const align = node.attrs?.textAlign;
+  const style = align ? ` style="text-align: ${align}"` : "";
+  switch (node.type) {
+    case "doc": return children;
+    case "paragraph": return `<p${style}>${children || "<br>"}</p>`;
+    case "heading": { const l = node.attrs?.level ?? 1; return `<h${l}${style}>${children}</h${l}>`; }
+    case "bulletList": return `<ul>${children}</ul>`;
+    case "orderedList": return `<ol start="${node.attrs?.start ?? 1}">${children}</ol>`;
+    case "listItem": return `<li>${children}</li>`;
+    case "blockquote": return `<blockquote>${children}</blockquote>`;
+    case "codeBlock": return `<pre><code>${children}</code></pre>`;
+    case "hardBreak": return "<br>";
+    case "horizontalRule": return "<hr>";
+    default: return children;
+  }
+}
+function tiptapJsonToHtml(content: any): string {
+  if (!content || typeof content !== "object") return "";
+  return nodeToHtml(content);
+}
 
 const BG_COLORS = [
   "bg-amber-200",
@@ -162,7 +216,7 @@ const Settings: pageWithLayout<Props> = ({ document, canEdit, canDelete }) => {
       if (document.content && (document.content as any).external) {
         return { type: "external", content: document.content };
       }
-      const html = generateHTML(document.content as Object, [StarterKit]);
+      const html = tiptapJsonToHtml(document.content);
       return { type: "html", content: html };
     } catch (e) {
       return { type: "markdown", content: String(document.content) };
@@ -263,15 +317,11 @@ const Settings: pageWithLayout<Props> = ({ document, canEdit, canDelete }) => {
                 dangerouslySetInnerHTML={{ __html: output.content }}
                 onClick={(e) => {
                   const target = e.target as HTMLElement;
-                  const link = target.closest("a");
-                  if (link && link.href) {
-                    const href = link.getAttribute("href");
-                    if (
-                      href &&
-                      (href.startsWith("http://") ||
-                        href.startsWith("https://"))
-                    ) {
-                      e.preventDefault();
+                  const link = target.closest("a") as HTMLAnchorElement | null;
+                  if (link) {
+                    e.preventDefault();
+                    const href = link.getAttribute("href") || link.href;
+                    if (href && (href.startsWith("http://") || href.startsWith("https://"))) {
                       handleExternalLink(href);
                     }
                   }
@@ -377,7 +427,7 @@ const Settings: pageWithLayout<Props> = ({ document, canEdit, canDelete }) => {
                 <button
                   type="button"
                   onClick={proceedWithLink}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#ff0099] hover:bg-[#ff0099]/95 active:bg-[#ff0099]/90 text-white font-medium shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/95 active:bg-primary/90 text-white font-medium shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
                   <IconExternalLink size={18} />
                   Continue
