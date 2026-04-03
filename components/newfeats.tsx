@@ -116,7 +116,10 @@ const newFeatures = ({ onReady }: NewFeaturesProps = {}) => {
 
                 <div className="max-h-64 overflow-y-auto">
                   <div className="text-sm text-zinc-600 dark:text-zinc-300 prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:my-2">
-                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                    <ReactMarkdown
+                      rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                      components={{ img: () => null }}
+                    >
                       {latestEntry.content}
                     </ReactMarkdown>
                   </div>
@@ -129,7 +132,7 @@ const newFeatures = ({ onReady }: NewFeaturesProps = {}) => {
                     rel="noopener noreferrer"
                     className="text-sm text-zinc-600 dark:text-zinc-300 hover:underline"
                   >
-                    View full changelog
+                    View changelog
                   </a>
                   <button
                     type="button"
