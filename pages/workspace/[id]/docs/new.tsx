@@ -452,14 +452,6 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                     >
                       <IconAlignRight className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => editor?.chain().focus().setTextAlign('justify').run()}
-                      className={`p-2 rounded-md transition-colors ${editor?.isActive({ textAlign: 'justify' }) ? 'bg-primary/20 text-primary' : 'text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
-                      aria-label="Justify"
-                      title="Justify"
-                    >
-                      <IconAlignJustified className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
                 <div className="w-full min-h-80 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 overflow-y-auto cursor-text" onClick={() => editor?.chain().focus().run()}>
