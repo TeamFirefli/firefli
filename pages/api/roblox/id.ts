@@ -10,10 +10,6 @@ export default async function handler(
 
   const body = req.body;
   if (!body.keyword) return res.status(400).json({ error: true, message: "Missing 'keyword'" });
-
-  console.log("we're getting the user id from the api")
-  console.log(body.keyword)
-
   try {
     const { data } = await axios.post(
       `https://users.roblox.com/v1/usernames/users`,
@@ -28,9 +24,6 @@ export default async function handler(
         },
       }
     );
-
-    console.log("we got the user id from the api")
-    console.log(data)
 
     return res.status(200).json({
       error: false,
