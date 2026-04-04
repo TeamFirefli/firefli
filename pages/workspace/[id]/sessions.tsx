@@ -609,7 +609,6 @@ const Home: pageWithLayout<pageProps> = (props) => {
   const [isPatternEditDialogOpen, setIsPatternEditDialogOpen] = useState(false);
   const [sessionToEdit, setSessionToEdit] = useState<any>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const router = useRouter();
   const workspaceIdForColors = Array.isArray(router.query.id)
     ? router.query.id[0]
@@ -723,15 +722,8 @@ const Home: pageWithLayout<pageProps> = (props) => {
   };
 
   useEffect(() => {
-    const today = new Date().toDateString();
-    if (!hasInitialLoad && selectedDate.toDateString() === today && props.allSessions.length > 0) {
-      setHasInitialLoad(true);
-      return;
-    }
-    
     if (router.query.id && selectedDate && !loading) {
       loadSessionsForDate(selectedDate);
-      setHasInitialLoad(true);
     }
   }, [router.query.id, selectedDate, showHistory]);
   
