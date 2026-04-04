@@ -76,10 +76,15 @@ export async function handler(
 
     const before = notice;
     if (status === 'cancel') {
-      await prisma.inactivityNotice.delete({
+      const after = await prisma.inactivityNotice.update({
         where: { id },
+        data: {
+          revoked: true,
+          revokedAt: new Date(),
+          revokedByUserId: BigInt(req.session.userid),
+        },
       });
-      try { await logAudit(notice.workspaceGroupId, (req as any).session?.userid || null, 'notice.cancel', `notice:${id}`, { before, after: null, reviewer: (req as any).session?.userid || null }); } catch (e) {}
+      try { await logAudit(notice.workspaceGroupId, (req as any).session?.userid || null, 'notice.cancel', `notice:${id}`, { before, after, reviewer: (req as any).session?.userid || null }); } catch (e) {}
     } else {
       const after = await prisma.inactivityNotice.update({
         where: { id },
@@ -87,6 +92,8 @@ export async function handler(
           approved: status === 'approve',
           reviewed: true,
           reviewComment: reviewComment || null,
+          approvedAt: status === 'approve' ? new Date() : null,
+          reviewedByUserId: BigInt(req.session.userid),
         },
       });
       try { await logAudit(after.workspaceGroupId, (req as any).session?.userid || null, status === 'approve' ? 'notice.approve' : 'notice.deny', `notice:${id}`, { before, after, reviewer: (req as any).session?.userid || null }); } catch (e) {}

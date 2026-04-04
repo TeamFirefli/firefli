@@ -413,9 +413,14 @@ model inactivityNotice {
   reviewed         Boolean?  @default(false)
   revoked          Boolean?  @default(false)
   workspaceGroupId Int
-  reviewComment    String?
-  user             user      @relation(fields: [userId], references: [userid])
-  workspace        workspace @relation(fields: [workspaceGroupId], references: [groupId])
+  reviewComment      String?
+  createdAt          DateTime  @default(now())
+  approvedAt         DateTime?
+  reviewedByUserId   BigInt?
+  revokedAt          DateTime?
+  revokedByUserId    BigInt?
+  user               user      @relation(fields: [userId], references: [userid])
+  workspace          workspace @relation(fields: [workspaceGroupId], references: [groupId])
 
   @@index([workspaceGroupId, endTime, startTime, approved, reviewed])
   @@index([workspaceGroupId, userId])

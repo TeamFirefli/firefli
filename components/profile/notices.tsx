@@ -344,6 +344,7 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
               const now = new Date();
               const isActive =
                 notice.approved &&
+                !notice.revoked &&
                 notice.startTime &&
                 notice.endTime &&
                 new Date(notice.startTime) <= now &&
@@ -376,6 +377,23 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
                       <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 break-words">
                         {notice.reason}
                       </p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                        {notice.createdAt && (
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                            Created {moment(notice.createdAt).format("DD MMM YYYY")}
+                          </span>
+                        )}
+                        {notice.approvedAt && !notice.revoked && (
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                            {notice.approved ? "Approved" : "Reviewed"}{notice.reviewedByUsername ? ` by ${notice.reviewedByUsername}` : ""}{notice.approvedAt ? ` ${moment(notice.approvedAt).format("DD MMM YYYY")}` : ""}
+                          </span>
+                        )}
+                        {notice.revoked && (
+                          <span className="text-xs text-red-400 dark:text-red-400">
+                            Revoked{notice.revokedByUsername ? ` by ${notice.revokedByUsername}` : ""}{notice.revokedAt ? ` ${moment(notice.revokedAt).format("DD MMM YYYY")}` : ""}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {isActive && canManageNotices && (
@@ -393,7 +411,11 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
                               }
                             );
                             setLocalNotices((prev) =>
-                              prev.filter((n) => n.id !== notice.id)
+                              prev.map((n) =>
+                                n.id === notice.id
+                                  ? { ...n, revoked: true, revokedAt: new Date().toISOString() }
+                                  : n
+                              )
                             );
                             toast.success("Notice revoked");
                           } catch (e) {

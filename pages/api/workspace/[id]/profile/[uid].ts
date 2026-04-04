@@ -132,6 +132,23 @@ export default withSessionRoute(async function handler(
       orderBy: { id: "desc" },
     });
 
+    const reviewerIds = [
+      ...new Set([
+        ...notices.filter((n) => n.reviewedByUserId).map((n) => n.reviewedByUserId!),
+        ...notices.filter((n) => n.revokedByUserId).map((n) => n.revokedByUserId!),
+      ]),
+    ];
+    const reviewerUsers = reviewerIds.length
+      ? await prisma.user.findMany({
+          where: { userid: { in: reviewerIds } },
+          select: { userid: true, username: true },
+        })
+      : [];
+    const reviewerMap: Record<string, string> = {};
+    reviewerUsers.forEach((r) => {
+      reviewerMap[r.userid.toString()] = r.username || "Unknown";
+    });
+
     const hostedSessions = await prisma.session.findMany({
       where: {
         ownerId: userId,
@@ -266,6 +283,14 @@ export default withSessionRoute(async function handler(
     const serializedNotices = notices.map((notice) => ({
       ...notice,
       userId: notice.userId.toString(),
+      reviewedByUserId: notice.reviewedByUserId?.toString() ?? null,
+      reviewedByUsername: notice.reviewedByUserId
+        ? (reviewerMap[notice.reviewedByUserId.toString()] ?? null)
+        : null,
+      revokedByUserId: notice.revokedByUserId?.toString() ?? null,
+      revokedByUsername: notice.revokedByUserId
+        ? (reviewerMap[notice.revokedByUserId.toString()] ?? null)
+        : null,
     }));
 
     return res.status(200).json({

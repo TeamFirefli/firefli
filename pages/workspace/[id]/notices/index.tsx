@@ -186,6 +186,33 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
+    const allReviewerIds = [
+      ...new Set([
+        ...allNotices
+          .filter((n: any) => n.reviewedByUserId)
+          .map((n: any) => BigInt(n.reviewedByUserId!)),
+        ...userNotices
+          .filter((n: any) => n.reviewedByUserId)
+          .map((n: any) => BigInt(n.reviewedByUserId!)),
+        ...allNotices
+          .filter((n: any) => n.revokedByUserId)
+          .map((n: any) => BigInt(n.revokedByUserId!)),
+        ...userNotices
+          .filter((n: any) => n.revokedByUserId)
+          .map((n: any) => BigInt(n.revokedByUserId!)),
+      ]),
+    ];
+    const reviewerUsers = allReviewerIds.length
+      ? await prisma.user.findMany({
+          where: { userid: { in: allReviewerIds } },
+          select: { userid: true, username: true },
+        })
+      : [];
+    const reviewerMap: Record<string, string> = {};
+    reviewerUsers.forEach((r) => {
+      reviewerMap[r.userid.toString()] = r.username || "Unknown";
+    });
+
     return {
       props: {
         userNotices: JSON.parse(
@@ -201,6 +228,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         canApproveNotices: hasApprovePermission,
         canManageNotices: hasManagePermission,
         canCreateNotices: !!hasCreatePermission,
+        reviewerMap,
       },
     };
   },
@@ -215,6 +243,7 @@ interface NoticesPageProps {
   canApproveNotices: boolean;
   canManageNotices: boolean;
   canCreateNotices: boolean;
+  reviewerMap: Record<string, string>;
 }
 
 const Notices: pageWithLayout<NoticesPageProps> = ({
@@ -223,6 +252,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
   canApproveNotices,
   canManageNotices: canManageNoticesProp,
   canCreateNotices,
+  reviewerMap,
 }) => {
   const router = useRouter();
   const { id } = router.query;
@@ -326,7 +356,13 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
 
       if (res.data.success) {
         if (status === "cancel") {
-          setAllNotices((prev) => prev.filter((n) => n.id !== noticeId));
+          setAllNotices((prev) =>
+            prev.map((n) =>
+              n.id === noticeId
+                ? { ...n, revoked: true, revokedAt: new Date(), revokedByUserId: BigInt(login.userId ?? 0) }
+                : n
+            )
+          );
         } else {
           window.location.reload();
         }
@@ -350,18 +386,20 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
       new Date(n.startTime) <= now &&
       new Date(n.endTime) >= now
   );
-  const pendingNotices = allNotices.filter((n) => !n.reviewed);
+  const pendingNotices = allNotices.filter((n) => !n.reviewed && !n.revoked);
   const upcomingNotices = allNotices.filter(
-    (n) => n.reviewed && n.approved && new Date(n.startTime) > now
+    (n) => n.reviewed && n.approved && !n.revoked && new Date(n.startTime) > now
   );
   const activeNotices = allNotices.filter(
     (n) =>
       n.approved &&
+      !n.revoked &&
       n.startTime &&
       n.endTime &&
       new Date(n.startTime) <= now &&
       new Date(n.endTime) >= now
   );
+  const revokedNotices = allNotices.filter((n) => n.revoked);
 
   const renderManageNoticeSection = (
     title: string,
@@ -416,16 +454,23 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                 <p className="text-sm text-zinc-600 dark:text-zinc-300">
                   {notice.reason}
                 </p>
+                {notice.createdAt && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-400 mt-1.5">
+                    Submitted {moment(notice.createdAt).format("DD MMM YYYY")}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-2">
                 {showCancel ? (
+                  !notice.revoked && (
                   <button
                     onClick={() => updateNotice(notice.id, "cancel")}
                     className="flex-1 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium"
                   >
                     Revoke
                   </button>
+                  )
                 ) : (
                   <>
                     <button
@@ -757,14 +802,18 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                           </div>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              !notice.reviewed
+                              notice.revoked
+                                ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                                : !notice.reviewed
                                 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
                                 : notice.approved
                                 ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                                 : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
                             }`}
                           >
-                            {!notice.reviewed
+                            {notice.revoked
+                              ? "Revoked"
+                              : !notice.reviewed
                               ? "Pending"
                               : notice.approved
                               ? "Approved"
@@ -774,6 +823,24 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                         <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3">
                           {notice.reason}
                         </p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2">
+                          {notice.createdAt && (
+                            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                              Submitted {moment(notice.createdAt).format("DD MMM YYYY")}
+                            </span>
+                          )}
+                          {!notice.revoked && notice.reviewed && notice.reviewedByUserId && reviewerMap[(notice.reviewedByUserId as any)?.toString?.()] && (
+                            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                              {notice.approved ? "Approved" : "Denied"} by {reviewerMap[(notice.reviewedByUserId as any)?.toString?.()]}
+                              {notice.approvedAt ? ` on ${moment(notice.approvedAt).format("DD MMM YYYY")}` : ""}
+                            </span>
+                          )}
+                          {notice.revoked && (
+                            <span className="text-xs text-red-400 dark:text-red-400">
+                              Revoked{(notice as any).revokedByUserId && reviewerMap[(notice as any).revokedByUserId?.toString?.()] ? ` by ${reviewerMap[(notice as any).revokedByUserId?.toString?.()]}` : ""}{(notice as any).revokedAt ? ` on ${moment((notice as any).revokedAt).format("DD MMM YYYY")}` : ""}
+                            </span>
+                          )}
+                        </div>
                         {notice.reviewed &&
                           !notice.approved &&
                           notice.reviewComment && (
@@ -854,6 +921,11 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                           <p className="text-sm text-zinc-600 dark:text-zinc-300">
                             {notice.reason}
                           </p>
+                          {notice.createdAt && (
+                            <p className="text-xs text-zinc-400 dark:text-zinc-400 mt-1.5">
+                              Submitted {moment(notice.createdAt).format("DD MMM YYYY")}
+                            </p>
+                          )}
                         </div>
 
                         <div className="flex gap-2">
@@ -951,9 +1023,22 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                               <p className="text-sm text-zinc-600 dark:text-zinc-300 break-words whitespace-pre-wrap">
                                 {notice.reason}
                               </p>
+                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                                {notice.createdAt && (
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-400">
+                                    Submitted {moment(notice.createdAt).format("DD MMM YYYY")}
+                                  </span>
+                                )}
+                                {notice.reviewedByUserId && reviewerMap[(notice.reviewedByUserId as any)?.toString?.()] && (
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-400">
+                                    Approved by {reviewerMap[(notice.reviewedByUserId as any)?.toString?.()]}
+                                    {notice.approvedAt ? ` on ${moment(notice.approvedAt).format("DD MMM YYYY")}` : ""}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
-                            {hasManageAccess && (
+                            {hasManageAccess && !notice.revoked && (
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => updateNotice(notice.id, "cancel")}
@@ -1043,9 +1128,22 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                             <p className="text-sm text-zinc-600 dark:text-zinc-300">
                               {notice.reason}
                             </p>
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                              {notice.createdAt && (
+                                <span className="text-xs text-zinc-400 dark:text-zinc-400">
+                                  Submitted {moment(notice.createdAt).format("DD MMM YYYY")}
+                                </span>
+                              )}
+                              {notice.reviewedByUserId && reviewerMap[(notice.reviewedByUserId as any)?.toString?.()] && (
+                                <span className="text-xs text-zinc-400 dark:text-zinc-400">
+                                  Approved by {reviewerMap[(notice.reviewedByUserId as any)?.toString?.()]}
+                                  {notice.approvedAt ? ` on ${moment(notice.approvedAt).format("DD MMM YYYY")}` : ""}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          {hasManageAccess && (
+                          {hasManageAccess && !notice.revoked && (
                             <div className="flex gap-2">
                               <button
                                 onClick={() => updateNotice(notice.id, "cancel")}
@@ -1064,7 +1162,8 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
 
               {pendingNotices.length === 0 &&
                 upcomingNotices.length === 0 &&
-                activeNotices.length === 0 && (
+                activeNotices.length === 0 &&
+                revokedNotices.length === 0 && (
                   <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-12 text-center">
                     <div className="mx-auto w-16 h-16 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center mb-4">
                       <IconCalendarTime className="w-8 h-8 text-zinc-400" />
@@ -1077,6 +1176,70 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                     </p>
                   </div>
                 )}
+
+              {revokedNotices.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
+                    Revoked Notices ({revokedNotices.length})
+                  </h3>
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                    {revokedNotices.map((notice) => (
+                      <div
+                        key={notice.id}
+                        className="bg-white dark:bg-zinc-700 rounded-xl p-5 shadow-sm opacity-75"
+                      >
+                        <div className="flex items-center gap-3 mb-3">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${getRandomBg(
+                              notice.user?.userid?.toString() ?? ""
+                            )} ring-2 ring-transparent overflow-hidden`}
+                          >
+                            <img
+                              src={getAvatarSrc(id, notice.user)}
+                              alt={notice.user?.username ?? "User"}
+                              className="w-10 h-10 object-cover rounded-full border-2 border-white"
+                              onError={(e) => { e.currentTarget.src = "/default-avatar.jpg"; }}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-zinc-900 dark:text-white">
+                              {notice.user?.username}
+                            </h4>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                              <IconX className="w-3 h-3" />
+                              Revoked
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-zinc-50 dark:bg-zinc-600 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 mb-1">
+                            <IconCalendarTime className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                            <span>
+                              {moment(notice.startTime!).format("MMM Do")} -{" "}
+                              {moment(notice.endTime!).format("MMM Do YYYY")}
+                            </span>
+                          </div>
+                          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                            {notice.reason}
+                          </p>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                            {notice.createdAt && (
+                              <span className="text-xs text-zinc-400 dark:text-zinc-400">
+                                Submitted {moment(notice.createdAt).format("DD MMM YYYY")}
+                              </span>
+                            )}
+                            {(notice as any).revokedAt && (
+                              <span className="text-xs text-red-400 dark:text-red-400">
+                                Revoked{(notice as any).revokedByUserId && reviewerMap[(notice as any).revokedByUserId?.toString?.()] ? ` by ${reviewerMap[(notice as any).revokedByUserId?.toString?.()]}` : ""} on {moment((notice as any).revokedAt).format("DD MMM YYYY")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -387,6 +387,32 @@ export const getServerSideProps = withPermissionCheckSsr(
       orderBy: [{ startTime: "desc" }],
     });
 
+    const noticeReviewerIds = [
+      ...new Set([
+        ...notices.filter((n) => n.reviewedByUserId).map((n) => n.reviewedByUserId!),
+        ...notices.filter((n) => n.revokedByUserId).map((n) => n.revokedByUserId!),
+      ]),
+    ];
+    const noticeReviewers = noticeReviewerIds.length
+      ? await prisma.user.findMany({
+          where: { userid: { in: noticeReviewerIds } },
+          select: { userid: true, username: true },
+        })
+      : [];
+    const noticeReviewerMap: Record<string, string> = {};
+    noticeReviewers.forEach((r) => {
+      noticeReviewerMap[r.userid.toString()] = r.username || "Unknown";
+    });
+    const noticesWithReviewer = notices.map((n) => ({
+      ...n,
+      reviewedByUsername: n.reviewedByUserId
+        ? (noticeReviewerMap[n.reviewedByUserId.toString()] ?? null)
+        : null,
+      revokedByUsername: n.revokedByUserId
+        ? (noticeReviewerMap[n.revokedByUserId.toString()] ?? null)
+        : null,
+    }));
+
     const sessions = await prisma.activitySession.findMany({
       where: {
         userId: BigInt(query?.uid as string),
@@ -725,7 +751,7 @@ export const getServerSideProps = withPermissionCheckSsr(
     return {
       props: {
         notices: JSON.parse(
-          JSON.stringify(notices, (_k, v) =>
+          JSON.stringify(noticesWithReviewer, (_k, v) =>
             typeof v === "bigint" ? v.toString() : v,
           ),
         ),
