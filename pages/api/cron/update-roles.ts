@@ -71,6 +71,8 @@ export default async function handler(
       console.log(
         `[cron-update-roles] Multi-container mode: Batch ${activeBatchId} - Starting sequential sync of ${ws.length} workspaces`,
       );
+      let consecutiveConnectionFailures = 0;
+      const MAX_CONSECUTIVE_CONNECTION_FAILURES = 2;
       for (let i = 0; i < ws.length; i++) {
         const w = ws[i];
         ids.push(w.groupId);
@@ -80,11 +82,29 @@ export default async function handler(
 
         try {
           await checkGroupRoles(w.groupId);
+          consecutiveConnectionFailures = 0;
           console.log(
             `[cron-update-roles] [Batch ${activeBatchId}] Successfully synced workspace ${w.groupId}`,
           );
-        } catch (e) {
-          console.error("checkgrouproles cron error for", w.groupId, e);
+        } catch (e: any) {
+          const isConnError =
+            e?.cause?.code === "UND_ERR_CONNECT_TIMEOUT" ||
+            e?.code === "ETIMEDOUT" ||
+            e?.code === "ECONNREFUSED";
+          if (isConnError) {
+            consecutiveConnectionFailures++;
+            console.warn(
+              `[cron-update-roles] [Batch ${activeBatchId}] Connection failure for ${w.groupId} (${consecutiveConnectionFailures}/${MAX_CONSECUTIVE_CONNECTION_FAILURES} consecutive)`,
+            );
+            if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_CONNECTION_FAILURES) {
+              console.error(
+                `[cron-update-roles] [Batch ${activeBatchId}] Circuit breaker triggered — Roblox API appears to be blocking this IP. Aborting remaining ${ws.length - i - 1} workspace(s) to allow IP cooldown.`,
+              );
+              break;
+            }
+          } else {
+            console.error("checkgrouproles cron error for", w.groupId, e);
+          }
         }
 
         if (i < ws.length - 1) {
@@ -100,13 +120,49 @@ export default async function handler(
       );
     } else {
       console.log(
-        `[cron-update-roles] Single-container mode: Starting parallel sync of ${ws.length} workspaces`,
+        `[cron-update-roles] Single-container mode: Starting sequential sync of ${ws.length} workspaces`,
       );
-      for (const w of ws) {
+      let consecutiveConnectionFailures = 0;
+      const MAX_CONSECUTIVE_CONNECTION_FAILURES = 2;
+      for (let i = 0; i < ws.length; i++) {
+        const w = ws[i];
         ids.push(w.groupId);
-        checkGroupRoles(w.groupId).catch((e) =>
-          console.error("checkgrouproles cron error for", w.groupId, e),
+        console.log(
+          `[cron-update-roles] Syncing workspace ${i + 1}/${ws.length}: ${w.groupId}`,
         );
+        try {
+          await checkGroupRoles(w.groupId);
+          consecutiveConnectionFailures = 0;
+          console.log(
+            `[cron-update-roles] Successfully synced workspace ${w.groupId}`,
+          );
+        } catch (e: any) {
+          const isConnError =
+            e?.cause?.code === "UND_ERR_CONNECT_TIMEOUT" ||
+            e?.code === "ETIMEDOUT" ||
+            e?.code === "ECONNREFUSED";
+          if (isConnError) {
+            consecutiveConnectionFailures++;
+            console.warn(
+              `[cron-update-roles] Connection failure for ${w.groupId} (${consecutiveConnectionFailures}/${MAX_CONSECUTIVE_CONNECTION_FAILURES} consecutive)`,
+            );
+            if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_CONNECTION_FAILURES) {
+              console.error(
+                `[cron-update-roles] Circuit breaker triggered — Roblox API appears to be blocking this IP. Aborting remaining ${ws.length - i - 1} workspace(s) to allow IP cooldown.`,
+              );
+              break;
+            }
+          } else {
+            console.error("checkgrouproles cron error for", w.groupId, e);
+          }
+        }
+        if (i < ws.length - 1) {
+          const delayMs = 15000;
+          console.log(
+            `[cron-update-roles] Waiting ${delayMs}ms before next workspace...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
       }
     }
 

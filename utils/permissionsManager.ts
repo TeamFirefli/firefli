@@ -553,6 +553,11 @@ export async function checkGroupRoles(groupID: number) {
           `[Refresh] Failed to get roles for group ${groupID}:`,
           error
         );
+        const isConnTimeout = error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT';
+        const isEtimedout = error?.code === 'ETIMEDOUT' || error?.code === 'ECONNREFUSED';
+        if (isConnTimeout || isEtimedout) {
+          throw error;
+        }
         return null;
       });
     if (!rss) {
