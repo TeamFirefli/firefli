@@ -152,6 +152,7 @@ const EditSession: pageWithLayout<
     { id: "basic", label: "Basic", icon: <IconInfoCircle size={18} /> },
     { id: "scheduling", label: "Scheduling", icon: <IconCalendarEvent size={18} /> },
     { id: "statuses", label: "Statuses", icon: <IconClipboardList size={18} /> },
+    { id: "roles", label: "Roles", icon: <IconUserPlus size={18} />, mobileOnly: true },
   ];
 
   const goToSection = (id: string) => {
@@ -516,7 +517,7 @@ const EditSession: pageWithLayout<
             <button
               key={tab.id}
               onClick={() => goToSection(tab.id)}
-              className={`px-4 py-3 flex items-center gap-2 text-sm font-medium transition-all border-b-2 -mb-px ${
+              className={`px-4 py-3 flex items-center gap-2 text-sm font-medium transition-all border-b-2 -mb-px ${tab.id === 'roles' ? 'md:hidden ' : ''}${
                 activeTab === tab.id
                   ? "border-primary text-primary dark:border-primary dark:text-primary"
                   : "border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
@@ -563,7 +564,7 @@ const EditSession: pageWithLayout<
                     <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Continue to Scheduling</Button>
                   </div>
                 </div>
-                <div className="w-64 flex-shrink-0">
+                <div className="hidden md:block w-64 flex-shrink-0">
                   <div className="sticky top-4 border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden">
                     <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-700/50 border-b border-gray-200 dark:border-zinc-700 flex items-center gap-2">
                       <IconUserPlus size={14} className="text-primary" />
@@ -754,6 +755,112 @@ const EditSession: pageWithLayout<
               <div className="mt-8 flex justify-between w-full">
                 <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600">Back</Button>
                 <Button onPress={form.handleSubmit(handleSaveClick)} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">{isSubmitting ? "Saving..." : "Save Changes"}</Button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "roles" && (
+            <div className="p-6 md:hidden" id="roles">
+              <div className="flex items-start mb-6">
+                <div className="bg-primary/10 p-2 rounded-lg mr-4">
+                  <IconUserPlus className="text-primary" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold dark:text-white">Session Roles</h2>
+                  <p className="text-zinc-500 dark:text-zinc-400 mt-1">Select which roles are included in this session</p>
+                </div>
+              </div>
+              <div className="border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                <div className="p-4">
+                  {isLoadingTemplates ? (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 py-2 text-center">Loading…</p>
+                  ) : roleTemplates.length === 0 ? (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4 leading-relaxed">
+                      No roles defined yet.<br />
+                      <span className="opacity-70">Configure in Settings → Sessions.</span>
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(() => {
+                        const UNCATEGORISED = "__uncategorised__";
+                        const map = new Map<string, typeof roleTemplates>();
+                        for (const t of roleTemplates) {
+                          const key = t.categoryId || UNCATEGORISED;
+                          if (!map.has(key)) map.set(key, []);
+                          map.get(key)!.push(t);
+                        }
+                        type FlatItem =
+                          | { type: "category"; catKey: string; catName: string; roles: typeof roleTemplates }
+                          | { type: "role"; template: (typeof roleTemplates)[0] };
+                        const flat: FlatItem[] = [];
+                        for (const [catKey, roles] of map.entries()) {
+                          if (catKey === UNCATEGORISED) {
+                            for (const t of roles) flat.push({ type: "role", template: t });
+                          } else {
+                            flat.push({ type: "category", catKey, catName: roles[0]?.category?.name ?? catKey, roles });
+                          }
+                        }
+                        flat.sort((a, b) => {
+                          if (a.type === "category" && b.type === "category") return a.catName.localeCompare(b.catName);
+                          if (a.type === "category") return -1;
+                          if (b.type === "category") return 1;
+                          return 0;
+                        });
+                        return flat.map((item) => {
+                          if (item.type === "category") {
+                            const catIds = item.roles.map((t) => t.id);
+                            const allOn = catIds.every((id) => selectedTemplateIds.has(id));
+                            const someOn = !allOn && catIds.some((id) => selectedTemplateIds.has(id));
+                            const hasHost = item.roles.some((t) => t.hostRole === "primary");
+                            return (
+                              <div key={item.catKey} className="flex items-center justify-between gap-2 py-2">
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate block">{item.catName}</span>
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                    {item.roles.length} role{item.roles.length !== 1 ? "s" : ""}
+                                    {hasHost && <span className="ml-1 text-amber-500">· Host</span>}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleCategory(catIds)}
+                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allOn ? "bg-primary" : someOn ? "bg-primary/40" : "bg-zinc-300 dark:bg-zinc-600"}`}
+                                  role="switch"
+                                  aria-checked={allOn}
+                                >
+                                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${allOn ? "translate-x-4" : someOn ? "translate-x-2" : "translate-x-0"}`} />
+                                </button>
+                              </div>
+                            );
+                          } else {
+                            const template = item.template;
+                            return (
+                              <div key={template.id} className="flex items-center justify-between gap-2 py-2">
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate block">{template.name}</span>
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                    {template.slots} slot{template.slots !== 1 ? "s" : ""}
+                                    {template.hostRole === "primary" && <span className="ml-1 text-amber-500">· Primary</span>}
+                                    {template.hostRole === "secondary" && <span className="ml-1 text-blue-500">· Secondary</span>}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleTemplate(template.id)}
+                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${selectedTemplateIds.has(template.id) ? "bg-primary" : "bg-zinc-300 dark:bg-zinc-600"}`}
+                                  role="switch"
+                                  aria-checked={selectedTemplateIds.has(template.id)}
+                                >
+                                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${selectedTemplateIds.has(template.id) ? "translate-x-4" : "translate-x-0"}`} />
+                                </button>
+                              </div>
+                            );
+                          }
+                        });
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
