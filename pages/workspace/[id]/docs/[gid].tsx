@@ -70,6 +70,13 @@ function nodeToHtml(node: any): string {
     case "listItem": return `<li>${children}</li>`;
     case "blockquote": return `<blockquote>${children}</blockquote>`;
     case "codeBlock": return `<pre><code>${children}</code></pre>`;
+    case "image": {
+      const src = escapeHtml(node.attrs?.src ?? "");
+      const alt = escapeHtml(node.attrs?.alt ?? "");
+      const title = node.attrs?.title ? ` title="${escapeHtml(node.attrs.title)}"` : "";
+      const width = node.attrs?.width ? ` width="${escapeHtml(String(node.attrs.width))}"` : "";
+      return src ? `<img src="${src}" alt="${alt}"${title}${width} />` : "";
+    }
     case "hardBreak": return "<br>";
     case "horizontalRule": return "<hr>";
     default: return children;

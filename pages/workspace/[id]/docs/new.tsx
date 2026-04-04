@@ -10,6 +10,21 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
+import CodeBlock from "@tiptap/extension-code-block";
+import Image from "@tiptap/extension-image";
+
+const RichCodeBlock = CodeBlock.extend({ marks: 'bold italic underline' });
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        renderHTML: (attrs) => attrs.width ? { width: attrs.width } : {},
+      },
+    };
+  },
+});
 import {
   IconCheck,
   IconH1,
@@ -31,6 +46,9 @@ import {
   IconEdit,
   IconWorld,
   IconChevronDown,
+  IconCode,
+  IconPhoto,
+  IconMinus,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
@@ -93,9 +111,12 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [showListDropdown, setShowListDropdown] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageWidth, setImageWidth] = useState("");
 
   const editor = useEditor({
-    extensions: [StarterKit, Link.configure({ openOnClick: false }), Underline, TextAlign.configure({ types: ['heading', 'paragraph'] })],
+    extensions: [StarterKit, Link.configure({ openOnClick: false }), Underline, TextAlign.configure({ types: ['heading', 'paragraph'] }), RichCodeBlock, ResizableImage.configure({ inline: false, allowBase64: false })],
     editable: true,
     editorProps: {
       attributes: {
@@ -452,6 +473,31 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                     >
                       <IconAlignRight className="w-4 h-4" />
                     </button>
+                    <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-600" />
+                    <button
+                      onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+                      className={`p-2 rounded-md transition-colors ${editor?.isActive('codeBlock') ? 'bg-primary/20 text-primary' : 'text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
+                      aria-label="Code Block"
+                      title="Code Block"
+                    >
+                      <IconCode className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setImageUrl(''); setShowImageModal(true); }}
+                      className={`p-2 rounded-md transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100`}
+                      aria-label="Insert Image"
+                      title="Insert Image"
+                    >
+                      <IconPhoto className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+                      className="p-2 rounded-md transition-colors text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      aria-label="Divider"
+                      title="Divider"
+                    >
+                      <IconMinus className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
                 <div className="w-full min-h-80 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 overflow-y-auto cursor-text" onClick={() => editor?.chain().focus().run()}>
@@ -574,6 +620,46 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
             </motion.div>
           </div>
         )}
+
+      {showImageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowImageModal(false)}>
+          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 w-80 flex flex-col gap-3" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">Insert Image</h3>
+            <input
+              type="url"
+              placeholder="https://cdn.firefli.net/brand/logo.png"
+              value={imageUrl}
+              onChange={e => setImageUrl(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (imageUrl.trim()) editor?.chain().focus().setImage({ src: imageUrl.trim(), ...(imageWidth.trim() ? { width: imageWidth.trim() } : {}) } as any).run();
+                  setShowImageModal(false); setImageUrl(''); setImageWidth('');
+                }
+                if (e.key === 'Escape') { setShowImageModal(false); setImageUrl(''); setImageWidth(''); }
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Width (e.g. 400px or 50%)"
+              value={imageWidth}
+              onChange={e => setImageWidth(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowImageModal(false); setImageUrl(''); setImageWidth(''); }} className="px-3 py-1.5 text-sm rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700">Cancel</button>
+              <button
+                onClick={() => {
+                  if (imageUrl.trim()) editor?.chain().focus().setImage({ src: imageUrl.trim(), ...(imageWidth.trim() ? { width: imageWidth.trim() } : {}) } as any).run();
+                  setShowImageModal(false); setImageUrl(''); setImageWidth('');
+                }}
+                className="px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90"
+              >Insert</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showLinkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowLinkModal(false)}>
