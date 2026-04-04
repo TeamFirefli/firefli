@@ -241,7 +241,6 @@ const Home: pageWithLayout<pageProps> = ({ documents, canCreate, canEdit, canDel
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <Toaster position="bottom-center" />
       <div className="pagePadding">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">
@@ -252,9 +251,7 @@ const Home: pageWithLayout<pageProps> = ({ documents, canCreate, canEdit, canDel
             </p>
           </div>
         </div>
-
-        {/* New Document Button */}
-        {canCreate ? (
+        {canCreate && (
           <button
             onClick={() =>
               router.push(`/workspace/${router.query.id}/docs/new`)
@@ -275,13 +272,7 @@ const Home: pageWithLayout<pageProps> = ({ documents, canCreate, canEdit, canDel
               </div>
             </div>
           </button>
-        ) : (
-          <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-4 mb-8 text-sm text-zinc-600 dark:text-zinc-400">
-            You don't have permission to create documents.
-          </div>
         )}
-
-        {/* Documents Grid */}
         {documents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {documents.map((document) => (
