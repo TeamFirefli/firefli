@@ -34,7 +34,8 @@ export default async function handler(
     return res.status(401).json({ success: false, error: "Unauthorized" });
   }
 
-  console.log("[User Sync] Starting global user info update");
+  const isMultiContainer = process.env.NEXT_MULTI?.toLowerCase() === "true";
+  console.log(`[User Sync] Starting user info update${isMultiContainer ? " (multi-container mode)" : ""}`);
 
   try {
     const allUsers = await prisma.user.findMany({
@@ -49,8 +50,8 @@ export default async function handler(
 
     let updated = 0;
     let failed = 0;
-
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = isMultiContainer ? 10 : 50;
+    const BATCH_DELAY_MS = isMultiContainer ? 5000 : 1000;
     const batches: bigint[][] = [];
 
     for (let i = 0; i < allUsers.length; i += BATCH_SIZE) {
@@ -109,7 +110,7 @@ export default async function handler(
         }
 
         if (batchIndex < batches.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
         }
       } catch (batchError) {
         failed += batch.length;
