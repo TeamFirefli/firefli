@@ -31,6 +31,7 @@ import axios from "axios";
 import { loginState } from "@/state";
 import { SWRConfig } from 'swr';
 import { swrConfig } from '@/lib/swr-config';
+import IOSbanner from "@/components/pwa";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST =
@@ -212,6 +213,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
         <ThemeHandler />
         <ColorThemeHandler />
         <HelpWidget />
+        <IOSbanner />
 
         {!loading ? (
           <Layout>
@@ -245,6 +247,13 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 function Initializer() {
   const [login] = useRecoilState(loginState);
   const posthogRef = useRef<any>(null);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('Service worker registration failed:', err);
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (!POSTHOG_KEY) return;
