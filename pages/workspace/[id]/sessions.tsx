@@ -734,10 +734,14 @@ const Home: pageWithLayout<pageProps> = (props) => {
       (date) => date.toDateString() === today.toDateString()
     );
 
-    if (todayInNewWeek && todayInNewWeek.toDateString() !== selectedDate.toDateString()) {
-      setSelectedDate(todayInNewWeek);
-    } else if (!todayInNewWeek && newWeekDates[0].toDateString() !== selectedDate.toDateString()) {
-      setSelectedDate(newWeekDates[0]);
+    const newDate = todayInNewWeek || newWeekDates[0];
+    if (newDate.toDateString() !== selectedDate.toDateString()) {
+      setSelectedDate(newDate);
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+      const newDateMidnight = new Date(newDate);
+      newDateMidnight.setHours(0, 0, 0, 0);
+      setShowHistory(newDateMidnight < todayMidnight);
     }
   }, [currentWeek]);
   
@@ -870,7 +874,14 @@ const Home: pageWithLayout<pageProps> = (props) => {
                         return (
                           <button
                             key={date.toDateString()}
-                            onClick={() => setSelectedDate(date)}
+                            onClick={() => {
+                              setSelectedDate(date);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              const d = new Date(date);
+                              d.setHours(0, 0, 0, 0);
+                              setShowHistory(d < today);
+                            }}
                             className={`flex flex-col items-center justify-center min-w-[44px] sm:min-w-[56px] py-1.5 sm:py-2 px-2 sm:px-3 rounded-xl transition-all transform hover:scale-105 focus:outline-none border ${
                               isSelected
                                 ? "bg-primary text-white border-primary shadow-lg"
