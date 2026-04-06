@@ -124,15 +124,22 @@ export const getServerSideProps = withPermissionCheckSsr(
         },
       },
     });
-    
+
     const membership = currentUser?.workspaceMemberships?.[0];
     const isAdmin = membership?.isAdmin || false;
     const userRole = currentUser?.roles?.[0];
-    const hasManageViewsPerm = userRole?.permissions?.includes("edit_views") || false;
-    const hasCreateViewsPerm = userRole?.permissions?.includes("create_views") || false;
-    const hasDeleteViewsPerm = userRole?.permissions?.includes("delete_views") || false;
-    const hasUseSavedViewsPerm = userRole?.permissions?.includes("use_views") || false;
-    const hasViewMemberProfiles = isAdmin || userRole?.permissions?.includes("view_member_profiles") || false;
+    const hasManageViewsPerm =
+      userRole?.permissions?.includes("edit_views") || false;
+    const hasCreateViewsPerm =
+      userRole?.permissions?.includes("create_views") || false;
+    const hasDeleteViewsPerm =
+      userRole?.permissions?.includes("delete_views") || false;
+    const hasUseSavedViewsPerm =
+      userRole?.permissions?.includes("use_views") || false;
+    const hasViewMemberProfiles =
+      isAdmin ||
+      userRole?.permissions?.includes("view_member_profiles") ||
+      false;
 
     const departments = await prisma.department.findMany({
       where: { workspaceGroupId },
@@ -142,7 +149,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         color: true,
       },
       orderBy: {
-        name: 'asc',
+        name: "asc",
       },
     });
 
@@ -158,7 +165,7 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     };
   },
-  "view_members"
+  "view_members",
 );
 
 const filters: {
@@ -198,21 +205,33 @@ type pageProps = {
   hasViewMemberProfiles: boolean;
   departments: Array<{ id: string; name: string; color: string | null }>;
 };
-const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCreateViewsPerm, hasDeleteViewsPerm, hasUseSavedViewsPerm, hasViewMemberProfiles, departments }) => {
+const Views: pageWithLayout<pageProps> = ({
+  isAdmin,
+  hasManageViewsPerm,
+  hasCreateViewsPerm,
+  hasDeleteViewsPerm,
+  hasUseSavedViewsPerm,
+  hasViewMemberProfiles,
+  departments,
+}) => {
   const [login, setLogin] = useRecoilState(loginState);
   const [workspace, setWorkspace] = useRecoilState(workspacestate);
   const router = useRouter();
   const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [viewToDelete, setViewToDelete] = useState<string | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([{ id: "rankName", desc: false }]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "rankName", desc: false },
+  ]);
   const [rowSelection, setRowSelection] = useState({});
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [type, setType] = useState("");
   const [minutes, setMinutes] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
-  const [ranks, setRanks] = useState<{ id: number; rank: number; name: string }[]>([]);
+  const [ranks, setRanks] = useState<
+    { id: number; rank: number; name: string }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -233,7 +252,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   const [saveName, setSaveName] = useState("");
   const [saveColor, setSaveColor] = useState("");
   const [saveIcon, setSaveIcon] = useState("");
-  const [saveType, setSaveType] = useState<'team' | 'local'>('local');
+  const [saveType, setSaveType] = useState<"team" | "local">("local");
   const [isEditMode, setIsEditMode] = useState(false);
   const [originalViewConfig, setOriginalViewConfig] = useState<any>(null);
   const [mobileViewsOpen, setMobileViewsOpen] = useState(false);
@@ -245,18 +264,18 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   const [kickFromDiscord, setKickFromDiscord] = useState(false);
   const [banFromDiscord, setBanFromDiscord] = useState(false);
   const [banDeleteDays, setBanDeleteDays] = useState(0);
-  const [viewLayout, setViewLayout] = useState<'list' | 'card'>('list');
+  const [viewLayout, setViewLayout] = useState<"list" | "card">("list");
 
   useEffect(() => {
-    const savedLayout = localStorage.getItem('viewsLayout');
-    if (savedLayout === 'card' || savedLayout === 'list') {
+    const savedLayout = localStorage.getItem("viewsLayout");
+    if (savedLayout === "card" || savedLayout === "list") {
       setViewLayout(savedLayout);
     }
   }, []);
 
-  const handleLayoutChange = (layout: 'list' | 'card') => {
+  const handleLayoutChange = (layout: "list" | "card") => {
     setViewLayout(layout);
-    localStorage.setItem('viewsLayout', layout);
+    localStorage.setItem("viewsLayout", layout);
   };
 
   const ICON_OPTIONS: { key: string; Icon: any; title?: string }[] = [
@@ -284,7 +303,12 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     const found = ICON_OPTIONS.find((i) => i.key === key);
     if (!found) return null;
     const C = found.Icon;
-    return <C className={className} style={{ stroke: '#18181b', color: '#18181b' }} />;
+    return (
+      <C
+        className={className}
+        style={{ stroke: "#18181b", color: "#18181b" }}
+      />
+    );
   };
 
   const hasManageViews = () => {
@@ -334,18 +358,18 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       cell: (row) => {
         return (
           <div
-            className={`flex flex-row ${hasViewMemberProfiles ? 'cursor-pointer' : 'cursor-default'}`}
+            className={`flex flex-row ${hasViewMemberProfiles ? "cursor-pointer" : "cursor-default"}`}
             onClick={() => {
               if (hasViewMemberProfiles) {
                 router.push(
-                  `/workspace/${router.query.id}/profile/${row.getValue().userId}`
+                  `/workspace/${router.query.id}/profile/${row.getValue().userId}`,
                 );
               }
             }}
           >
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getRandomBg(
-                row.getValue().userId.toString()
+                row.getValue().userId.toString(),
               )}`}
             >
               <img
@@ -364,30 +388,49 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               const notices = row.row.original.inactivityNotices || [];
               const now = new Date();
               const approved = notices.filter(
-                (n: any) => n.approved === true && n.reviewed === true && n.revoked === false
+                (n: any) =>
+                  n.approved === true &&
+                  n.reviewed === true &&
+                  n.revoked === false,
               );
               const active = approved.find(
-                (n: any) => n.endTime && new Date(n.startTime) <= now && new Date(n.endTime) >= now
+                (n: any) =>
+                  n.endTime &&
+                  new Date(n.startTime) <= now &&
+                  new Date(n.endTime) >= now,
               );
               if (active) {
                 return (
-                  <div className="flex-shrink-0 my-auto" title={`On notice: ${active.reason || "N/A"}`}>
+                  <div
+                    className="flex-shrink-0 my-auto"
+                    title={`On notice: ${active.reason || "N/A"}`}
+                  >
                     <IconBeach className="w-4 h-4 text-amber-500" />
                   </div>
                 );
               }
-              const upcoming = approved.find((n: any) => new Date(n.startTime) > now);
+              const upcoming = approved.find(
+                (n: any) => new Date(n.startTime) > now,
+              );
               if (upcoming) {
                 return (
-                  <div className="flex-shrink-0 my-auto" title={`Upcoming notice (starts ${new Date(upcoming.startTime).toLocaleDateString()})`}>
+                  <div
+                    className="flex-shrink-0 my-auto"
+                    title={`Upcoming notice (starts ${new Date(upcoming.startTime).toLocaleDateString()})`}
+                  >
                     <IconBeach className="w-4 h-4 text-emerald-500" />
                   </div>
                 );
               }
-              const past = approved.find((n: any) => n.endTime && new Date(n.endTime) < now);
+              const past = approved.find(
+                (n: any) => n.endTime && new Date(n.endTime) < now,
+              );
               if (past) {
                 return (
-                  <div className="flex-shrink-0 my-auto" title={`Previous notice (ended ${new Date(past.endTime!).toLocaleDateString()})`}>
+                  <div
+                    className="flex-shrink-0 my-auto"
+                    title={`Previous notice (ended ${new Date(past.endTime!).toLocaleDateString()})`}
+                  >
                     <IconBeach className="w-4 h-4 text-zinc-400" />
                   </div>
                 );
@@ -416,11 +459,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     columnHelper.accessor("rankName", {
       header: "Rank",
       cell: (row) => {
-        return (
-          <p className="dark:text-white">
-            {row.getValue() || "Guest"}
-          </p>
-        );
+        return <p className="dark:text-white">{row.getValue() || "Guest"}</p>;
       },
       sortingFn: (rowA, rowB) => {
         const rankA = rowA.original.rankID || 0;
@@ -456,7 +495,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               );
             })}
             {userDepts.length > 2 && (
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">+{userDepts.length - 2}</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                +{userDepts.length - 2}
+              </span>
             )}
           </div>
         );
@@ -549,7 +590,11 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       cell: (row) => {
         const user = row.row.original;
         if (user.quotaTotal === 0) return <p>-</p>;
-        return <p>{user.quotaCompleted}/{user.quotaTotal}</p>;
+        return (
+          <p>
+            {user.quotaCompleted}/{user.quotaTotal}
+          </p>
+        );
       },
     }),
     columnHelper.accessor("quotaFailed", {
@@ -558,7 +603,11 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
         const user = row.row.original;
         if (user.quotaTotal === 0) return <p>-</p>;
         const failed = user.quotaTotal - user.quotaCompleted;
-        return <p>{failed}/{user.quotaTotal}</p>;
+        return (
+          <p>
+            {failed}/{user.quotaTotal}
+          </p>
+        );
       },
     }),
   ];
@@ -618,7 +667,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     id: string,
     column: string,
     filter: string,
-    value: string
+    value: string,
   ) => {
     const OBJ = Object.assign([] as typeof colFilters, colFilters);
     const index = OBJ.findIndex((filter) => filter.id === id);
@@ -648,7 +697,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     if (!router.query.id) return;
     const checkBloxlinkStatus = async () => {
       try {
-        const response = await axios.get(`/api/workspace/${router.query.id}/settings/bloxlink/status`);
+        const response = await axios.get(
+          `/api/workspace/${router.query.id}/settings/bloxlink/status`,
+        );
         if (response.data.success && response.data.integration) {
           setBloxlinkEnabled(response.data.integration.isActive);
         }
@@ -658,7 +709,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     };
     const checkDiscordStatus = async () => {
       try {
-        const response = await axios.get(`/api/workspace/${router.query.id}/settings/discord/status`);
+        const response = await axios.get(
+          `/api/workspace/${router.query.id}/settings/discord/status`,
+        );
         if (response.data.success && response.data.integration?.isActive) {
           setDiscordEnabled(true);
         }
@@ -682,12 +735,14 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   }, [router.query.view, savedViews, localViews]);
 
   useEffect(() => {
-    if (router.query.newView === 'true') {
+    if (router.query.newView === "true") {
       openSaveDialog();
-      router.replace(`/workspace/${router.query.id}/views`, undefined, { shallow: true });
+      router.replace(`/workspace/${router.query.id}/views`, undefined, {
+        shallow: true,
+      });
     }
   }, [router.query.newView]);
-  
+
   // Reset to page 0 when filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
@@ -696,7 +751,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
   useEffect(() => {
     const fetchStaffData = async () => {
       if (!router.query.id) return;
-      
+
       setIsLoading(true);
       try {
         const visibleColumnKeys = Object.entries(columnVisibility)
@@ -712,9 +767,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               filters: JSON.stringify(colFilters),
               columns: JSON.stringify(visibleColumnKeys),
             },
-          }
+          },
         );
-        
+
         if (res.data) {
           setUsers(res.data.users || []);
           setRanks(res.data.ranks || []);
@@ -729,7 +784,13 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     };
 
     fetchStaffData();
-  }, [router.query.id, pagination.pageIndex, pagination.pageSize, colFilters, columnVisibility]);
+  }, [
+    router.query.id,
+    pagination.pageIndex,
+    pagination.pageSize,
+    colFilters,
+    columnVisibility,
+  ]);
 
   const applySavedView = (view: any) => {
     if (!view) return;
@@ -792,7 +853,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     setSaveName("");
     setSaveColor("");
     setSaveIcon("");
-    setSaveType(hasCreateViews() ? 'team' : 'local');
+    setSaveType(hasCreateViews() ? "team" : "local");
     setIsSaveOpen(true);
   };
 
@@ -806,7 +867,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
         filtersPayload.sorting = sorting;
       }
 
-      const isLocal = saveType === 'local';
+      const isLocal = saveType === "local";
       const payload = {
         name: saveName || `View ${new Date().toISOString()}`,
         color: saveColor || null,
@@ -817,7 +878,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       };
       const res = await axios.post(
         `/api/workspace/${router.query.id}/views`,
-        payload
+        payload,
       );
       if (res.data && res.data.view) {
         if (isLocal) {
@@ -825,7 +886,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
         } else {
           setSavedViews((prev) => [...prev, res.data.view]);
         }
-        window.dispatchEvent(new CustomEvent('savedViewsChanged'));
+        window.dispatchEvent(new CustomEvent("savedViewsChanged"));
       }
       setIsSaveOpen(false);
       toast.success(isLocal ? "Local view created!" : "Team view created!");
@@ -919,22 +980,22 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
 
         await axios.patch(
           `/api/workspace/${router.query.id}/views/${selectedViewId}`,
-          payload
+          payload,
         );
 
         setSavedViews((prev) =>
           prev.map((v) =>
             v.id === selectedViewId
               ? { ...v, filters: filtersPayload, columnVisibility }
-              : v
-          )
+              : v,
+          ),
         );
         setLocalViews((prev) =>
           prev.map((v) =>
             v.id === selectedViewId
               ? { ...v, filters: filtersPayload, columnVisibility }
-              : v
-          )
+              : v,
+          ),
         );
 
         setOriginalViewConfig({
@@ -953,8 +1014,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     }
   };
 
-  useEffect(() => {
-  }, [colFilters]);
+  useEffect(() => {}, [colFilters]);
 
   const massAction = () => {
     const selected = table.getSelectedRowModel().flatRows;
@@ -967,7 +1027,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
           axios.post(`/api/workspace/${router.query.id}/activity/add`, {
             userId: data.info.userId,
             minutes,
-          })
+          }),
         );
       } else {
         const apiType = type === "fire" ? "termination" : type;
@@ -977,13 +1037,27 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
             {
               notes: message,
               type: apiType,
-              notifyDiscord: notifyDiscord && bloxlinkEnabled && discordEnabled && (apiType === "warning" || apiType === "promotion" || apiType === "demotion" || apiType === "termination" || apiType === "resignation"),
-              ...(apiType === "termination" && notifyDiscord && bloxlinkEnabled && {
-                terminationAction: banFromDiscord ? 'ban' : (kickFromDiscord ? 'kick' : 'none'),
-                ...(banFromDiscord && { banDeleteDays })
-              })
-            }
-          )
+              notifyDiscord:
+                notifyDiscord &&
+                bloxlinkEnabled &&
+                discordEnabled &&
+                (apiType === "warning" ||
+                  apiType === "promotion" ||
+                  apiType === "demotion" ||
+                  apiType === "termination" ||
+                  apiType === "resignation"),
+              ...(apiType === "termination" &&
+                notifyDiscord &&
+                bloxlinkEnabled && {
+                  terminationAction: banFromDiscord
+                    ? "ban"
+                    : kickFromDiscord
+                      ? "kick"
+                      : "none",
+                  ...(banFromDiscord && { banDeleteDays }),
+                }),
+            },
+          ),
         );
       }
     }
@@ -1006,14 +1080,16 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
     setBanDeleteDays(0);
   };
 
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   const updateSearchQuery = (query: any) => {
     setSearchQuery(query);
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-    
+
     if (query.trim() === "") {
       setSearchOpen(false);
       setColFilters([]);
@@ -1024,7 +1100,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
       try {
         setSearchOpen(true);
         const userRequest = await axios.get(
-          `/api/workspace/${router.query.id}/staff/search/${query.trim()}`
+          `/api/workspace/${router.query.id}/staff/search/${query.trim()}`,
         );
         const userList = userRequest.data.users;
         setSearchResults(userList);
@@ -1035,7 +1111,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
         setSearchResults([]);
       }
     }, 2000);
-    
+
     setSearchTimeout(timeout);
   };
 
@@ -1050,19 +1126,23 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
 
   const searchExternally = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsSearchingExternal(true);
     try {
-      const response = await axios.post('/api/roblox/id', {
-        keyword: searchQuery.trim()
+      const response = await axios.post("/api/roblox/id", {
+        keyword: searchQuery.trim(),
       });
-      
-      if (response.data && response.data.data && response.data.data.length > 0) {
+
+      if (
+        response.data &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
         const users = response.data.data.map((user: any) => ({
           userId: user.id,
           username: user.name,
           displayName: user.displayName,
-          thumbnail: `/api/workspace/${router.query.id}/avatar/${user.id}`
+          thumbnail: `/api/workspace/${router.query.id}/avatar/${user.id}`,
         }));
         setExternalSearchResults(users);
       } else {
@@ -1136,6 +1216,128 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
           </p>
         </div>
 
+        {hasUseSavedViews() &&
+          (savedViews.length > 0 ||
+            localViews.length > 0 ||
+            hasCreateViews()) && (
+            <div className="md:hidden mb-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Views
+                </span>
+                {hasCreateViews() && (
+                  <button
+                    onClick={openSaveDialog}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-all"
+                  >
+                    <IconPlus className="w-3 h-3" />
+                    New
+                  </button>
+                )}
+              </div>
+
+              {savedViews.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <HugeiconsIcon
+                      icon={UserGroupIcon}
+                      className="w-3 h-3 text-zinc-400 dark:text-zinc-500"
+                    />
+                    <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                      Team
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {savedViews.map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => {
+                          if (selectedViewId === v.id) resetToDefault();
+                          else {
+                            setSelectedViewId(v.id);
+                            applySavedView(v);
+                          }
+                        }}
+                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          selectedViewId === v.id
+                            ? "border-[color:rgb(var(--group-theme))] text-[color:rgb(var(--group-theme))] bg-[color:rgb(var(--group-theme)/0.08)] dark:bg-[color:rgb(var(--group-theme)/0.15)]"
+                            : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800/50"
+                        }`}
+                      >
+                        <span
+                          className="w-3.5 h-3.5 rounded-sm flex items-center justify-center flex-shrink-0"
+                          style={{ background: v.color || "#e5e7eb" }}
+                        >
+                          {v.icon ? (
+                            renderIcon(v.icon, "w-2.5 h-2.5 !text-zinc-900")
+                          ) : (
+                            <span className="text-[8px] font-bold text-zinc-900">
+                              {(v.name || "").charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </span>
+                        {v.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {localViews.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <HugeiconsIcon
+                      icon={UserMultiple02Icon}
+                      className="w-3 h-3 text-zinc-400 dark:text-zinc-500"
+                    />
+                    <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                      Local
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {localViews.map((v) => (
+                      <button
+                        key={v.id}
+                        onClick={() => {
+                          if (selectedViewId === v.id) resetToDefault();
+                          else {
+                            setSelectedViewId(v.id);
+                            applySavedView(v);
+                          }
+                        }}
+                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          selectedViewId === v.id
+                            ? "border-[color:rgb(var(--group-theme))] text-[color:rgb(var(--group-theme))] bg-[color:rgb(var(--group-theme)/0.08)] dark:bg-[color:rgb(var(--group-theme)/0.15)]"
+                            : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800/50"
+                        }`}
+                      >
+                        <span
+                          className="w-3.5 h-3.5 rounded-sm flex items-center justify-center flex-shrink-0"
+                          style={{ background: v.color || "#e5e7eb" }}
+                        >
+                          {v.icon ? (
+                            renderIcon(v.icon, "w-2.5 h-2.5 !text-zinc-900")
+                          ) : (
+                            <span className="text-[8px] font-bold text-zinc-900">
+                              {(v.name || "").charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </span>
+                        {v.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {savedViews.length === 0 && localViews.length === 0 && (
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  No views yet. Create one to get started.
+                </p>
+              )}
+            </div>
+          )}
+
         <div className="flex gap-6">
           {hasUseSavedViews() && (
             <aside className="w-64 hidden">
@@ -1186,10 +1388,7 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                             style={{ background: v.color || "#e5e7eb" }}
                           >
                             {v.icon ? (
-                              renderIcon(
-                                v.icon,
-                                "w-4 h-4 !text-zinc-900"
-                              )
+                              renderIcon(v.icon, "w-4 h-4 !text-zinc-900")
                             ) : (
                               <span className="text-sm font-medium text-zinc-900">
                                 {(v.name || "").charAt(0).toUpperCase()}
@@ -1224,147 +1423,6 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               </div>
             </aside>
           )}
-
-          {/* Mobile dropdown for saved views */}
-            <div className="md:hidden w-full mb-4 max-w-[200px]">
-              <div className="bg-white dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">VIEWS</span>
-                  <button
-                    onClick={openSaveDialog}
-                    title="Create View"
-                    className="p-1 rounded-md text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition"
-                  >
-                    <IconPlus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="space-y-0.5 max-h-64 overflow-y-auto">
-                {savedViews.length === 0 && localViews.length === 0 && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 px-1.5 py-1">
-                    No views
-                  </p>
-                )}
-                {savedViews.length > 0 && (
-                  <div className="flex items-center gap-1 px-1 py-1">
-                    <HugeiconsIcon icon={UserGroupIcon} className="w-3 h-3 text-zinc-500 dark:text-zinc-400" />
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Team</p>
-                  </div>
-                )}
-                {savedViews.map((v) => (
-                  <div
-                    key={v.id}
-                    className={`flex items-center justify-between gap-1.5 px-1.5 py-1 rounded-md ${
-                      selectedViewId === v.id
-                        ? "bg-zinc-50 dark:bg-zinc-800/40 border-l-2 border-[color:rgb(var(--group-theme))]"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-700/40"
-                    }`}
-                    style={{ minWidth: 0 }}
-                  >
-                    <button
-                      onClick={() => {
-                        if (selectedViewId === v.id) resetToDefault();
-                        else {
-                          setSelectedViewId(v.id);
-                          applySavedView(v);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 text-left w-full min-w-0"
-                    >
-                      <span
-                        className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-                        style={{ background: v.color || "#e5e7eb" }}
-                      >
-                        {v.icon ? (
-                          renderIcon(
-                            v.icon,
-                            "w-3 h-3 !text-zinc-900"
-                          )
-                        ) : (
-                          <span className="text-xs font-medium text-zinc-900">
-                            {(v.name || "").charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-xs font-medium truncate text-zinc-900 dark:text-white">
-                        {v.name}
-                      </span>
-                    </button>
-                    {hasDeleteViews() && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewToDelete(v.id);
-                          setShowDeleteModal(true);
-                        }}
-                        className="p-0.5 rounded text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition flex-shrink-0"
-                        title="Delete View"
-                      >
-                        <IconX className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {localViews.length > 0 && (
-                  <div className="flex items-center gap-1 px-1 py-1 mt-1.5">
-                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-3 h-3 text-zinc-500 dark:text-zinc-400" />
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Local</p>
-                  </div>
-                )}
-                {localViews.map((v) => (
-                  <div
-                    key={v.id}
-                    className={`flex items-center justify-between gap-1.5 px-1.5 py-1 rounded-md ${
-                      selectedViewId === v.id
-                        ? "bg-zinc-50 dark:bg-zinc-800/40 border-l-2 border-[color:rgb(var(--group-theme))]"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-700/40"
-                    }`}
-                    style={{ minWidth: 0 }}
-                  >
-                    <button
-                      onClick={() => {
-                        if (selectedViewId === v.id) resetToDefault();
-                        else {
-                          setSelectedViewId(v.id);
-                          applySavedView(v);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 text-left w-full min-w-0"
-                    >
-                      <span
-                        className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-                        style={{ background: v.color || "#e5e7eb" }}
-                      >
-                        {v.icon ? (
-                          renderIcon(
-                            v.icon,
-                            "w-3 h-3 !text-zinc-900"
-                          )
-                        ) : (
-                          <span className="text-xs font-medium text-zinc-900">
-                            {(v.name || "").charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-xs font-medium truncate text-zinc-900 dark:text-white">
-                        {v.name}
-                      </span>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setViewToDelete(v.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="p-0.5 rounded text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition flex-shrink-0"
-                      title="Delete View"
-                    >
-                      <IconX className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            </div>
 
           <div className="flex-1">
             <div className="bg-white dark:bg-zinc-800/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-4 mb-6 relative z-10 overflow-visible">
@@ -1486,9 +1544,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
 
                   <div className="hidden md:flex gap-1 border border-zinc-200 dark:border-zinc-600 rounded-lg p-0.5 bg-zinc-50 dark:bg-zinc-700/50">
                     <button
-                      onClick={() => handleLayoutChange('list')}
+                      onClick={() => handleLayoutChange("list")}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        viewLayout === 'list'
+                        viewLayout === "list"
                           ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm"
                           : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                       }`}
@@ -1497,9 +1555,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                       <IconLayoutList className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleLayoutChange('card')}
+                      onClick={() => handleLayoutChange("card")}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        viewLayout === 'card'
+                        viewLayout === "card"
                           ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm"
                           : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                       }`}
@@ -1527,52 +1585,55 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                   {searchOpen && (
                     <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl">
                       <div className="py-1 max-h-48 overflow-y-auto">
-                        {searchResults.length === 0 && !isSearchingExternal && externalSearchResults.length === 0 && (
-                          <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 text-center">
-                            <p>No results found in workspace</p>
-                            {searchQuery.trim().length >= 3 && (
-                              <button
-                                onClick={searchExternally}
-                                className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-[color:rgb(var(--group-theme))] text-white hover:opacity-90 transition-opacity"
-                              >
-                                <IconSearch className="w-3 h-3" />
-                                Search on Roblox
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        {searchResults.length === 0 &&
+                          !isSearchingExternal &&
+                          externalSearchResults.length === 0 && (
+                            <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 text-center">
+                              <p>No results found in workspace</p>
+                              {searchQuery.trim().length >= 3 && (
+                                <button
+                                  onClick={searchExternally}
+                                  className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md bg-[color:rgb(var(--group-theme))] text-white hover:opacity-90 transition-opacity"
+                                >
+                                  <IconSearch className="w-3 h-3" />
+                                  Search on Roblox
+                                </button>
+                              )}
+                            </div>
+                          )}
                         {isSearchingExternal && (
                           <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 text-center">
                             <IconLoader2 className="w-4 h-4 animate-spin inline-block mr-2" />
                             Searching Roblox...
                           </div>
                         )}
-                        {externalSearchResults.length > 0 && searchResults.length === 0 && (
-                          <>
-                            <div className="px-4 py-1 text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-                              Roblox Results
-                            </div>
-                            {externalSearchResults.map((u: any) => (
-                              <button
-                                key={u.userId}
-                                onClick={() => openExternalProfile(u.userId)}
-                                className="w-full text-left px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between transition-colors group"
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <img
-                                    src={u.thumbnail}
-                                    alt={u.username}
-                                    className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-600"
-                                  />
-                                  <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors">
-                                    {u.username}
-                                  </span>
-                                </div>
-                                <IconExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />
-                              </button>
-                            ))}
-                          </>
-                        )}
+                        {externalSearchResults.length > 0 &&
+                          searchResults.length === 0 && (
+                            <>
+                              <div className="px-4 py-1 text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                                Roblox Results
+                              </div>
+                              {externalSearchResults.map((u: any) => (
+                                <button
+                                  key={u.userId}
+                                  onClick={() => openExternalProfile(u.userId)}
+                                  className="w-full text-left px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between transition-colors group"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <img
+                                      src={u.thumbnail}
+                                      alt={u.username}
+                                      className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-600"
+                                    />
+                                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 group-hover:text-zinc-950 dark:group-hover:text-white transition-colors">
+                                      {u.username}
+                                    </span>
+                                  </div>
+                                  <IconExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300" />
+                                </button>
+                              ))}
+                            </>
+                          )}
                         {searchResults.map((u: any) => (
                           <button
                             key={u.username}
@@ -1594,24 +1655,26 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                   )}
                 </div>
 
-                {selectedViewId !== null && (hasManageViews() || localViews.some(v => v.id === selectedViewId)) && (
-                  <button
-                    onClick={handleEditOrSaveView}
-                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
-                  >
-                    {hasUnsavedChanges() ? (
-                      <>
-                        <IconDeviceFloppy className="w-4 h-4" />
-                        <span>Save</span>
-                      </>
-                    ) : (
-                      <>
-                        <IconPencil className="w-4 h-4" />
-                        <span>Edit</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                {selectedViewId !== null &&
+                  (hasManageViews() ||
+                    localViews.some((v) => v.id === selectedViewId)) && (
+                    <button
+                      onClick={handleEditOrSaveView}
+                      className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
+                    >
+                      {hasUnsavedChanges() ? (
+                        <>
+                          <IconDeviceFloppy className="w-4 h-4" />
+                          <span>Save</span>
+                        </>
+                      ) : (
+                        <>
+                          <IconPencil className="w-4 h-4" />
+                          <span>Edit</span>
+                        </>
+                      )}
+                    </button>
+                  )}
               </div>
 
               {table.getSelectedRowModel().flatRows.length > 0 && (
@@ -1657,302 +1720,383 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
               <div className="bg-white dark:bg-zinc-800/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/50 rounded-lg p-12">
                 <div className="flex flex-col items-center justify-center text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading staff data...</p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Loading staff data...
+                  </p>
                 </div>
               </div>
             ) : (
-            <>
-            <div className={`block space-y-4 ${viewLayout === 'card' ? 'md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4 md:space-y-0' : 'md:hidden'}`}>
-              {table.getRowModel().rows.map((row) => {
-                const user = row.original;
-                const warnings = Array.isArray(user.book)
-                  ? user.book.filter((b: any) => b.type === "warning").length
-                  : 0;
-                const hosted = user.hostedSessions as any;
-                const hostedLen = hosted && typeof hosted.length === "number" ? hosted.length : 0;
+              <>
+                <div
+                  className={`block space-y-4 ${viewLayout === "card" ? "md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4 md:space-y-0" : "md:hidden"}`}
+                >
+                  {table.getRowModel().rows.map((row) => {
+                    const user = row.original;
+                    const warnings = Array.isArray(user.book)
+                      ? user.book.filter((b: any) => b.type === "warning")
+                          .length
+                      : 0;
+                    const hosted = user.hostedSessions as any;
+                    const hostedLen =
+                      hosted && typeof hosted.length === "number"
+                        ? hosted.length
+                        : 0;
 
-                const selectCell = row.getVisibleCells().find(cell => cell.column.id === 'select');
+                    const selectCell = row
+                      .getVisibleCells()
+                      .find((cell) => cell.column.id === "select");
 
-                return (
-                  <div
-                    key={row.id}
-                    className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 space-y-3 overflow-hidden"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {selectCell && (
-                        <div className="flex-shrink-0">
-                          {flexRender(
-                            selectCell.column.columnDef.cell,
-                            selectCell.getContext()
+                    return (
+                      <div
+                        key={row.id}
+                        className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 space-y-3 overflow-hidden"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {selectCell && (
+                            <div className="flex-shrink-0">
+                              {flexRender(
+                                selectCell.column.columnDef.cell,
+                                selectCell.getContext(),
+                              )}
+                            </div>
+                          )}
+                          <div
+                            className={`flex items-center gap-2 flex-1 min-w-0 ${hasViewMemberProfiles ? "cursor-pointer" : "cursor-default"}`}
+                            onClick={() => {
+                              if (hasViewMemberProfiles) {
+                                router.push(
+                                  `/workspace/${router.query.id}/profile/${user.info.userId}`,
+                                );
+                              }
+                            }}
+                          >
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getRandomBg(
+                                user.info.userId.toString(),
+                              )}`}
+                            >
+                              <img
+                                src={user.info.picture!}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                                style={{ background: "transparent" }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-zinc-900 dark:text-white truncate">
+                                {user.info.username}
+                              </p>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                {user.rankName || "Guest"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                          {columnVisibility.minutes && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Minutes
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.minutes}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.lastPeriodMinutes && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Last Period
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.lastPeriodMinutes !== null
+                                  ? user.lastPeriodMinutes
+                                  : "-"}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.idleMinutes && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Idle
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.idleMinutes}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.book && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Warnings
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {warnings}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.hostedSessions && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Hosted
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {hostedLen}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.sessionsAttended && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Attended
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.sessionsAttended}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.lastPeriodSessionsHosted && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Last Period Hosted
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.lastPeriodSessionsHosted !== null
+                                  ? user.lastPeriodSessionsHosted
+                                  : "-"}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.lastPeriodSessionsAttended && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Last Period Attended
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.lastPeriodSessionsAttended !== null
+                                  ? user.lastPeriodSessionsAttended
+                                  : "-"}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.allianceVisits && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Alliance Visits
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.allianceVisits}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.inactivityNotices && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Notices
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.inactivityNotices.length}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.messages && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Messages
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.messages}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.registered && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Registered
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.registered ? "✅" : "❌"}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.quota && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Quota
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {user.quota ? "✅" : "❌"}
+                              </p>
+                            </div>
+                          )}
+                          {columnVisibility.departments && (
+                            <div>
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Department
+                              </p>
+                              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                                {Array.isArray(user.departments) &&
+                                user.departments.length > 0
+                                  ? user.departments.join(", ")
+                                  : "—"}
+                              </p>
+                            </div>
                           )}
                         </div>
-                      )}
-                      <div
-                        className={`flex items-center gap-2 flex-1 min-w-0 ${hasViewMemberProfiles ? 'cursor-pointer' : 'cursor-default'}`}
-                        onClick={() => {
-                          if (hasViewMemberProfiles) {
-                            router.push(
-                              `/workspace/${router.query.id}/profile/${user.info.userId}`
-                            );
-                          }
-                        }}
-                      >
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getRandomBg(
-                            user.info.userId.toString()
-                          )}`}
-                        >
-                          <img
-                            src={user.info.picture!}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-white"
-                            style={{ background: "transparent" }}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-zinc-900 dark:text-white truncate">
-                            {user.info.username}
-                          </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {user.rankName || "Guest"}
-                          </p>
-                        </div>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                      {columnVisibility.minutes && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Minutes</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.minutes}</p>
-                        </div>
-                      )}
-                      {columnVisibility.lastPeriodMinutes && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Last Period</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.lastPeriodMinutes !== null ? user.lastPeriodMinutes : "-"}</p>
-                        </div>
-                      )}
-                      {columnVisibility.idleMinutes && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Idle</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.idleMinutes}</p>
-                        </div>
-                      )}
-                      {columnVisibility.book && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Warnings</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{warnings}</p>
-                        </div>
-                      )}
-                      {columnVisibility.hostedSessions && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Hosted</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{hostedLen}</p>
-                        </div>
-                      )}
-                      {columnVisibility.sessionsAttended && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Attended</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.sessionsAttended}</p>
-                        </div>
-                      )}
-                      {columnVisibility.lastPeriodSessionsHosted && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Last Period Hosted</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.lastPeriodSessionsHosted !== null ? user.lastPeriodSessionsHosted : "-"}</p>
-                        </div>
-                      )}
-                      {columnVisibility.lastPeriodSessionsAttended && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Last Period Attended</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.lastPeriodSessionsAttended !== null ? user.lastPeriodSessionsAttended : "-"}</p>
-                        </div>
-                      )}
-                      {columnVisibility.allianceVisits && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Alliance Visits</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.allianceVisits}</p>
-                        </div>
-                      )}
-                      {columnVisibility.inactivityNotices && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Notices</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.inactivityNotices.length}</p>
-                        </div>
-                      )}
-                      {columnVisibility.messages && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Messages</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.messages}</p>
-                        </div>
-                      )}
-                      {columnVisibility.registered && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Registered</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.registered ? "✅" : "❌"}</p>
-                        </div>
-                      )}
-                      {columnVisibility.quota && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Quota</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">{user.quota ? "✅" : "❌"}</p>
-                        </div>
-                      )}
-                      {columnVisibility.departments && (
-                        <div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Department</p>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                            {Array.isArray(user.departments) && user.departments.length > 0
-                              ? user.departments.join(", ")
-                              : "—"}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className={`${viewLayout === 'card' ? 'block' : 'hidden md:hidden'} bg-white dark:bg-zinc-800 md:dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg md:rounded-none p-3 md:px-4 md:py-3 md:border-0 md:border-t mt-4 md:mt-0`}>
-              <div className="flex items-center justify-between md:justify-center gap-3 md:gap-2">
-                  <button
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                    className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
-                  >
-                    Previous
-                  </button>
-                  <div className="flex md:inline-flex items-center px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-400 md:text-zinc-700 md:dark:text-zinc-300 whitespace-nowrap md:bg-zinc-100 md:dark:bg-zinc-700/50 md:border md:border-zinc-300 md:dark:border-zinc-600 md:rounded-lg">
-                    <span className="md:hidden text-zinc-900 dark:text-white font-semibold">{table.getState().pagination.pageIndex + 1}</span>
-                    <span className="md:hidden mx-1">/</span>
-                    <span className="md:hidden">{table.getPageCount()}</span>
-                    <span className="hidden md:inline">Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
-                  </div>
-                  <button
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                    className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
-                  >
-                    Next
-                  </button>
+                    );
+                  })}
                 </div>
-              </div>
 
-            <div className={`hidden ${viewLayout === 'list' ? 'md:block' : 'md:hidden'} bg-white dark:bg-zinc-800/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/50 rounded-lg overflow-hidden`}>
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto md:table-fixed divide-y divide-zinc-200 dark:divide-zinc-700">
-                  <thead className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700">
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <th
-                            key={header.id}
-                            scope="col"
-                            aria-sort={
-                              header.column.getIsSorted?.() === "asc"
-                                ? "ascending"
-                                : header.column.getIsSorted?.() === "desc"
-                                ? "descending"
-                                : "none"
-                            }
-                            className={
-                              `px-4 py-3 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-300 uppercase tracking-widest cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors` +
-                              (header.column.id === "info"
-                                ? " md:w-1/4 min-w-[90px]"
-                                : header.column.id === "select"
-                                ? " w-12 text-center px-2"
-                                : "")
-                            }
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {header.isPlaceholder ? null : (
-                              <div className="flex items-center space-x-2 text-zinc-900 dark:text-zinc-300">
-                                <span>
-                                  {flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                                </span>
-                                <span className="text-zinc-500 dark:text-zinc-400">
-                                  {header.column.getIsSorted?.() === "asc" ? (
-                                    <IconArrowUp className="w-3 h-3" />
-                                  ) : header.column.getIsSorted?.() ===
-                                    "desc" ? (
-                                    <IconArrowDown className="w-3 h-3" />
-                                  ) : null}
-                                </span>
-                              </div>
-                            )}
-                          </th>
+                <div
+                  className={`${viewLayout === "card" ? "block" : "hidden md:hidden"} bg-white dark:bg-zinc-800 md:dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg md:rounded-none p-3 md:px-4 md:py-3 md:border-0 md:border-t mt-4 md:mt-0`}
+                >
+                  <div className="flex items-center justify-between md:justify-center gap-3 md:gap-2">
+                    <button
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                      className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
+                    >
+                      Previous
+                    </button>
+                    <div className="flex md:inline-flex items-center px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium text-zinc-600 dark:text-zinc-400 md:text-zinc-700 md:dark:text-zinc-300 whitespace-nowrap md:bg-zinc-100 md:dark:bg-zinc-700/50 md:border md:border-zinc-300 md:dark:border-zinc-600 md:rounded-lg">
+                      <span className="md:hidden text-zinc-900 dark:text-white font-semibold">
+                        {table.getState().pagination.pageIndex + 1}
+                      </span>
+                      <span className="md:hidden mx-1">/</span>
+                      <span className="md:hidden">{table.getPageCount()}</span>
+                      <span className="hidden md:inline">
+                        Page {table.getState().pagination.pageIndex + 1} of{" "}
+                        {table.getPageCount()}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                      className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  className={`hidden ${viewLayout === "list" ? "md:block" : "md:hidden"} bg-white dark:bg-zinc-800/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/50 rounded-lg overflow-hidden`}
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full table-auto md:table-fixed divide-y divide-zinc-200 dark:divide-zinc-700">
+                      <thead className="bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700">
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <tr key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                              <th
+                                key={header.id}
+                                scope="col"
+                                aria-sort={
+                                  header.column.getIsSorted?.() === "asc"
+                                    ? "ascending"
+                                    : header.column.getIsSorted?.() === "desc"
+                                      ? "descending"
+                                      : "none"
+                                }
+                                className={
+                                  `px-4 py-3 text-left text-xs font-semibold text-zinc-900 dark:text-zinc-300 uppercase tracking-widest cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors` +
+                                  (header.column.id === "info"
+                                    ? " md:w-1/4 min-w-[90px]"
+                                    : header.column.id === "select"
+                                      ? " w-12 text-center px-2"
+                                      : "")
+                                }
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {header.isPlaceholder ? null : (
+                                  <div className="flex items-center space-x-2 text-zinc-900 dark:text-zinc-300">
+                                    <span>
+                                      {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext(),
+                                      )}
+                                    </span>
+                                    <span className="text-zinc-500 dark:text-zinc-400">
+                                      {header.column.getIsSorted?.() ===
+                                      "asc" ? (
+                                        <IconArrowUp className="w-3 h-3" />
+                                      ) : header.column.getIsSorted?.() ===
+                                        "desc" ? (
+                                        <IconArrowDown className="w-3 h-3" />
+                                      ) : null}
+                                    </span>
+                                  </div>
+                                )}
+                              </th>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody className="bg-white dark:bg-zinc-900/20 divide-y divide-zinc-200 dark:divide-zinc-700">
-                    {table.getRowModel().rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className="hover:bg-zinc-100 dark:hover:bg-zinc-700/30 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0"
+                      </thead>
+                      <tbody className="bg-white dark:bg-zinc-900/20 divide-y divide-zinc-200 dark:divide-zinc-700">
+                        {table.getRowModel().rows.map((row) => (
+                          <tr
+                            key={row.id}
+                            className="hover:bg-zinc-100 dark:hover:bg-zinc-700/30 transition-colors border-b border-zinc-200 dark:border-zinc-700 last:border-b-0"
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <td
+                                key={cell.id}
+                                className={
+                                  cell.column.id === "info"
+                                    ? "pl-1 pr-2 py-3 text-sm text-zinc-700 dark:text-zinc-300 overflow-hidden"
+                                    : cell.column.id === "select"
+                                      ? "px-2 py-3 text-sm text-zinc-700 dark:text-zinc-300 overflow-hidden text-center"
+                                      : "px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 overflow-hidden"
+                                }
+                                style={
+                                  cell.column.id === "info"
+                                    ? {
+                                        minWidth: 90,
+                                        maxWidth: "30%",
+                                        minHeight: 44,
+                                      }
+                                    : cell.column.id === "select"
+                                      ? { width: 48 }
+                                      : { maxWidth: 0 }
+                                }
+                              >
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="bg-white dark:bg-zinc-800/50 px-4 py-3 flex items-center justify-center border-t border-zinc-200 dark:border-zinc-700">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700/30 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:disabled:text-zinc-500 transition-all"
                       >
-                        {row.getVisibleCells().map((cell) => (
-                          <td
-                            key={cell.id}
-                            className={
-                              cell.column.id === "info"
-                                ? "pl-1 pr-2 py-3 text-sm text-zinc-700 dark:text-zinc-300 overflow-hidden"
-                                : cell.column.id === "select"
-                                ? "px-2 py-3 text-sm text-zinc-700 dark:text-zinc-300 overflow-hidden text-center"
-                                : "px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 overflow-hidden"
-                            }
-                            style={
-                              cell.column.id === "info"
-                                ? {
-                                    minWidth: 90,
-                                    maxWidth: "30%",
-                                    minHeight: 44,
-                                  }
-                                : cell.column.id === "select"
-                                ? { width: 48 }
-                                : { maxWidth: 0 }
-                            }
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="bg-white dark:bg-zinc-800/50 px-4 py-3 flex items-center justify-center border-t border-zinc-200 dark:border-zinc-700">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700/30 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:disabled:text-zinc-500 transition-all"
-                  >
-                    Previous
-                  </button>
-                  <span className="inline-flex items-center px-4 py-2 bg-zinc-100 dark:bg-zinc-700/50 border border-zinc-300 dark:border-zinc-600 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    Page {table.getState().pagination.pageIndex + 1} of{" "}
-                    {table.getPageCount()}
-                  </span>
-                  <button
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700/30 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:disabled:text-zinc-500 transition-all"
-                  >
-                    Next
-                  </button>
+                        Previous
+                      </button>
+                      <span className="inline-flex items-center px-4 py-2 bg-zinc-100 dark:bg-zinc-700/50 border border-zinc-300 dark:border-zinc-600 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Page {table.getState().pagination.pageIndex + 1} of{" "}
+                        {table.getPageCount()}
+                      </span>
+                      <button
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700/30 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:disabled:text-zinc-500 transition-all"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            </>
+              </>
             )}
           </div>
         </div>
@@ -2029,87 +2173,115 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                       </div>
                     </FormProvider>
 
-                    {bloxlinkEnabled && discordEnabled && (type === "warning" || type === "promotion" || type === "demotion" || type === "termination" || type === "fire") && (
-                      <div className="mt-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-3 rounded-lg">
-                        <div className="flex items-start space-x-3">
-                          <input
-                            id="notify-discord-mass"
-                            type="checkbox"
-                            checked={notifyDiscord}
-                            onChange={(e) => setNotifyDiscord(e.target.checked)}
-                            className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                          />
-                          <label htmlFor="notify-discord-mass" className="text-sm">
-                            <div className="font-medium text-blue-800 dark:text-blue-200">
-                              Notify users via Discord DM
-                            </div>
-                            <div className="text-xs text-blue-700 dark:text-blue-300">
-                              Send Discord direct messages to all affected users (requires linked Bloxlink accounts)
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-                    {bloxlinkEnabled && (type === "termination" || type === "fire") && notifyDiscord && (
-                      <div className="mt-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-3">
-                          Discord Server Actions
-                        </h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              id="kick-discord-mass"
-                              type="checkbox"
-                              checked={kickFromDiscord}
-                              onChange={(e) => {
-                                setKickFromDiscord(e.target.checked);
-                                if (e.target.checked) setBanFromDiscord(false);
-                              }}
-                              className="w-4 h-4 text-red-600 bg-white border-red-300 rounded focus:ring-red-500 focus:ring-2"
-                            />
-                            <label htmlFor="kick-discord-mass" className="text-sm text-red-700 dark:text-red-300 cursor-pointer">
-                              Kick from Discord server
-                            </label>
-                          </div>
+                    {bloxlinkEnabled &&
+                      discordEnabled &&
+                      (type === "warning" ||
+                        type === "promotion" ||
+                        type === "demotion" ||
+                        type === "termination" ||
+                        type === "fire") && (
+                        <div className="mt-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-3 rounded-lg">
                           <div className="flex items-start space-x-3">
                             <input
-                              id="ban-discord-mass"
+                              id="notify-discord-mass"
                               type="checkbox"
-                              checked={banFromDiscord}
-                              onChange={(e) => {
-                                setBanFromDiscord(e.target.checked);
-                                if (e.target.checked) setKickFromDiscord(false);
-                              }}
-                              className="mt-1 w-4 h-4 text-red-600 bg-white border-red-300 rounded focus:ring-red-500 focus:ring-2"
+                              checked={notifyDiscord}
+                              onChange={(e) =>
+                                setNotifyDiscord(e.target.checked)
+                              }
+                              className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                             />
-                            <div className="flex-1">
-                              <label htmlFor="ban-discord-mass" className="text-sm text-red-700 dark:text-red-300 cursor-pointer">
-                                Ban from Discord server
+                            <label
+                              htmlFor="notify-discord-mass"
+                              className="text-sm"
+                            >
+                              <div className="font-medium text-blue-800 dark:text-blue-200">
+                                Notify users via Discord DM
+                              </div>
+                              <div className="text-xs text-blue-700 dark:text-blue-300">
+                                Send Discord direct messages to all affected
+                                users (requires linked Bloxlink accounts)
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
+                    {bloxlinkEnabled &&
+                      (type === "termination" || type === "fire") &&
+                      notifyDiscord && (
+                        <div className="mt-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 p-4 rounded-lg">
+                          <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-3">
+                            Discord Server Actions
+                          </h4>
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-3">
+                              <input
+                                id="kick-discord-mass"
+                                type="checkbox"
+                                checked={kickFromDiscord}
+                                onChange={(e) => {
+                                  setKickFromDiscord(e.target.checked);
+                                  if (e.target.checked)
+                                    setBanFromDiscord(false);
+                                }}
+                                className="w-4 h-4 text-red-600 bg-white border-red-300 rounded focus:ring-red-500 focus:ring-2"
+                              />
+                              <label
+                                htmlFor="kick-discord-mass"
+                                className="text-sm text-red-700 dark:text-red-300 cursor-pointer"
+                              >
+                                Kick from Discord server
                               </label>
-                              {banFromDiscord && (
-                                <div className="mt-2">
-                                  <label className="block text-xs text-red-600 dark:text-red-400 mb-1">
-                                    Delete message history:
-                                  </label>
-                                  <select
-                                    value={banDeleteDays}
-                                    onChange={(e) => setBanDeleteDays(parseInt(e.target.value))}
-                                    className="text-xs px-2 py-1 border border-red-200 dark:border-red-600 rounded bg-white dark:bg-zinc-800 text-red-700 dark:text-red-300"
-                                  >
-                                    <option value={0}>Don't delete messages</option>
-                                    <option value={1}>1 day</option>
-                                    <option value={2}>2 days</option>
-                                    <option value={3}>3 days</option>
-                                    <option value={7}>7 days</option>
-                                  </select>
-                                </div>
-                              )}
+                            </div>
+                            <div className="flex items-start space-x-3">
+                              <input
+                                id="ban-discord-mass"
+                                type="checkbox"
+                                checked={banFromDiscord}
+                                onChange={(e) => {
+                                  setBanFromDiscord(e.target.checked);
+                                  if (e.target.checked)
+                                    setKickFromDiscord(false);
+                                }}
+                                className="mt-1 w-4 h-4 text-red-600 bg-white border-red-300 rounded focus:ring-red-500 focus:ring-2"
+                              />
+                              <div className="flex-1">
+                                <label
+                                  htmlFor="ban-discord-mass"
+                                  className="text-sm text-red-700 dark:text-red-300 cursor-pointer"
+                                >
+                                  Ban from Discord server
+                                </label>
+                                {banFromDiscord && (
+                                  <div className="mt-2">
+                                    <label className="block text-xs text-red-600 dark:text-red-400 mb-1">
+                                      Delete message history:
+                                    </label>
+                                    <select
+                                      value={banDeleteDays}
+                                      onChange={(e) =>
+                                        setBanDeleteDays(
+                                          parseInt(e.target.value),
+                                        )
+                                      }
+                                      className="text-xs px-2 py-1 border border-red-200 dark:border-red-600 rounded bg-white dark:bg-zinc-800 text-red-700 dark:text-red-300"
+                                    >
+                                      <option value={0}>
+                                        Don't delete messages
+                                      </option>
+                                      <option value={1}>1 day</option>
+                                      <option value={2}>2 days</option>
+                                      <option value={3}>3 days</option>
+                                      <option value={7}>7 days</option>
+                                    </select>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     <div className="mt-5 flex justify-end gap-2">
                       <button
@@ -2186,33 +2358,41 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                           <div className="flex gap-2">
                             <button
                               type="button"
-                              onClick={() => setSaveType('team')}
+                              onClick={() => setSaveType("team")}
                               className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
-                                saveType === 'team'
-                                  ? 'bg-[color:rgb(var(--group-theme))] text-white border-transparent'
-                                  : 'bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                                saveType === "team"
+                                  ? "bg-[color:rgb(var(--group-theme))] text-white border-transparent"
+                                  : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                               }`}
                             >
                               <div className="flex items-center justify-center gap-2">
                                 <IconUsers className="w-4 h-4" />
                                 Team
                               </div>
-                              <p className={`text-xs mt-1 ${saveType === 'team' ? 'text-white/70' : 'text-zinc-500 dark:text-zinc-400'}`}>Visible to everyone</p>
+                              <p
+                                className={`text-xs mt-1 ${saveType === "team" ? "text-white/70" : "text-zinc-500 dark:text-zinc-400"}`}
+                              >
+                                Visible to everyone
+                              </p>
                             </button>
                             <button
                               type="button"
-                              onClick={() => setSaveType('local')}
+                              onClick={() => setSaveType("local")}
                               className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
-                                saveType === 'local'
-                                  ? 'bg-[color:rgb(var(--group-theme))] text-white border-transparent'
-                                  : 'bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700'
+                                saveType === "local"
+                                  ? "bg-[color:rgb(var(--group-theme))] text-white border-transparent"
+                                  : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                               }`}
                             >
                               <div className="flex items-center justify-center gap-2">
                                 <IconLock className="w-4 h-4" />
                                 Local
                               </div>
-                              <p className={`text-xs mt-1 ${saveType === 'local' ? 'text-white/70' : 'text-zinc-500 dark:text-zinc-400'}`}>Only visible to you</p>
+                              <p
+                                className={`text-xs mt-1 ${saveType === "local" ? "text-white/70" : "text-zinc-500 dark:text-zinc-400"}`}
+                              >
+                                Only visible to you
+                              </p>
                             </button>
                           </div>
                         </div>
@@ -2221,7 +2401,9 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                           <div className="flex items-center gap-2">
                             <IconLock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             <p className="text-sm text-blue-800 dark:text-blue-300">
-                              Creating a <span className="font-semibold">local view</span> (only visible to you)
+                              Creating a{" "}
+                              <span className="font-semibold">local view</span>{" "}
+                              (only visible to you)
                             </p>
                           </div>
                         </div>
@@ -2340,8 +2522,11 @@ const Views: pageWithLayout<pageProps> = ({ isAdmin, hasManageViewsPerm, hasCrea
                 Confirm Deletion
               </h2>
               <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                Are you sure you want to delete this view?</p>
-              <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-6">This action cannot be undone.</p>
+                Are you sure you want to delete this view?
+              </p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-6">
+                This action cannot be undone.
+              </p>
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => {
@@ -2416,7 +2601,8 @@ const Filter: React.FC<{
     updateFilterRef.current = updateFilter;
   }, [updateFilter]);
 
-  const validCol = data.column && filters[data.column] ? data.column : "username";
+  const validCol =
+    data.column && filters[data.column] ? data.column : "username";
 
   const methods = useForm<{
     col: string;
@@ -2437,7 +2623,7 @@ const Filter: React.FC<{
       updateFilterRef.current(
         methods.getValues().col,
         methods.getValues().op,
-        methods.getValues().value
+        methods.getValues().value,
       );
     });
     return () => subscription.unsubscribe();
@@ -2477,22 +2663,28 @@ const Filter: React.FC<{
             {...register("op")}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
           >
-            {(filters[methods.getValues().col] || filters["username"]).map((filter) => (
-              <option value={filter} key={filter}>
-                {filterNames[filter]}
-              </option>
-            ))}
+            {(filters[methods.getValues().col] || filters["username"]).map(
+              (filter) => (
+                <option value={filter} key={filter}>
+                  {filterNames[filter]}
+                </option>
+              ),
+            )}
           </select>
         </div>
 
-        {getValues("col") !== "rank" && getValues("col") !== "registered" && getValues("col") !== "quota" && getValues("col") !== "quotaFailed" && getValues("col") !== "department" && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-white">
-              Value
-            </label>
-            <Input {...register("value")} />
-          </div>
-        )}
+        {getValues("col") !== "rank" &&
+          getValues("col") !== "registered" &&
+          getValues("col") !== "quota" &&
+          getValues("col") !== "quotaFailed" &&
+          getValues("col") !== "department" && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-white">
+                Value
+              </label>
+              <Input {...register("value")} />
+            </div>
+          )}
 
         {getValues("col") === "rank" && (
           <div className="space-y-2">
