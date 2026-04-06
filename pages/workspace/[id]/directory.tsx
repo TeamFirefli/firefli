@@ -415,15 +415,6 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                           {user.rankName || "Guest"}
                         </p>
-                        <div className="mt-1 flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                          <IconBuilding className="w-3.5 h-3.5" />
-                          <span className="truncate">
-                            {Array.isArray(user.departments) &&
-                            user.departments.length > 0
-                              ? user.departments.join(", ")
-                              : ""}
-                          </span>
-                        </div>
                       </div>
                     </button>
                   ))}
