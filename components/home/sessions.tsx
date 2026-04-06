@@ -112,10 +112,10 @@ const Sessions: React.FC = () => {
             <IconSpeakerphone className="w-8 h-8 text-primary" />
           </div>
           <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
-            No sessions today
+            No sessions
           </p>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-            There are no sessions scheduled for today
+            There are no sessions claimed for today
           </p>
           <button
             onClick={goToSessions}
