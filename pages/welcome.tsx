@@ -275,6 +275,12 @@ const Login: NextPage = () => {
 				toast.error('Username not found');
 			} else if (e?.response?.status === 403 || e?.response?.status === 409) {
 				toast.error(e.response.data.error || 'Workspace already exists');
+				if (e?.response?.status === 409) {
+					methods.setError("groupid", {
+						type: "custom",
+						message: e.response.data.error || 'This workspace already exists',
+					});
+				}
 			} else if (e?.response?.status === 400 && e?.response?.data?.error?.includes('rank')) {
 				methods.setError("groupid", { 
 					type: "custom", 
