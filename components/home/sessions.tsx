@@ -7,7 +7,6 @@ import Button from "@/components/button";
 import type { Session, user } from "@/utils/database";
 import { useRouter } from "next/router";
 import { IconChevronRight, IconSpeakerphone } from "@tabler/icons-react";
-import { getThumbnail } from "@/utils/userinfoEngine";
 import { useSessionColors } from "@/hooks/useSessionColors";
 
 const BG_COLORS = [
@@ -142,7 +141,7 @@ const Sessions: React.FC = () => {
                     )}`}
                   >
                     <img
-                      src={session.owner?.picture ?? "/default-avatar.jpg"}
+                      src={session.owner?.picture || `/api/workspace/[id]/avatar/${session.owner?.userid}`}
                       alt={`${session.owner?.username || "User"}'s avatar`}
                       className="rounded-lg h-10 w-10 object-cover border-2 border-white dark:border-zinc-800"
                       onError={(e) => {
@@ -212,7 +211,7 @@ const Sessions: React.FC = () => {
                     )}`}
                   >
                     <img
-                      src={nextSession.owner?.picture ?? "/default-avatar.jpg"}
+                      src={nextSession.owner?.picture || `/api/workspace/[id]/avatar/${nextSession.owner?.userid}`}
                       alt={`${nextSession.owner?.username || "User"}'s avatar`}
                       className="rounded-lg h-10 w-10 object-cover border-2 border-white dark:border-zinc-800"
                       onError={(e) => {
