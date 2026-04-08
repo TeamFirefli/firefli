@@ -1136,7 +1136,7 @@ const Profile: pageWithLayout<pageProps> = ({
         <Toaster position="bottom-center" />
         <div>
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 sm:p-6 shadow-sm mb-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="relative flex-shrink-0">
                 <div
                   className={`rounded-xl h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center ${getRandomBg(
@@ -1154,7 +1154,7 @@ const Profile: pageWithLayout<pageProps> = ({
                   <IconUserCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 </div>
               </div>
-              <div className="flex-1 w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex-1 w-full flex flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h1 className="text-xl sm:text-2xl font-medium text-zinc-900 dark:text-white truncate">
@@ -1221,7 +1221,7 @@ const Profile: pageWithLayout<pageProps> = ({
                     </p>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 flex-shrink-0">
                   {workspaceMember &&
                     workspaceMember.timezone &&
                     (() => {
@@ -1284,7 +1284,7 @@ const Profile: pageWithLayout<pageProps> = ({
                   }
                 >
                   <IconClipboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Details
+                  <span className="hidden sm:inline">Details</span>
                 </Tab>
                 <Tab
                   className={({ selected }) =>
@@ -1296,7 +1296,7 @@ const Profile: pageWithLayout<pageProps> = ({
                   }
                 >
                   <IconHistory className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Activity
+                  <span className="hidden sm:inline">Activity</span>
                 </Tab>
                 {logbookEnabled && (
                   <Tab
@@ -1309,7 +1309,7 @@ const Profile: pageWithLayout<pageProps> = ({
                     }
                   >
                     <IconBook className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    Logbook
+                    <span className="hidden sm:inline">Logbook</span>
                   </Tab>
                 )}
                 <Tab
@@ -1322,7 +1322,7 @@ const Profile: pageWithLayout<pageProps> = ({
                   }
                 >
                   <IconCalendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Notices
+                  <span className="hidden sm:inline">Notices</span>
                 </Tab>
               </Tab.List>
               <Tab.Panels className="p-3 sm:p-4 bg-white dark:bg-zinc-800 rounded-b-xl">
