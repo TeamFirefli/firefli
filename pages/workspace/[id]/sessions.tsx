@@ -847,10 +847,8 @@ const Home: pageWithLayout<pageProps> = (props) => {
         </div>
 
         <div className="mb-6">
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex-1 flex flex-col items-center">
-              <div className="flex items-center justify-center gap-3">
-                <div className="w-full max-w-4xl mx-auto flex items-center gap-3">
+          <div className="flex items-center">
+            <div className="w-full sm:max-w-lg sm:mx-auto flex items-center gap-3">
                   <button
                     onClick={() => {
                       const previousWeek = new Date(currentWeek);
@@ -864,7 +862,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
                   </button>
 
                   <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-center gap-2 py-1 px-2">
+                    <div className="grid grid-cols-7 items-center gap-1 sm:gap-2 py-1 px-2">
                       {weekDates.map((date, index) => {
                         const isToday =
                           date.toDateString() === new Date().toDateString();
@@ -882,7 +880,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
                               d.setHours(0, 0, 0, 0);
                               setShowHistory(d < today);
                             }}
-                            className={`flex flex-col items-center justify-center min-w-[44px] sm:min-w-[56px] py-1.5 sm:py-2 px-2 sm:px-3 rounded-xl transition-all transform hover:scale-105 focus:outline-none border ${
+                            className={`flex flex-col items-center justify-center w-full py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl transition-all transform hover:scale-105 focus:outline-none border ${
                               isSelected
                                 ? "bg-primary text-white border-primary shadow-lg"
                                 : isToday
@@ -919,10 +917,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
                   >
                     <IconChevronRight className="w-4 h-4" />
                   </button>
-                </div>
-              </div>
             </div>
-            <div className="flex-shrink-0" />
           </div>
         </div>
 
