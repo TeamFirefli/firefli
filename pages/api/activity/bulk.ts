@@ -117,11 +117,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
               const universeInfo: any = await noblox.getUniverseInfo(Number(placeid));
               if (universeInfo?.[0]?.name) {
                 gameName = universeInfo[0].name;
-              }
+              };
             } catch {
-              // ignroe
-            }
-          }
+              // ignore
+            };
+          };
 
           const sessionStartTime = new Date();
           const sessionMessage = generateSessionTimeMessage(gameName, sessionStartTime);
