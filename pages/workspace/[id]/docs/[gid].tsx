@@ -279,7 +279,7 @@ const Settings: pageWithLayout<Props> = ({ document, canEdit, canDelete }) => {
   return (
     <div className="pagePadding">
       <Toaster position="bottom-center" />
-      <div className="max-w-4xl">
+      <div className="w-full">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
             <button
@@ -317,7 +317,7 @@ const Settings: pageWithLayout<Props> = ({ document, canEdit, canDelete }) => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-8">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-4 sm:p-6 md:p-8">
           <div className="prose dark:prose-invert max-w-none">
             {output.type === "html" && (
               <div
