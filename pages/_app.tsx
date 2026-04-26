@@ -2,6 +2,7 @@
 
 import type React from "react";
 
+import "@/styles/tailwind.css";
 import "@/styles/globals.scss";
 import "@/styles/grid-layout.css";
 import "react-grid-layout/css/styles.css";
