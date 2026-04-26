@@ -603,7 +603,7 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -1281,14 +1281,24 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                 >
                   Back
                 </Button>
-                <Button
-                  onPress={form.handleSubmit(createSession)}
-                  disabled={isSubmitting || !isFormValid()}
-                  classoverride={`flex items-center gap-1 ${isFormValid() ? "bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90" : "bg-zinc-300 text-zinc-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-400"}`}
-                >
-                  <IconDeviceFloppy size={16} />{" "}
-                  {isSubmitting ? "Creating..." : "Create Session"}
-                </Button>
+                <div className="md:hidden">
+                  <Button
+                    onPress={() => setActiveTab("roles")}
+                    classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90"
+                  >
+                    Next
+                  </Button>
+                </div>
+                <div className="hidden md:block">
+                  <Button
+                    onPress={form.handleSubmit(createSession)}
+                    disabled={isSubmitting || !isFormValid()}
+                    classoverride={`flex items-center gap-1 ${isFormValid() ? "bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90" : "bg-zinc-300 text-zinc-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-400"}`}
+                  >
+                    <IconDeviceFloppy size={16} />{" "}
+                    {isSubmitting ? "Creating..." : "Create Session"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -1395,6 +1405,23 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-8 flex justify-between w-full">
+                <Button
+                  onPress={() => setActiveTab("statuses")}
+                  classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
+                >
+                  Back
+                </Button>
+                <Button
+                  onPress={form.handleSubmit(createSession)}
+                  disabled={isSubmitting || !isFormValid()}
+                  classoverride={`flex items-center gap-1 ${isFormValid() ? "bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90" : "bg-zinc-300 text-zinc-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-400"}`}
+                >
+                  <IconDeviceFloppy size={16} />{" "}
+                  {isSubmitting ? "Creating..." : "Create Session"}
+                </Button>
               </div>
             </div>
           )}

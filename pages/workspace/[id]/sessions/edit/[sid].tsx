@@ -543,7 +543,7 @@ const EditSession: pageWithLayout<
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -580,7 +580,7 @@ const EditSession: pageWithLayout<
                     <Input {...form.register("gameId")} label="Game ID" placeholder="Optional game ID" />
                   </div>
                   <div className="mt-8 flex justify-end">
-                    <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Continue to Scheduling</Button>
+                    <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Next</Button>
                   </div>
                 </div>
                 <div className="hidden md:block w-64 flex-shrink-0">
@@ -741,7 +741,7 @@ const EditSession: pageWithLayout<
 
               <div className="mt-8 flex justify-between w-full">
                 <Button onPress={() => setActiveTab("basic")} classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600">Back</Button>
-                <Button onPress={() => setActiveTab("statuses")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Continue to Statuses</Button>
+                <Button onPress={() => setActiveTab("statuses")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Next</Button>
               </div>
             </div>
           )}
@@ -784,7 +784,12 @@ const EditSession: pageWithLayout<
 
               <div className="mt-8 flex justify-between w-full">
                 <Button onPress={() => setActiveTab("scheduling")} classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600">Back</Button>
-                <Button onPress={form.handleSubmit(handleSaveClick)} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">{isSubmitting ? "Saving..." : "Save Changes"}</Button>
+                <div className="md:hidden">
+                  <Button onPress={() => setActiveTab("roles")} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">Next</Button>
+                </div>
+                <div className="hidden md:block">
+                  <Button onPress={form.handleSubmit(handleSaveClick)} classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90">{isSubmitting ? "Saving..." : "Save Changes"}</Button>
+                </div>
               </div>
             </div>
           )}
@@ -891,6 +896,23 @@ const EditSession: pageWithLayout<
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-8 flex justify-between w-full">
+                <Button
+                  onPress={() => setActiveTab("statuses")}
+                  classoverride="bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
+                >
+                  Back
+                </Button>
+                <Button
+                  onPress={form.handleSubmit(handleSaveClick)}
+                  disabled={isSubmitting}
+                  classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90 flex items-center gap-1"
+                >
+                  <IconDeviceFloppy size={16} />{" "}
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
             </div>
           )}
