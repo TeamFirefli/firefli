@@ -110,7 +110,23 @@ export async function handler(
 				console.warn(`[Add User] Open Cloud API returned status ${ocRes.status} for user ${userIdNum}`);
 			}
 		} else {
-			console.warn(`[Add User] No Open Cloud API key configured for group ${workspaceGroupId}, user ${userIdNum} will have role 0 (Guest)`);
+			try {
+				const v2Res = await fetch(`https://groups.roblox.com/v2/users/${userIdNum}/groups/roles`);
+				if (v2Res.ok) {
+					const v2Data = await v2Res.json();
+					const membership = v2Data.data?.find((g: any) => g.group?.id === workspaceGroupId);
+					if (membership?.role?.id) {
+						robloxRoleId = membership.role.id;
+						console.log(`[Add User] Roblox v2 API: fetched role ID ${robloxRoleId} for user ${userIdNum} in group ${workspaceGroupId}`);
+					} else {
+						console.log(`[Add User] User ${userIdNum} is not in group ${workspaceGroupId}, setting role to 0 (Guest)`);
+					}
+				} else {
+					console.warn(`[Add User] Roblox v2 API returned status ${v2Res.status} for user ${userIdNum}`);
+				}
+			} catch (v2Err) {
+				console.warn(`[Add User] Roblox v2 API fallback failed for user ${userIdNum}:`, v2Err);
+			}
 		}
 	} catch (e) {
 		console.error(`[Add User] Failed to fetch Roblox role for user ${userIdNum}:`, e);
