@@ -43,13 +43,13 @@ export function ActivityTabs(props: Props) {
   return (
     <div>
       <Tab.Group>
-        <Tab.List className="flex p-1 gap-1 bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-200 dark:border-zinc-600 rounded-lg mb-6">
+        <Tab.List className="flex border-b border-zinc-200 dark:border-zinc-700 mb-6 overflow-x-auto scrollbar-hide">
           <Tab
             className={({ selected }) =>
-              `flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors flex-1 justify-center ${
+              `flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap ${
                 selected
-                  ? "bg-white dark:bg-zinc-800 text-[#ff0099] shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-300 hover:bg-white/50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
               }`
             }
           >
@@ -58,10 +58,10 @@ export function ActivityTabs(props: Props) {
           </Tab>
           <Tab
             className={({ selected }) =>
-              `flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors flex-1 justify-center ${
+              `flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap ${
                 selected
-                  ? "bg-white dark:bg-zinc-800 text-[#ff0099] shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-300 hover:bg-white/50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
               }`
             }
           >
@@ -70,10 +70,10 @@ export function ActivityTabs(props: Props) {
           </Tab>
           <Tab
             className={({ selected }) =>
-              `flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors flex-1 justify-center ${
+              `flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap ${
                 selected
-                  ? "bg-white dark:bg-zinc-800 text-[#ff0099] shadow-sm"
-                  : "text-zinc-600 dark:text-zinc-300 hover:bg-white/50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
               }`
             }
           >

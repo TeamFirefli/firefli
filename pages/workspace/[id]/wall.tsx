@@ -575,7 +575,7 @@ const Wall: pageWithLayout<pageProps> = (props) => {
 
         <div className="space-y-6">
           {posts.length < 1 ? (
-            <div className="bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm p-8 text-center">
+            <div className="rounded-xl shadow-sm p-8 text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                 <IconInbox className="w-8 h-8 text-primary" />
               </div>

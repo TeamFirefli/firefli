@@ -1300,7 +1300,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                         )}
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {reps.length} selected, minimum 1 required.
+                      Minimum 1 representative required.
                     </p>
                   </div>
                 ) : (

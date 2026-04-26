@@ -681,7 +681,7 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
               Recommendations
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Recommend members for promotion
+              Suggest staff deserving of a promotion
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -902,17 +902,17 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
         )}
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-6">
-          <div className="flex gap-0.5 sm:gap-1 flex-1 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl p-1">
+          <div className="flex border-b border-zinc-200 dark:border-zinc-700 flex-1 overflow-x-auto scrollbar-hide">
             {STATUS_TABS.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.key}
                   onClick={() => switchTab(tab.key)}
-                  className={`flex items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-2 rounded-lg text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap flex-1 sm:flex-initial ${
+                  className={`flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2.5 text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap border-b-2 -mb-px ${
                     activeTab === tab.key
-                      ? "bg-[color:rgb(var(--group-theme)/0.1)] text-[color:rgb(var(--group-theme))]"
-                      : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                   }`}
                 >
                   <Icon size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
@@ -946,15 +946,15 @@ const Recommendations: pageWithLayout<pageProps> = (props) => {
         )}
 
         {!tabLoading && recommendations.length === 0 && (
-          <div className="text-center py-16">
-            <div className="mx-auto mb-3 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <IconInbox
-                size={32}
-                className="text-primary"
-              />
+          <div className="rounded-lg p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+              <IconInbox size={32} className="text-primary" />
             </div>
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-              No {activeTab} recommendations
+            <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
+              No entries found
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-300">
+              There are no {activeTab} recommendations to display.
             </p>
           </div>
         )}

@@ -253,15 +253,13 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
               Staff Directory
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Grouped by department
+              View your Staff organised by department
             </p>
           </div>
           <div className="hidden md:flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2">
             <IconUsers className="w-4 h-4" />
-            <span>{totalUsers} total staff</span>
-            <span className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
             <label className="inline-flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Members by rank
+              Rank Ordering
               <select
                 value={rankSort}
                 onChange={(e) =>
@@ -286,15 +284,16 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
             </div>
           </div>
         ) : groupedUsers.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-10 text-center">
-            <div className="flex flex-col items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                <IconUsers className="w-8 h-8 text-primary" />
-              </div>
-              <p className="text-zinc-700 dark:text-zinc-300">
-                No staff members found.
-              </p>
+          <div className="rounded-lg p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+              <IconUsers className="w-8 h-8 text-primary" />
             </div>
+            <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
+              No staff found
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-300">
+              No staff members found in the directory.
+            </p>
           </div>
         ) : (
           <div className="space-y-5">
@@ -328,11 +327,14 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
                   {members.map((user) => (
                     <button
                       key={`${departmentName}-${user.info.userId}`}
-                      onClick={() =>
-                        router.push(
-                          `/workspace/${id}/profile/${user.info.userId}`,
-                        )
-                      }
+                      onClick={(e) => {
+                        const href = `/workspace/${id}/profile/${user.info.userId}`;
+                        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                          window.open(href, '_blank');
+                        } else {
+                          router.push(href);
+                        }
+                      }}
                       className="text-left flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700/70 transition-colors"
                     >
                       <div

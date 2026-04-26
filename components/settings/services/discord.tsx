@@ -1333,7 +1333,7 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
               onClick={() => setActiveTab('configuration')}
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
                 activeTab === 'configuration'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
               }`}
             >
@@ -1344,7 +1344,7 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
               onClick={() => setActiveTab('embeds')}
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
                 activeTab === 'embeds'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
               }`}
             >

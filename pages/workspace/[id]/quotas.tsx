@@ -682,13 +682,13 @@ const Quotas: pageWithLayout<pageProps> = ({
           </div>
 
           {(canManageQuotas || (canDeleteQuotas as boolean)) && (
-            <div className="flex p-1 gap-1 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 rounded-lg mb-6">
+            <div className="flex border-b border-zinc-200 dark:border-zinc-700 mb-6">
               <button
                 onClick={() => setActiveTab("my-quotas")}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
                   activeTab === "my-quotas"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 <IconTarget className="w-4 h-4" />
@@ -696,10 +696,10 @@ const Quotas: pageWithLayout<pageProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab("manage-quotas")}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
                   activeTab === "manage-quotas"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 <IconClipboardList className="w-4 h-4" />
@@ -729,7 +729,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                   {myQuotas.map((quota: any) => (
                     <div
                       key={quota.id}
-                      className="bg-white dark:bg-zinc-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-all"
+                      className="bg-white dark:bg-zinc-800 lg:p-6 border border-white/10 rounded-xl p-6 shadow-sm hover:shadow-md transition-all"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -959,7 +959,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                   {allQuotas.map((quota: any) => (
                     <div
                       key={quota.id}
-                      className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4"
+                      className="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-white/10 min-w-0"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">

@@ -58,6 +58,28 @@ a {
 * {
   box-sizing: border-box;
 }
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button:focus:not(:focus-visible),
+[role="tab"]:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+button:focus,
+button:focus-visible,
+[role="tab"]:focus,
+[role="tab"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /*
 @media (prefers-color-scheme: dark) {
   html {
@@ -77,7 +99,6 @@ a {
 	.cardBtn {
 		@apply px-5 py-4 bg-white rounded-md mt-3 w-full outline-1 cursor-pointer outline-gray-300 outline text-left hover:bg-zinc-200 focus-visible:bg-zinc-200 transition;
 	}
-
 	.pagePadding {
 		@apply 2xl:pr-12 lg:pr-10 md:pr-8 sm:pr-6 pr-4 md:pl-6 pl-4 py-8;
 	}

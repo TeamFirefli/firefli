@@ -659,7 +659,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <Toaster position="bottom-center" />
       <div className="pagePadding">
-        <div className="mb-6">
+        <div className="mb-0">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">
               Policies
@@ -670,14 +670,14 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
               ? "Review and acknowledge required policies"
               : "Manage workspace policies and track acknowledgments"}
           </p>
-          <div className="flex p-1 gap-1 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 rounded-lg mt-4">
+          <div className="flex border-b border-zinc-200 dark:border-zinc-700 mt-4">
             <button
               onClick={() => setViewMode("user")}
               className={clsx(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
                 viewMode === "user"
-                  ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                  : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
               <IconUser className="w-4 h-4" />
@@ -687,10 +687,10 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
               <button
                 onClick={() => setViewMode("admin")}
                 className={clsx(
-                  "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                  "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
                   viewMode === "admin"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                 )}
               >
                 <IconSettings className="w-4 h-4" />
@@ -708,15 +708,14 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
         )}
         {viewMode === "admin" && canViewPolicyManagement && (
           <>
-            <div className="flex items-center mb-6">
-              <div className="flex p-1 gap-1 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 rounded-lg">
+            <div className="flex border-b border-zinc-200 dark:border-zinc-700 mb-6 -mt-px w-full">
                 <button
                   onClick={() => setSelectedView("overview")}
                   className={clsx(
-                    "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                    "px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
                     selectedView === "overview"
-                      ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                      : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                   )}
                 >
                   Overview
@@ -725,10 +724,10 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                   <button
                     onClick={() => setSelectedView("compliance")}
                     className={clsx(
-                      "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                      "px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
                       selectedView === "compliance"
-                        ? "bg-primary text-white"
-                        : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                     )}
                   >
                     Compliance
@@ -738,17 +737,16 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                   <button
                     onClick={() => setSelectedView("create")}
                     className={clsx(
-                      "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                      "px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
                       selectedView === "create"
-                        ? "bg-primary text-white"
-                        : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                     )}
                   >
                     Create Policy
                   </button>
                 )}
               </div>
-            </div>
             {selectedView === "overview" && (
               <div>
                 {isLoadingStats ? (
@@ -763,7 +761,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4 shadow-sm">
+                      <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-white/10 min-w-0">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                             <IconFileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -779,7 +777,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
+                      <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-white/10 min-w-0">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                             <IconCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -801,7 +799,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                         </div>
                       </div>
 
-                      <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
+                      <div className="bg-white dark:bg-zinc-800 rounded-xl p-4 lg:p-6 border border-white/10 min-w-0">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
                             <IconClock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -954,7 +952,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                       })}
 
                       {documents.length === 0 && (
-                        <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg shadow-sm p-8 text-center">
+                        <div className="rounded-lg shadow-sm p-8 text-center">
                           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                             <IconShield className="w-8 h-8 text-primary" />
                           </div>
@@ -986,7 +984,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                 {complianceData ? (
                   <div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4">
+                      <div className="rounded-lg p-4">
                         <div className="text-2xl font-bold text-zinc-900 dark:text-white">
                           {complianceData.overallStats.averageComplianceRate}%
                         </div>
@@ -994,7 +992,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                           Average Compliance
                         </div>
                       </div>
-                      <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4">
+                      <div className="rounded-lg p-4">
                         <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                           {complianceData.overallStats.fullyCompliantCount}
                         </div>
@@ -1002,7 +1000,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                           Fully Compliant
                         </div>
                       </div>
-                      <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4">
+                      <div className="rounded-lg p-4">
                         <div className="text-2xl font-bold text-red-600 dark:text-red-400">
                           {complianceData.overallStats.overdueCount}
                         </div>
@@ -1010,7 +1008,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
                           Overdue
                         </div>
                       </div>
-                      <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4">
+                      <div className="rounded-lg p-4">
                         <div className="text-2xl font-bold text-zinc-900 dark:text-white">
                           {complianceData.totalPolicies}
                         </div>
@@ -1199,7 +1197,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
 
                   <div className="mt-6">
                     <div className="flex items-center justify-between relative">
-                      <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-zinc-200 dark:bg-zinc-700 -translate-y-1/2" />
+                      <div className="absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2" />
                       <div
                         className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 transition-all duration-300 ease-out"
                         style={{ width: `${((currentStep - 1) / 4) * 100}%` }}
@@ -1965,7 +1963,7 @@ const PoliciesPage: pageWithLayout<pageProps> = ({
 
                   <div className="mt-6">
                     <div className="flex items-center justify-between relative">
-                      <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-zinc-200 dark:bg-zinc-700 -translate-y-1/2" />
+                      <div className="absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2" />
                       <div
                         className="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 transition-all duration-300 ease-out"
                         style={{ width: `${((currentStep - 1) / 4) * 100}%` }}

@@ -249,47 +249,31 @@ const Allies: pageWithLayout<pageProps> = (props) => {
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="pagePadding">
           <div>
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center justify-between gap-3 mb-6">
               <div>
                 <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">
                   Alliances
                 </h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  Manage and view your group’s alliances with other communities
+                  Manage and view your group's alliances with other communities
                 </p>
               </div>
+              {canManageAlliances && (
+                <button
+                  onClick={() => setIsOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0"
+                >
+                  <IconPlus className="w-4 h-4" />
+                  <span className="text-sm font-medium">New Alliance</span>
+                </button>
+              )}
             </div>
 
-            <div className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm overflow-hidden mb-6">
+            <div className="rounded-xl overflow-hidden mb-6">
               <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-lg">
-                      <IconUsers className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-medium text-zinc-900 dark:text-white">
-                        Allies
-                      </h2>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        Manage your group alliances
-                      </p>
-                    </div>
-                  </div>
-                  {canManageAlliances && (
-                    <button
-                      onClick={() => setIsOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                      <IconPlus className="w-4 h-4" />
-                      <span className="text-sm font-medium">New Alliance</span>
-                    </button>
-                  )}
-                </div>
-
                 {allies.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="bg-white dark:bg-zinc-800 rounded-xl p-8 max-w-md mx-auto">
+                    <div className="rounded-xl p-8 max-w-md mx-auto">
                       <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                         <IconClipboardList className="w-8 h-8 text-primary" />
                       </div>
@@ -308,7 +292,7 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                     {allies.map((ally: any) => (
                       <div
                         key={ally.id}
-                        className="bg-zinc-50 dark:bg-zinc-700 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4"
+                        className="bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-lg p-4"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-3">
@@ -423,7 +407,7 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                       as="h3"
                       className="text-lg font-medium text-zinc-900 dark:text-white mb-4"
                     >
-                      Create New Ally
+                      Create new alliance
                     </Dialog.Title>
 
                     <div className="mt-2">
@@ -484,7 +468,7 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                                     </div>
                                   )}
                                   <div className="relative">
-                                    <div className="flex items-center gap-2 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 focus-within:ring-2 focus-within:ring-primary">
+                                    <div className="flex items-center gap-2 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700">
                                       <IconSearch className="w-4 h-4 text-zinc-400 flex-shrink-0" />
                                       <input
                                         ref={repSearchRef}
@@ -503,7 +487,7 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                                           )
                                         }
                                         placeholder="Search by username..."
-                                        className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none"
+                                        className="flex-1 bg-transparent border-0 appearance-none text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none ring-0"
                                       />
                                     </div>
                                     {repSearchFocused &&
@@ -543,7 +527,7 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                                       )}
                                   </div>
                                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {reps.length} selected, Minimum 1 required.
+                                    Minimum 1 representative required.
                                   </p>
                                 </div>
                               )}

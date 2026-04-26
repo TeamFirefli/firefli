@@ -175,7 +175,7 @@ export default function MemberIntroEditor() {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search..."
-            className="flex-1 min-w-0 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-0 focus:ring-0"
           />
           <button
             onClick={handleSearch}
@@ -216,7 +216,6 @@ export default function MemberIntroEditor() {
         )}
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
         <button
           onClick={handleSave}

@@ -1284,13 +1284,13 @@ const Profile: pageWithLayout<pageProps> = ({
 
           <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm overflow-hidden">
             <Tab.Group>
-              <Tab.List className="flex p-1 gap-1 mx-2 sm:mx-4 mt-3 mb-2 bg-zinc-50 dark:bg-zinc-700/60 border border-zinc-200 dark:border-zinc-600 rounded-lg overflow-x-auto scrollbar-hide">
+              <Tab.List className="flex border-b border-zinc-200 dark:border-zinc-700 mx-2 sm:mx-4 mt-3 mb-2 overflow-x-auto scrollbar-hide">
                 <Tab
                   className={({ selected }) =>
-                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
+                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                       selected
-                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                        : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`
                   }
                 >
@@ -1299,10 +1299,10 @@ const Profile: pageWithLayout<pageProps> = ({
                 </Tab>
                 <Tab
                   className={({ selected }) =>
-                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
+                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                       selected
-                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                        : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`
                   }
                 >
@@ -1312,10 +1312,10 @@ const Profile: pageWithLayout<pageProps> = ({
                 {logbookEnabled && (
                   <Tab
                     className={({ selected }) =>
-                      `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
+                      `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                         selected
-                          ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                          : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                       }`
                     }
                   >
@@ -1325,10 +1325,10 @@ const Profile: pageWithLayout<pageProps> = ({
                 )}
                 <Tab
                   className={({ selected }) =>
-                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${
+                    `flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
                       selected
-                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                        : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                     }`
                   }
                 >

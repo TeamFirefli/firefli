@@ -399,6 +399,25 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
       new Date(n.startTime) <= now &&
       new Date(n.endTime) >= now
   );
+
+  const undANotices = Object.values(
+    activeNotices.reduce<Record<string, NoticeWithUser>>((acc, n) => {
+      const uid = n.user?.userid?.toString() ?? n.id;
+      if (!acc[uid] || new Date(n.endTime!) < new Date(acc[uid].endTime!)) {
+        acc[uid] = n;
+      }
+      return acc;
+    }, {})
+  );
+  const undUNotices = Object.values(
+    upcomingNotices.reduce<Record<string, NoticeWithUser>>((acc, n) => {
+      const uid = n.user?.userid?.toString() ?? n.id;
+      if (!acc[uid] || new Date(n.startTime!) < new Date(acc[uid].startTime!)) {
+        acc[uid] = n;
+      }
+      return acc;
+    }, {})
+  );
   const revokedNotices = allNotices.filter((n) => n.revoked);
 
   const renderManageNoticeSection = (
@@ -514,13 +533,13 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
             </div>
           </div>
           {(hasApproveAccess || hasManageAccess) && (
-            <div className="flex p-1 gap-1 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 rounded-lg mb-6">
+            <div className="flex border-b border-zinc-200 dark:border-zinc-700 mb-6">
               <button
                 onClick={() => setActiveTab("my-notices")}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
                   activeTab === "my-notices"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 <IconUserCircle className="w-4 h-4" />
@@ -528,10 +547,10 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab("manage-notices")}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
                   activeTab === "manage-notices"
-                    ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-white/70 dark:hover:bg-zinc-800/80"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60 hover:opacity-100 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 <IconUsers className="w-4 h-4" />
@@ -546,7 +565,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
           )}
           {(!(hasApproveAccess || hasManageAccess) || activeTab === "my-notices") && (
             <>
-              {activeNotices.length > 0 && (
+              {undANotices.length > 0 && (
                 <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl p-6 shadow-sm mb-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="bg-primary/10 p-2 rounded-lg">
@@ -562,7 +581,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
                     </div>
                   </div>
                   <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {activeNotices.map((notice) => (
+                    {undANotices.map((notice) => (
                       <div
                         key={notice.id}
                         className="flex flex-col items-center gap-1 p-2"
