@@ -359,11 +359,14 @@ const Views: pageWithLayout<pageProps> = ({
         return (
           <div
             className={`flex flex-row ${hasViewMemberProfiles ? "cursor-pointer" : "cursor-default"}`}
-            onClick={() => {
+            onClick={(e) => {
               if (hasViewMemberProfiles) {
-                router.push(
-                  `/workspace/${router.query.id}/profile/${row.getValue().userId}`,
-                );
+                const href = `/workspace/${router.query.id}/profile/${row.getValue().userId}`;
+                if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                  window.open(href, '_blank');
+                } else {
+                  router.push(href);
+                }
               }
             }}
           >
@@ -742,6 +745,13 @@ const Views: pageWithLayout<pageProps> = ({
       });
     }
   }, [router.query.newView]);
+
+  useEffect(() => {
+    const page = parseInt(router.query.page as string);
+    if (!isNaN(page) && page !== pagination.pageIndex) {
+      setPagination((prev) => ({ ...prev, pageIndex: page }));
+    }
+  }, [router.query.page]);
 
   // Reset to page 0 when filters change
   useEffect(() => {
@@ -1252,10 +1262,13 @@ const Views: pageWithLayout<pageProps> = ({
                       <button
                         key={v.id}
                         onClick={() => {
-                          if (selectedViewId === v.id) resetToDefault();
-                          else {
+                          if (selectedViewId === v.id) {
+                            const { view: _v, page: _p, ...rest } = router.query;
+                            router.push({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+                          } else {
                             setSelectedViewId(v.id);
                             applySavedView(v);
+                            router.push({ pathname: router.pathname, query: { ...router.query, view: v.id, page: 0 } }, undefined, { shallow: true });
                           }
                         }}
                         className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
@@ -1299,10 +1312,13 @@ const Views: pageWithLayout<pageProps> = ({
                       <button
                         key={v.id}
                         onClick={() => {
-                          if (selectedViewId === v.id) resetToDefault();
-                          else {
+                          if (selectedViewId === v.id) {
+                            const { view: _v, page: _p, ...rest } = router.query;
+                            router.push({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+                          } else {
                             setSelectedViewId(v.id);
                             applySavedView(v);
+                            router.push({ pathname: router.pathname, query: { ...router.query, view: v.id, page: 0 } }, undefined, { shallow: true });
                           }
                         }}
                         className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
@@ -1762,11 +1778,14 @@ const Views: pageWithLayout<pageProps> = ({
                           )}
                           <div
                             className={`flex items-center gap-2 flex-1 min-w-0 ${hasViewMemberProfiles ? "cursor-pointer" : "cursor-default"}`}
-                            onClick={() => {
+                            onClick={(e) => {
                               if (hasViewMemberProfiles) {
-                                router.push(
-                                  `/workspace/${router.query.id}/profile/${user.info.userId}`,
-                                );
+                                const href = `/workspace/${router.query.id}/profile/${user.info.userId}`;
+                                if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                                  window.open(href, '_blank');
+                                } else {
+                                  router.push(href);
+                                }
                               }
                             }}
                           >
@@ -1953,7 +1972,11 @@ const Views: pageWithLayout<pageProps> = ({
                 >
                   <div className="flex items-center justify-between md:justify-center gap-3 md:gap-2">
                     <button
-                      onClick={() => table.previousPage()}
+                      onClick={() => {
+                        const newIndex = pagination.pageIndex - 1;
+                        setPagination((prev) => ({ ...prev, pageIndex: newIndex }));
+                        router.push({ pathname: router.pathname, query: { ...router.query, page: newIndex } }, undefined, { shallow: true });
+                      }}
                       disabled={!table.getCanPreviousPage()}
                       className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
                     >
@@ -1971,7 +1994,11 @@ const Views: pageWithLayout<pageProps> = ({
                       </span>
                     </div>
                     <button
-                      onClick={() => table.nextPage()}
+                      onClick={() => {
+                        const newIndex = pagination.pageIndex + 1;
+                        setPagination((prev) => ({ ...prev, pageIndex: newIndex }));
+                        router.push({ pathname: router.pathname, query: { ...router.query, page: newIndex } }, undefined, { shallow: true });
+                      }}
                       disabled={!table.getCanNextPage()}
                       className="flex-1 md:flex-none md:inline-flex items-center md:gap-2 px-4 py-2.5 md:px-3 md:py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white md:bg-zinc-50 dark:bg-zinc-700/50 md:dark:bg-zinc-700/30 hover:bg-zinc-50 md:hover:bg-zinc-100 dark:hover:bg-zinc-700 md:dark:hover:bg-zinc-700/50 disabled:opacity-40 md:disabled:opacity-100 md:disabled:bg-zinc-100 md:dark:disabled:bg-zinc-800 disabled:cursor-not-allowed md:disabled:text-zinc-400 md:dark:disabled:text-zinc-500 transition-all"
                     >
@@ -2076,7 +2103,11 @@ const Views: pageWithLayout<pageProps> = ({
                   <div className="bg-white dark:bg-zinc-800/50 px-4 py-3 flex items-center justify-center border-t border-zinc-200 dark:border-zinc-700">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => table.previousPage()}
+                        onClick={() => {
+                          const newIndex = pagination.pageIndex - 1;
+                          setPagination((prev) => ({ ...prev, pageIndex: newIndex }));
+                          router.push({ pathname: router.pathname, query: { ...router.query, page: newIndex } }, undefined, { shallow: true });
+                        }}
                         disabled={!table.getCanPreviousPage()}
                         className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700/30 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:disabled:text-zinc-500 transition-all"
                       >
@@ -2087,7 +2118,11 @@ const Views: pageWithLayout<pageProps> = ({
                         {table.getPageCount()}
                       </span>
                       <button
-                        onClick={() => table.nextPage()}
+                        onClick={() => {
+                          const newIndex = pagination.pageIndex + 1;
+                          setPagination((prev) => ({ ...prev, pageIndex: newIndex }));
+                          router.push({ pathname: router.pathname, query: { ...router.query, page: newIndex } }, undefined, { shallow: true });
+                        }}
                         disabled={!table.getCanNextPage()}
                         className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700/30 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-400 dark:disabled:text-zinc-500 transition-all"
                       >
