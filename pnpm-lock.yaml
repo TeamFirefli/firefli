@@ -140,8 +140,8 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2
       '@types/formidable':
-        specifier: ^3.4.5
-        version: 3.4.6
+        specifier: ^3.5.1
+        version: 3.5.1
       '@types/react-grid-layout':
         specifier: ^1.3.6
         version: 1.3.6
@@ -1927,8 +1927,8 @@ packages:
     resolution: {integrity: sha512-xTVEthISP8tJ3qWpWKmetPt/Amusrfr7KdMZgg33lGw2g0YpDmECZYqh1As37tbgiAXl28NU+XHjw806YfboTg==}
     deprecated: This is a stub types definition. file-type provides its own type definitions, so you do not need this installed.
 
-  '@types/formidable@3.4.6':
-    resolution: {integrity: sha512-LI4Hk+KNsM5q7br4oMVoaWeb+gUqJpz1N8+Y2Q6Cz9cVH33ybahRKUWaRmMboVlkwSbOUGgwc/pEkS7yMSzoWg==}
+  '@types/formidable@3.5.1':
+    resolution: {integrity: sha512-aFQijSGbD8JCeEST2LEbwR7faHynbt43lojLIcTM/QhB2U06h41ZVRFVEql+Z1xdL+aKGIzm69V/P/uSW9N6XA==}
 
   '@types/hast@2.3.10':
     resolution: {integrity: sha512-McWspRw8xx8J9HurkVBfYj0xKoE25tOFlHGdx4MJ5xORQrMGZNqJhVQWaIbm6Oyla5kYOXtDiopzKRJzEOkwJw==}
@@ -7217,7 +7217,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@types/formidable@3.4.6':
+  '@types/formidable@3.5.1':
     dependencies:
       '@types/node': 25.6.0
 
