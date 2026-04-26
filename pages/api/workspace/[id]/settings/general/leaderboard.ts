@@ -23,7 +23,9 @@ async function handler(
   }
 
   if (req.method === 'GET') {
-	return res.status(200).json({ success: true });
+    const workspaceId = parseInt(req.query.id as string);
+    const value = await getConfig('leaderboard', workspaceId);
+    return res.status(200).json({ success: true, value });
   }
 
   if (req.method === 'PATCH') {
