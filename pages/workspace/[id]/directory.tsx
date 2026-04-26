@@ -379,7 +379,6 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
                               return (
                                 <span
                                   className="flex-shrink-0"
-                                  title={`On notice: ${active.reason || "N/A"}`}
                                 >
                                   <IconBeach className="w-4 h-4 text-amber-500" />
                                 </span>
@@ -392,7 +391,6 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
                               return (
                                 <span
                                   className="flex-shrink-0"
-                                  title={`Upcoming notice (starts ${new Date(upcoming.startTime as string).toLocaleDateString()})`}
                                 >
                                   <IconBeach className="w-4 h-4 text-emerald-500" />
                                 </span>
@@ -405,7 +403,6 @@ const StaffDirectoryPage: pageWithLayout<PageProps> = ({ departments }) => {
                               return (
                                 <span
                                   className="flex-shrink-0"
-                                  title={`Previous notice (ended ${new Date(past.endTime as string).toLocaleDateString()})`}
                                 >
                                   <IconBeach className="w-4 h-4 text-zinc-400" />
                                 </span>

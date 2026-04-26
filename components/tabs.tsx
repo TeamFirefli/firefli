@@ -177,6 +177,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
           </span>
         )}
         {item.canDelete && item.onDelete && item.id && (
+          <Tooltip orientation="top" tooltipText="Delete view">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -188,10 +189,10 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
               });
             }}
             className="flex-shrink-0 p-1 rounded-md text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition"
-            title="Delete"
           >
             <IconX className="w-3.5 h-3.5" />
           </button>
+          </Tooltip>
         )}
       </>
     );
@@ -442,6 +443,7 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                           </span>
                         )}
                         {item.canDelete && item.onDelete && item.id && (
+                          <Tooltip orientation="top" tooltipText="Delete view">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -453,10 +455,10 @@ const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                               });
                             }}
                             className="flex-shrink-0 p-1 rounded-md text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition"
-                            title="Delete"
                           >
                             <IconX className="w-3.5 h-3.5" />
                           </button>
+                          </Tooltip>
                         )}
                       </>
                     );

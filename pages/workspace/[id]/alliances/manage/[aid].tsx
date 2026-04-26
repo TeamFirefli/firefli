@@ -1062,8 +1062,20 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                   <h2 className="text-xl font-medium text-zinc-900 dark:text-white">
                     {ally.name}
                   </h2>
-                  <p className="text-sm text-zinc-500 mt-1">
+                  <p className="text-sm text-zinc-500 mt-1 flex items-center gap-1.5">
                     Group ID: {ally.groupId}
+                    <Tooltip orientation="top" tooltipText="Copy Group ID">
+                      <button
+                        type="button"
+                        className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                        onClick={() => {
+                          navigator.clipboard.writeText(String(ally.groupId));
+                          toast.success("Copied to clipboard");
+                        }}
+                      >
+                        <IconCopy className="w-3 h-3" />
+                      </button>
+                    </Tooltip>
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {ally.reps.map((rep: any) => (
@@ -1175,7 +1187,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                       </>
                     ) : (
                       <span className="text-zinc-500 dark:text-zinc-400 italic">
-                        No Discord server set
+                        No Discord server set.
                       </span>
                     )}
                   </div>
@@ -1334,17 +1346,18 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                               </span>
                             )}
                           </span>
-                          <button
-                            type="button"
-                            title="Copy username"
-                            className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
-                            onClick={() => {
-                              navigator.clipboard.writeText(rep.username);
-                              toast.success("Copied to clipboard");
-                            }}
-                          >
-                            <IconCopy className="w-3.5 h-3.5" />
-                          </button>
+                          <Tooltip orientation="top" tooltipText="Copy username">
+                            <button
+                              type="button"
+                              className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
+                              onClick={() => {
+                                navigator.clipboard.writeText(rep.username);
+                                toast.success("Copied to clipboard");
+                              }}
+                            >
+                              <IconCopy className="w-3.5 h-3.5" />
+                            </button>
+                          </Tooltip>
                         </div>
                       ))
                     ) : (
@@ -1495,6 +1508,20 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                                 <IconExternalLink className="w-3.5 h-3.5" />
                               </a>
                             )}
+                            <Tooltip orientation="top" tooltipText="Copy username">
+                              <button
+                                type="button"
+                                className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
+                                onClick={() => {
+                                  if (rep.username) {
+                                    navigator.clipboard.writeText(rep.username);
+                                    toast.success("Copied to clipboard");
+                                  }
+                                }}
+                              >
+                                <IconCopy className="w-3.5 h-3.5" />
+                              </button>
+                            </Tooltip>
                           </div>
                         ))
                     ) : (

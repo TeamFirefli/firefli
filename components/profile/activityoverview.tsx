@@ -372,7 +372,7 @@ export function ActivityOverview({
                   No Activity
                 </h3>
                 <p className="text-sm text-zinc-900 dark:text-white mb-4">
-                  No activity or adjustments have been recorded yet
+                  No activity or adjustments have been recorded yet.
                 </p>
               </div>
             </div>
