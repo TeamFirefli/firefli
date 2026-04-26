@@ -356,7 +356,7 @@ const Activity: pageWithLayout = () => {
               Activity Dashboard
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Monitor your performance and track detailed activity metrics
+              Monitor your performance and track detailed metrics
             </p>
           </div>
         </div>
@@ -452,7 +452,7 @@ const Activity: pageWithLayout = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {topStaff.slice(0, 10).map((user: any, index: number) => {
+                  {topStaff.slice(0, 3).map((user: any, index: number) => {
                     const position = index + 1;
                     let bgColor = "bg-zinc-50 dark:bg-zinc-700";
                     let positionColor = "bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300";
@@ -497,8 +497,8 @@ const Activity: pageWithLayout = () => {
         {topStaff.length > 0 && (
           <div className="md:hidden grid grid-cols-1 gap-4 mb-8">
             {[
-              { title: "In-game Staff", subtitle: "Currently active members", users: activeUsers, emptyText: "No staff are currently in-game", icon: IconUsers },
-              { title: "Inactive Staff", subtitle: "Staff on inactivity notice", users: inactiveUsers, emptyText: "No staff are currently inactive", icon: IconUserCircle },
+              { title: "In-game Staff", subtitle: "Currently active members", users: activeUsers, emptyText: "No staff are currently in-game.", icon: IconUsers },
+              { title: "Inactive Staff", subtitle: "Staff on inactivity notice", users: inactiveUsers, emptyText: "No staff are currently inactive.", icon: IconUserCircle },
             ].map(({ title, subtitle, users, emptyText, icon: Icon }) => (
               <div key={title} className="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
@@ -668,7 +668,7 @@ const Activity: pageWithLayout = () => {
                       No Activity
                     </h3>
                     <p className="text-sm text-zinc-900 dark:text-white mb-4">
-                      No activity or adjustments have been recorded yet
+                      No activity or adjustments have been recorded yet.
                     </p>
                   </div>
                 </div>

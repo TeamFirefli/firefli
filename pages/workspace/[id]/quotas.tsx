@@ -675,7 +675,7 @@ const Quotas: pageWithLayout<pageProps> = ({
               </h1>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                 {activeTab === "my-quotas"
-                  ? "Track your quota progress since the last activity reset"
+                  ? "Track your activity progress"
                   : "Manage quotas for your workspace"}
               </p>
             </div>
@@ -720,7 +720,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                       No Quotas Assigned
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                      You don't have any activity quotas assigned to you yet
+                      You don't have any activity quotas assigned to you yet.
                     </p>
                   </div>
                 </div>
@@ -1051,7 +1051,7 @@ const Quotas: pageWithLayout<pageProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-md transform overflow-y-auto rounded-none sm:rounded-xl bg-white dark:bg-zinc-800 p-6 text-left shadow-xl transition-all fixed top-12 bottom-16 left-0 right-0 sm:relative sm:inset-auto sm:h-auto sm:max-h-[85vh]">
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-medium text-zinc-900 mb-4 dark:text-white"

@@ -255,7 +255,7 @@ const Allies: pageWithLayout<pageProps> = (props) => {
                   Alliances
                 </h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  Manage and view your group's alliances with other communities
+                  Manage your group's alliances
                 </p>
               </div>
               {canManageAlliances && (

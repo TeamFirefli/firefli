@@ -548,14 +548,14 @@ const WeeklyCalendar: React.FC<{
         ) : (
           <div className="h-64 flex items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <IconCalendarEvent className="w-6 h-6 text-primary" />
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <IconCalendarEvent className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
+              <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-2">
                 No Sessions Scheduled
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                There are no sessions scheduled for this date
+                There are no sessions scheduled for this date.
               </p>
             </div>
           </div>
@@ -841,7 +841,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
               Sessions
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Plan, schedule, and manage sessions for your staff members
+              Plan, schedule, and manage sessions for your group
             </p>
           </div>
         </div>
@@ -1143,14 +1143,14 @@ const Home: pageWithLayout<pageProps> = (props) => {
             ) : (
               <div className="w-full h-40 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                    <IconCalendarEvent className="w-6 h-6 text-primary" />
+                  <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <IconCalendarEvent className="w-8 h-8 text-primary" />
                   </div>
-                  <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-2">
                     No Sessions Scheduled
                   </h3>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                    There are no sessions scheduled for this date
+                    There are no sessions scheduled for this date.
                   </p>
                 </div>
               </div>
