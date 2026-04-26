@@ -9,8 +9,6 @@ import { Fragment } from "react";
 import ThemeToggle from "./ThemeToggle";
 import VerifiedBadge from "./partners";
 import { usePartners } from "@/hooks/usePartners";
-import Notification from "./notifications";
-
 
 const BG_COLORS = [
   "bg-amber-200",
@@ -110,7 +108,7 @@ const Topbar: NextPage = () => {
 										leaveFrom="transform opacity-100 scale-100"
 										leaveTo="transform opacity-0 scale-95"
 									>
-										<Listbox.Options className="absolute left-0 mt-2 w-64 origin-top-left rounded-lg bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-y-auto z-[100]">
+										<Listbox.Options className="absolute left-0 mt-2 w-64 origin-top-left rounded-lg bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black dark:ring-zinc-700 ring-opacity-5 focus:outline-none max-h-60 overflow-y-auto z-[100]">
 											<div className="p-2">
 												{login?.workspaces && login.workspaces.length > 1 ? (
 													login.workspaces
@@ -212,7 +210,7 @@ const Topbar: NextPage = () => {
 							leaveFrom="transform opacity-100 scale-100"
 							leaveTo="transform opacity-0 scale-95"
 						>
-							<Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black dark:ring-zinc-700 ring-opacity-5 focus:outline-none">
+							<Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
 								<div className="p-2">
 									<div className="px-3 py-2">
 										<div className="flex items-center space-x-3">
