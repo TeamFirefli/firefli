@@ -117,7 +117,7 @@
     "autoprefixer": "^10.4.19",
     "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9.29.0",
-    "eslint-config-next": "^15.3.6",
+    "eslint-config-next": "^16.2.4",
     "js-yaml": "^4.1.1",
     "postcss": "^8.5.10",
     "prisma": "^7.8.0",
