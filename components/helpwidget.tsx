@@ -122,7 +122,7 @@ const HelpWidget = () => {
           leaveFrom="opacity-100 translate-y-0 scale-100"
           leaveTo="opacity-0 translate-y-2 scale-95"
         >
-          <Popover.Panel className="absolute bottom-14 md:bottom-16 right-0 w-64 origin-bottom-right rounded-xl bg-white dark:bg-zinc-800 shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Popover.Panel className="absolute bottom-14 md:bottom-16 right-0 w-64 origin-bottom-right rounded-xl bg-white dark:bg-zinc-800 shadow-xl ring-1 ring-black dark:ring-zinc-700 ring-opacity-5 focus:outline-none">
             <div className="p-4">
               <div className="flex items-center gap-3 mb-4 pb-3 border-b border-zinc-200 dark:border-zinc-700">
                 <img src="/logo.png" alt="Firefli" className="h-8 w-auto" />
