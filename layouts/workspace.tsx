@@ -12,7 +12,7 @@ import { workspacestate } from "@/state";
 import { loginState } from "@/state";
 import { useRouter } from "next/router";
 import hexRgb from "hex-rgb";
-import * as colors from "tailwindcss/colors";
+import colors from "tailwindcss/colors";
 import WorkspaceBirthdayPrompt from '@/components/bdayprompt';
 import NewFeatures from '@/components/newfeats';
 import { useEffect, useState, useMemo, useCallback } from "react";
