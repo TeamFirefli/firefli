@@ -251,7 +251,7 @@ export default function NewToTeam() {
                   <img
                     src={m.picture || `/api/workspace/[id]/avatar/${m.userid}`}
                     alt={m.username}
-                    className={`w-20 h-20 ${getRandomBg(m.userid)} rounded-full object-cover border-2 shadow transition-all hover:border-blue-500 ring-2 hover:ring-blue-300`}
+                    className={`w-20 h-20 ${getRandomBg(m.userid)} rounded-full object-cover border-2 shadow transition-all dark:ring-primary/10 ring-white hover:border-blue-500 ring-2 hover:ring-blue-300`}
                     onError={(e) => { (e.target as HTMLImageElement).src = "/default-avatar.jpg"; }}
                   />
 
