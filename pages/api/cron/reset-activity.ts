@@ -301,6 +301,7 @@ async function performReset(workspaceGroupId: bigint | number) {
             targetMinutes: quota.value,
             currentMinutes: 0,
             completed: false,
+            completionType: (quota as any).completionType || null,
           };
         }
       }
@@ -318,6 +319,7 @@ async function performReset(workspaceGroupId: bigint | number) {
             targetMinutes: quota.value,
             currentMinutes: 0,
             completed: false,
+            completionType: (quota as any).completionType || null,
           };
         }
       }

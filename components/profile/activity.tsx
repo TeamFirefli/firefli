@@ -372,6 +372,7 @@ const Activity: FC<Props> = ({
                   isViewingOwnProfile={isViewingOwnProfile}
                   workspaceId={id as string}
                   isHistorical={isHistorical}
+                  periodEnd={historicalPeriod?.end}
                 />
               </Tab.Panel>
             </Tab.Panels>

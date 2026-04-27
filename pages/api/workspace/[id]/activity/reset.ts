@@ -329,6 +329,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           name: quota.name,
           type: quota.type,
           requirement: quota.value,
+          completionType: (quota as any).completionType || null,
         };
 
         if (quota.type === "custom") {

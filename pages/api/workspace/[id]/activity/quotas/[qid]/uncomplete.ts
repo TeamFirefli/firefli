@@ -149,7 +149,10 @@ async function checkUncompletPermission(
   ) {
     return true;
   }
-  if (quota.completionType === "manager_signoff") {
+  if (
+    quota.completionType === "manager_signoff" ||
+    quota.completionType === "user_complete"
+  ) {
     return user.roles[0].permissions.includes("signoff_custom_quotas");
   }
   return false;

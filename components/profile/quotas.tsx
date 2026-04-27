@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import type { Quota } from "@prisma/client";
 import { IconChartBar, IconUsers, IconBriefcase, IconCheck } from "@tabler/icons-react";
 import Tooltip from "@/components/tooltip";
@@ -29,6 +29,7 @@ type Props = {
   isViewingOwnProfile?: boolean;
   workspaceId?: string;
   isHistorical?: boolean;
+  periodEnd?: string;
 };
 
 export function QuotasProgress({
@@ -43,13 +44,17 @@ export function QuotasProgress({
   isViewingOwnProfile = false,
   workspaceId,
   isHistorical = false,
+  periodEnd,
 }: Props) {
   const [localQuotas, setLocalQuotas] = useState(quotas);
-
-  // Update local quotas when prop changes
+  const quotaSetKey = `${isHistorical ? 'h' : 'c'}:${periodEnd ?? ''}:${quotas.map(q => (q as any).id).join(',')}`;
+  const prevQuotaSetKey = useRef('');
   React.useEffect(() => {
-    setLocalQuotas(quotas);
-  }, [quotas]);
+    if (quotaSetKey !== prevQuotaSetKey.current) {
+      prevQuotaSetKey.current = quotaSetKey;
+      setLocalQuotas(quotas);
+    }
+  }, [quotaSetKey]);
   const getQuotaPercentage = (quota: Quota | any) => {
     if (!quota || !quota.value) {
       return 0;
@@ -245,7 +250,8 @@ export function QuotasProgress({
                   )}
                   {!isHistorical && workspaceId && targetUserId && (
                     (quota.completionType === "user_complete" && isViewingOwnProfile) ||
-                    (quota.completionType === "manager_signoff" && canSignoffQuotas)
+                    (quota.completionType === "manager_signoff" && canSignoffQuotas) ||
+                    (quota.completionType === "user_complete" && canSignoffQuotas && !isViewingOwnProfile)
                   ) && (
                     <button
                       onClick={() => {
@@ -253,7 +259,7 @@ export function QuotasProgress({
                           `/api/workspace/${workspaceId}/activity/quotas/${quota.id}/uncomplete`,
                           { targetUserId }
                         ).then(() => {
-                          setLocalQuotas(localQuotas.map((q: any) => 
+                          setLocalQuotas(prev => prev.map((q: any) => 
                             q.id === quota.id 
                               ? { ...q, completed: false, completedAt: null, completedBy: null, completedByUser: null, completionNotes: null }
                               : q
@@ -275,16 +281,16 @@ export function QuotasProgress({
               
               {quota.type === "custom" && !quota.completed && (
                 <div className="mt-2">
-                  {!isHistorical && workspaceId && targetUserId ? (
+                  {workspaceId && targetUserId ? (
                     <>
-                      {quota.completionType === "user_complete" && isViewingOwnProfile ? (
+                      {quota.completionType === "user_complete" && isViewingOwnProfile && !isHistorical ? (
                         <button
                           onClick={() => {
                             const promise = axios.post(
                               `/api/workspace/${workspaceId}/activity/quotas/${quota.id}/complete`,
                               { targetUserId }
                             ).then(() => {
-                              setLocalQuotas(localQuotas.map((q: any) => 
+                              setLocalQuotas(prev => prev.map((q: any) => 
                                 q.id === quota.id 
                                   ? { ...q, completed: true, completedAt: new Date(), percentage: 100 }
                                   : q
@@ -296,19 +302,23 @@ export function QuotasProgress({
                               error: "Failed to complete quota"
                             });
                           }}
-                          className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors"
                         >
-                          <IconCheck className="w-4 h-4" />
+                          <IconCheck className="w-3.5 h-3.5" />
                           Mark as Complete
                         </button>
-                      ) : quota.completionType === "manager_signoff" && canSignoffQuotas ? (
+                      ) : (canSignoffQuotas && (
+                        quota.completionType === "manager_signoff" ||
+                        (quota.completionType === "user_complete" && (!isViewingOwnProfile || isHistorical)) ||
+                        (isHistorical && !quota.completionType)
+                      )) ? (
                         <button
                           onClick={() => {
                             const promise = axios.post(
                               `/api/workspace/${workspaceId}/activity/quotas/${quota.id}/signoff`,
-                              { targetUserId }
+                              { targetUserId, ...(isHistorical && periodEnd ? { periodEnd } : {}) }
                             ).then(() => {
-                              setLocalQuotas(localQuotas.map((q: any) => 
+                              setLocalQuotas(prev => prev.map((q: any) => 
                                 q.id === quota.id 
                                   ? { ...q, completed: true, completedAt: new Date(), percentage: 100 }
                                   : q
@@ -323,9 +333,9 @@ export function QuotasProgress({
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
                         >
                           <IconCheck className="w-3.5 h-3.5" />
-                          Manager Signoff
+                          {quota.completionType === "user_complete" ? "Mark as Complete" : "Sign Off"}
                         </button>
-                      ) : (
+                      ) : !isHistorical ? (
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 italic">
                           {quota.completionType === "user_complete" 
                             ? "Can be self-completed on user's own profile" 
@@ -333,14 +343,8 @@ export function QuotasProgress({
                               ? "Requires manager signoff" 
                               : "Requires manager with signoff permission"}
                         </p>
-                      )}
+                      ) : null}
                     </>
-                  ) : !isHistorical ? (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 italic">
-                      {quota.completionType === "user_complete" 
-                        ? "Can be self-completed" 
-                        : "Requires manager signoff"}
-                    </p>
                   ) : null}
                 </div>
               )}

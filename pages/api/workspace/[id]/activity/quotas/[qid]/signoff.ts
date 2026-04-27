@@ -28,7 +28,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   const quotaId = req.query.qid as string;
   const workspaceId = parseInt(req.query.id as string);
   const signoffUserId = BigInt(req.session.userid);
-  const { targetUserId, notes } = req.body;
+  const { targetUserId, notes, periodEnd } = req.body;
 
   if (!targetUserId) {
     return res
@@ -66,10 +66,72 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       });
     }
 
-    if ((quota as any).completionType !== "manager_signoff") {
-      return res.status(400).json({
-        success: false,
-        error: "This quota does not require manager signoff",
+    // Historical signoff: update the activityHistory JSON blob
+    if (periodEnd) {
+      const historyRecord = await (prisma as any).activityHistory.findFirst({
+        where: {
+          userId: targetUser,
+          workspaceGroupId: BigInt(workspaceId),
+          periodEnd: new Date(periodEnd),
+        },
+      });
+
+      if (!historyRecord) {
+        return res.status(404).json({ success: false, error: "Historical period not found" });
+      }
+
+      const quotaProgress = (historyRecord.quotaProgress as any) || {};
+
+      if (!quotaProgress[quotaId]) {
+        return res.status(400).json({ success: false, error: "Quota not found in this historical period" });
+      }
+
+      const signoffUser = await prisma.user.findFirst({
+        where: { userid: signoffUserId },
+        select: { username: true },
+      });
+
+      quotaProgress[quotaId] = {
+        ...quotaProgress[quotaId],
+        completed: true,
+        completedAt: new Date().toISOString(),
+        completedBy: signoffUserId.toString(),
+        completedByUsername: signoffUser?.username || null,
+        completionNotes: notes || null,
+      };
+
+      await (prisma as any).activityHistory.update({
+        where: { id: historyRecord.id },
+        data: { quotaProgress },
+      });
+
+      try {
+        await logAudit(
+          workspaceId,
+          req.session.userid,
+          "activity.quota.signoff",
+          `quota:${quotaId}`,
+          {
+            quotaId,
+            quotaName: quota.name,
+            targetUserId: targetUser.toString(),
+            signoffUserId: signoffUserId.toString(),
+            notes,
+            historical: true,
+            periodEnd,
+          },
+        );
+      } catch (e) {
+        console.error("Failed to log audit:", e);
+      }
+
+      return res.status(200).json({
+        success: true,
+        completion: {
+          completed: true,
+          completedAt: new Date().toISOString(),
+          completedByUser: { username: signoffUser?.username || null },
+        },
       });
     }
 
