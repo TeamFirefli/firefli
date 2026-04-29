@@ -70,6 +70,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   'create_views': 'Create views',
   'edit_views': 'Edit views',
   'delete_views': 'Delete views',
+  'use_mass_actions': 'Use mass actions',
   'create_docs': 'Create docs',
   'edit_docs': 'Edit docs',
   'delete_docs': 'Delete docs',

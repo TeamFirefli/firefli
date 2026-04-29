@@ -109,6 +109,7 @@ export async function handler(
 		"Create views": "create_views",
 		"Edit views": "edit_views",
 		"Delete views": "delete_views",
+		"Use mass actions": "use_mass_actions",
 		"Create docs": "create_docs",
 		"Edit docs": "edit_docs",
 		"Delete docs": "delete_docs",

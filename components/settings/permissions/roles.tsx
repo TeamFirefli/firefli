@@ -90,6 +90,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       "Create views": "create_views",
       "Edit views": "edit_views",
       "Delete views": "delete_views",
+      "Use mass actions": "use_mass_actions",
       "Create notices": "create_notices",
       "Approve notices": "approve_notices",
       "Manage notices": "manage_notices",
