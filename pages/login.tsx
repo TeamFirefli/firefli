@@ -939,72 +939,7 @@ const Login: NextPage = () => {
           </div>
         </div>
 
-        {/* Copyright button fixed at bottom left */}
-        <div className="fixed bottom-4 left-4 z-40">
-          <button
-            onClick={() => setShowCopyright(true)}
-            className="text-left text-xs text-zinc-500 hover:text-primary"
-            type="button"
-          >
-            © Copyright Notices
-          </button>
-        </div>
       </div>
-
-      {/* Copyright Notices Dialog */}
-      <Dialog
-        open={showCopyright}
-        onClose={() => setShowCopyright(false)}
-        className="relative z-50"
-      >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-sm rounded-lg bg-white dark:bg-zinc-800 p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <Dialog.Title className="text-lg font-medium text-zinc-900 dark:text-white">
-                Copyright Notices
-              </Dialog.Title>
-              <button
-                onClick={() => setShowCopyright(false)}
-                className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
-              >
-                <IconX className="w-5 h-5 text-zinc-500" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-
-              <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
-                  Firefli features, enhancements, and modifications:
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Copyright © 2026 Firefli. All rights reserved.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
-                  Orbit features, enhancements, and modifications:
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Copyright © 2026 Planetary. All rights reserved.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white mb-1">
-                  Original Tovy features and code:
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Copyright © 2022 Tovy. All rights reserved.
-                </p>
-              </div>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
     </div>
   );
 };
