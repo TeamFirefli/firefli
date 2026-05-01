@@ -125,7 +125,8 @@ const HelpWidget = () => {
           <Popover.Panel className="absolute bottom-14 md:bottom-16 right-0 w-64 origin-bottom-right rounded-xl bg-white dark:bg-zinc-800 shadow-xl ring-1 ring-black dark:ring-zinc-700 ring-opacity-5 focus:outline-none">
             <div className="p-4">
               <div className="flex items-center gap-3 mb-4 pb-3 border-b border-zinc-200 dark:border-zinc-700">
-                <img src="/logo.png" alt="Firefli" className="h-8 w-auto" />
+                <img src="/logo.png" alt="Firefli" className="h-8 w-auto dark:hidden" />
+				<img src="/wlogo.png" alt="Firefli" className="h-8 w-auto hidden dark:block" />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                     Firefli
