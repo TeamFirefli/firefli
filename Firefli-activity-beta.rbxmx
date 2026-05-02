@@ -44,12 +44,12 @@ local Configuration = {
 	-- Do not touch
 	url = "<url>",
 	auth = "<apikey>",
+	minTrackedRank = <minrole>,
+	groupId = <groupid>,
 	-- Edit to your liking
 	privateEnabled = false, -- Set to false if you do not want Fire to track private servers (or studio)
 	cooldownPeriod = 30, -- The interval (seconds) between retrying failed HTTP requests
-	rankChecking = false, -- Enables rank checking on player join/leave to ensure only relevant data is sent to Firefli (RECOMMENDED)
-	groupId = 0, -- The group ID to perform activity tracking for (RECOMMENDED)
-	minTrackedRank = 0,	 -- The minimum rank ID to perform activity tracking for (This value is retrieved from your Firefli instance on game launch)
+	rankChecking = false, -- Enables rank checking on player join/leave to ensure only relevant data is sent to Firefli (RECOMMENDED)	
 	minutesTillAFK = 2, -- How long a player can last without moving before being marked AFK
 	flushInterval = FLUSH_INTERVAL, -- How often to send events (seconds)
 }

@@ -17,931 +17,925 @@ import toast from "react-hot-toast";
 
 type LoginForm = { username: string; password: string };
 type SignupForm = {
-  username: string;
-  password: string;
-  verifypassword: string;
+	username: string;
+	password: string;
+	verifypassword: string;
 };
 
 const Login: NextPage = () => {
-  const [login, setLogin] = useRecoilState(loginState);
-  const { isAvailable: isOAuth, oauthOnly } = OAuthAvailable();
-  const router = useRouter();
+	const [login, setLogin] = useRecoilState(loginState);
+	const { isAvailable: isOAuth, oauthOnly } = OAuthAvailable();
+	const router = useRouter();
 
-  const loginMethods = useForm<LoginForm>();
-  const signupMethods = useForm<SignupForm>();
+	const loginMethods = useForm<LoginForm>();
+	const signupMethods = useForm<SignupForm>();
 
-  const {
-    register: regLogin,
-    handleSubmit: submitLogin,
-    setError: setErrLogin,
-  } = loginMethods;
-  const {
-    register: regSignup,
-    handleSubmit: submitSignup,
-    setError: setErrSignup,
-    getValues: getSignupValues,
-  } = signupMethods;
+	const {
+		register: regLogin,
+		handleSubmit: submitLogin,
+		setError: setErrLogin,
+	} = loginMethods;
+	const {
+		register: regSignup,
+		handleSubmit: submitSignup,
+		setError: setErrSignup,
+		getValues: getSignupValues,
+	} = signupMethods;
 
-  const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [signupStep, setSignupStep] = useState<0 | 1 | 2>(0);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verificationError, setVerificationError] = useState<string | null>(
-    null
-  );
-  const [showPassword, setShowPassword] = useState(false);
-  const [showCopyright, setShowCopyright] = useState(false);
-  const [suspendedMessage, setSuspendedMessage] = useState<string | null>(null);
-  const [usernameCheckLoading, setUsernameCheckLoading] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
-    null
-  );
+	const [loading, setLoading] = useState(false);
+	const [mode, setMode] = useState<"login" | "signup">("login");
+	const [signupStep, setSignupStep] = useState<0 | 1 | 2>(0);
+	const [verificationCode, setVerificationCode] = useState("");
+	const [verificationError, setVerificationError] = useState<string | null>(
+		null
+	);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showCopyright, setShowCopyright] = useState(false);
+	const [suspendedMessage, setSuspendedMessage] = useState<string | null>(null);
+	const [usernameCheckLoading, setUsernameCheckLoading] = useState(false);
+	const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
+		null
+	);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const usernameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [theme] = useRecoilState(themeState);
-  const [mounted, setMounted] = useState(false);
-  const isDarkModeRef = useRef(false);
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const usernameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+	const [theme] = useRecoilState(themeState);
+	const [mounted, setMounted] = useState(false);
+	const isDarkModeRef = useRef(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    const isDark = theme === "dark";
-    isDarkModeRef.current = isDark;
-  }, [mounted, theme]);
+	useEffect(() => {
+		if (!mounted) return;
+		const isDark = theme === "dark";
+		isDarkModeRef.current = isDark;
+	}, [mounted, theme]);
 
-  useEffect(() => {
-    if (!router.isReady) return;
+	useEffect(() => {
+		if (!router.isReady) return;
 
-    const error = router.query.error as string;
-    if (error) {
-      let message = 'An error occurred during login.';
-      let isSuspended = false;
-      switch (error) {
-        case 'access_denied':
-          message = 'Access denied. Your account has been blocked from accessing this system.';
-          isSuspended = true;
-          break;
-        case 'oauth_error':
-          message = 'OAuth authentication failed. Please try again.';
-          break;
-        case 'missing_params':
-          message = 'Missing required authentication parameters.';
-          break;
-        case 'state_mismatch':
-          message = 'Security verification failed. Please try logging in again.';
-          break;
-        case 'config_error':
-          message = 'Server configuration error. Please contact an administrator.';
-          break;
-        case 'invalid_user':
-          message = 'Invalid user information received from Roblox.';
-          break;
-        case 'database_error':
-          message = 'Database error during login. Please try again.';
-          break;
-        case 'oauth_failed':
-          message = 'OAuth authentication failed. Please check your credentials and try again.';
-          break;
-        case 'account_suspended':
-          message = 'Your account has been suspended. Please contact support for an appeal.';
-          isSuspended = true;
-          break;
-      }
+		const error = router.query.error as string;
+		if (error) {
+			let message = 'An error occurred during login.';
+			let isSuspended = false;
+			switch (error) {
+				case 'access_denied':
+					message = 'Access denied. Your account has been blocked from accessing this system.';
+					isSuspended = true;
+					break;
+				case 'oauth_error':
+					message = 'OAuth authentication failed. Please try again.';
+					break;
+				case 'missing_params':
+					message = 'Missing required authentication parameters.';
+					break;
+				case 'state_mismatch':
+					message = 'Security verification failed. Please try logging in again.';
+					break;
+				case 'config_error':
+					message = 'Server configuration error. Please contact an administrator.';
+					break;
+				case 'invalid_user':
+					message = 'Invalid user information received from Roblox.';
+					break;
+				case 'database_error':
+					message = 'Database error during login. Please try again.';
+					break;
+				case 'oauth_failed':
+					message = 'OAuth authentication failed. Please check your credentials and try again.';
+					break;
+				case 'account_suspended':
+					message = 'Your account has been suspended. Please contact support for an appeal.';
+					isSuspended = true;
+					break;
+			}
 
-      if (isSuspended) {
-        setSuspendedMessage(message);
-      } else {
-        toast.error(message, {
-          duration: 6000,
-          position: 'top-center',
-        });
-      }
+			if (isSuspended) {
+				setSuspendedMessage(message);
+			} else {
+				toast.error(message, {
+					duration: 6000,
+					position: 'top-center',
+				});
+			}
 
-      router.replace('/login', undefined, { shallow: true });
-    }
-  }, [router.isReady, router.query.error]);
+			router.replace('/login', undefined, { shallow: true });
+		}
+	}, [router.isReady, router.query.error]);
 
-  useEffect(() => {
-    if (!mounted) return;
-    
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+	useEffect(() => {
+		if (!mounted) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+		const canvas = canvasRef.current;
+		if (!canvas) return;
 
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    let animationId: number;
-    let time = 0;
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return;
 
-    type Firefly = {
-      x: number;
-      y: number;
-      radius: number;
-      speedX: number;
-      speedY: number;
-      glow: number;
-      phase: number;
-    };
+		let width = window.innerWidth;
+		let height = window.innerHeight;
+		let animationId: number;
+		let time = 0;
 
-    let fireflies: Firefly[] = [];
+		type Firefly = {
+			x: number;
+			y: number;
+			radius: number;
+			speedX: number;
+			speedY: number;
+			glow: number;
+			phase: number;
+		};
 
-    const buildFireflies = () => {
-      const desktop = window.innerWidth >= 1024;
-      if (!desktop) {
-        fireflies = [];
-        return;
-      }
+		let fireflies: Firefly[] = [];
 
-      const count = Math.max(18, Math.min(42, Math.floor(window.innerWidth / 42)));
-      fireflies = Array.from({ length: count }, () => ({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        radius: Math.random() * 2.2 + 1,
-        speedX: Math.random() * 0.45 + 0.18,
-        speedY: (Math.random() - 0.5) * 0.18,
-        glow: Math.random() * 0.35 + 0.4,
-        phase: Math.random() * Math.PI * 2,
-      }));
-    };
+		const buildFireflies = () => {
+			const desktop = window.innerWidth >= 1024;
+			if (!desktop) {
+				fireflies = [];
+				return;
+			}
 
-    canvas.width = width;
-    canvas.height = height;
-    buildFireflies();
+			const count = Math.max(18, Math.min(42, Math.floor(window.innerWidth / 42)));
+			fireflies = Array.from({ length: count }, () => ({
+				x: Math.random() * window.innerWidth,
+				y: Math.random() * window.innerHeight,
+				radius: Math.random() * 2.2 + 1,
+				speedX: Math.random() * 0.45 + 0.18,
+				speedY: (Math.random() - 0.5) * 0.18,
+				glow: Math.random() * 0.35 + 0.4,
+				phase: Math.random() * Math.PI * 2,
+			}));
+		};
 
-    const animate = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+		canvas.width = width;
+		canvas.height = height;
+		buildFireflies();
 
-      time += 0.005;
-      const dark = isDarkModeRef.current;
-      
-      if (dark) {
-        const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-        bgGrad.addColorStop(0, "#0a0a0f");
-        bgGrad.addColorStop(0.3, "#1a1a2e");
-        bgGrad.addColorStop(0.6, "#16213e");
-        bgGrad.addColorStop(1, "#0f0f1a");
-        ctx.fillStyle = bgGrad;
-      } else {
-        const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-        bgGrad.addColorStop(0, "#a8edea");
-        bgGrad.addColorStop(0.5, "#fed6e3");
-        bgGrad.addColorStop(1, "#d299c2");
-        ctx.fillStyle = bgGrad;
-      }
-      ctx.fillRect(0, 0, width, height);
-      const waveCount = 4;
-      for (let w = 0; w < waveCount; w++) {
-        ctx.beginPath();
-        
-        const waveOffset = w * 0.5;
-        const amplitude = 30 + w * 15;
-        const frequency = 0.003 + w * 0.001;
-        const yBase = height * (0.5 + w * 0.12);
-        
-        ctx.moveTo(0, height);
-        
-        for (let x = 0; x <= width; x += 5) {
-          const y = yBase + 
-            Math.sin(x * frequency + time + waveOffset) * amplitude +
-            Math.sin(x * frequency * 2 + time * 1.5 + waveOffset) * (amplitude * 0.5);
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(width, height);
-        ctx.closePath();
-        const waveGrad = ctx.createLinearGradient(0, yBase - amplitude, width, yBase + amplitude);
-        const alpha = 0.15 - w * 0.03;
-        
-        if (dark) {
-          waveGrad.addColorStop(0, `rgba(99, 102, 241, ${alpha})`);
-          waveGrad.addColorStop(0.5, `rgba(139, 92, 246, ${alpha})`);
-          waveGrad.addColorStop(1, `rgba(59, 130, 246, ${alpha})`);
-        } else {
-          waveGrad.addColorStop(0, `rgba(244, 114, 182, ${alpha + 0.1})`);
-          waveGrad.addColorStop(0.5, `rgba(168, 85, 247, ${alpha + 0.1})`);
-          waveGrad.addColorStop(1, `rgba(99, 102, 241, ${alpha + 0.1})`);
-        }
-        ctx.fillStyle = waveGrad;
-        ctx.fill();
-      }
+		const animate = () => {
+			width = window.innerWidth;
+			height = window.innerHeight;
+			canvas.width = width;
+			canvas.height = height;
 
-      if (width >= 1024) {
-        fireflies.forEach((firefly, index) => {
-          firefly.x += firefly.speedX;
-          firefly.y += firefly.speedY + Math.sin(time * 5 + firefly.phase) * 0.12;
+			time += 0.005;
+			const dark = isDarkModeRef.current;
 
-          if (firefly.x - firefly.radius > width) {
-            firefly.x = -firefly.radius;
-            firefly.y = Math.random() * height;
-          }
+			if (dark) {
+				const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+				bgGrad.addColorStop(0, "#0a0a0f");
+				bgGrad.addColorStop(0.3, "#1a1a2e");
+				bgGrad.addColorStop(0.6, "#16213e");
+				bgGrad.addColorStop(1, "#0f0f1a");
+				ctx.fillStyle = bgGrad;
+			} else {
+				const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+				bgGrad.addColorStop(0, "#a8edea");
+				bgGrad.addColorStop(0.5, "#fed6e3");
+				bgGrad.addColorStop(1, "#d299c2");
+				ctx.fillStyle = bgGrad;
+			}
+			ctx.fillRect(0, 0, width, height);
+			const waveCount = 4;
+			for (let w = 0; w < waveCount; w++) {
+				ctx.beginPath();
 
-          if (firefly.y < 0) {
-            firefly.y = height;
-          } else if (firefly.y > height) {
-            firefly.y = 0;
-          }
+				const waveOffset = w * 0.5;
+				const amplitude = 30 + w * 15;
+				const frequency = 0.003 + w * 0.001;
+				const yBase = height * (0.5 + w * 0.12);
 
-          const pulse = 0.65 + Math.sin(time * 8 + firefly.phase + index * 0.35) * 0.35;
-          const alpha = firefly.glow * pulse;
-          const glowRadius = firefly.radius * 5.5;
+				ctx.moveTo(0, height);
 
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 220, 102, ${alpha * 0.2})`;
-          ctx.arc(firefly.x, firefly.y, glowRadius, 0, Math.PI * 2);
-          ctx.fill();
+				for (let x = 0; x <= width; x += 5) {
+					const y = yBase +
+						Math.sin(x * frequency + time + waveOffset) * amplitude +
+						Math.sin(x * frequency * 2 + time * 1.5 + waveOffset) * (amplitude * 0.5);
+					ctx.lineTo(x, y);
+				}
+				ctx.lineTo(width, height);
+				ctx.closePath();
+				const waveGrad = ctx.createLinearGradient(0, yBase - amplitude, width, yBase + amplitude);
+				const alpha = 0.15 - w * 0.03;
 
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 232, 140, ${alpha})`;
-          ctx.arc(firefly.x, firefly.y, firefly.radius, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
+				if (dark) {
+					waveGrad.addColorStop(0, `rgba(99, 102, 241, ${alpha})`);
+					waveGrad.addColorStop(0.5, `rgba(139, 92, 246, ${alpha})`);
+					waveGrad.addColorStop(1, `rgba(59, 130, 246, ${alpha})`);
+				} else {
+					waveGrad.addColorStop(0, `rgba(244, 114, 182, ${alpha + 0.1})`);
+					waveGrad.addColorStop(0.5, `rgba(168, 85, 247, ${alpha + 0.1})`);
+					waveGrad.addColorStop(1, `rgba(99, 102, 241, ${alpha + 0.1})`);
+				}
+				ctx.fillStyle = waveGrad;
+				ctx.fill();
+			}
 
-      animationId = requestAnimationFrame(animate);
-    };
-    animate();
+			if (width >= 1024) {
+				fireflies.forEach((firefly, index) => {
+					firefly.x += firefly.speedX;
+					firefly.y += firefly.speedY + Math.sin(time * 5 + firefly.phase) * 0.12;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      buildFireflies();
-    };
-    
-    window.addEventListener("resize", resize);
-    
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animationId);
-    };
-  }, [mounted]);
+					if (firefly.x - firefly.radius > width) {
+						firefly.x = -firefly.radius;
+						firefly.y = Math.random() * height;
+					}
 
-  // Reset state when switching modes
-  useEffect(() => {
-    loginMethods.reset();
-    signupMethods.reset();
-    setVerificationError(null);
-    setSignupStep(0);
-    setLoading(false);
-    setUsernameCheckLoading(false);
-    setUsernameAvailable(null);
-    if (usernameCheckTimeout.current) {
-      clearTimeout(usernameCheckTimeout.current);
-    }
-  }, [mode]);
+					if (firefly.y < 0) {
+						firefly.y = height;
+					} else if (firefly.y > height) {
+						firefly.y = 0;
+					}
 
-  useEffect(() => {
-    return () => {
-      if (usernameCheckTimeout.current) {
-        clearTimeout(usernameCheckTimeout.current);
-      }
-    };
-  }, []);
+					const pulse = 0.65 + Math.sin(time * 8 + firefly.phase + index * 0.35) * 0.35;
+					const alpha = firefly.glow * pulse;
+					const glowRadius = firefly.radius * 5.5;
 
-  const checkUsernameAvailability = async (username: string) => {
-    if (!username || username.length < 2) {
-      setUsernameAvailable(null);
-      return;
-    }
+					ctx.beginPath();
+					ctx.fillStyle = `rgba(255, 220, 102, ${alpha * 0.2})`;
+					ctx.arc(firefly.x, firefly.y, glowRadius, 0, Math.PI * 2);
+					ctx.fill();
 
-    setUsernameCheckLoading(true);
-    setUsernameAvailable(null);
-    try {
-      await axios.post("/api/auth/checkUsername", { username });
-      signupMethods.clearErrors("username");
-      setUsernameAvailable(true);
-    } catch (e: any) {
-      const errorMessage = e?.response?.data?.error;
-      if (errorMessage) {
-        setErrSignup("username", {
-          type: "custom",
-          message: errorMessage,
-        });
-        setUsernameAvailable(false);
-      }
-    } finally {
-      setUsernameCheckLoading(false);
-    }
-  };
+					ctx.beginPath();
+					ctx.fillStyle = `rgba(255, 232, 140, ${alpha})`;
+					ctx.arc(firefly.x, firefly.y, firefly.radius, 0, Math.PI * 2);
+					ctx.fill();
+				});
+			}
 
-  const onUsernameChange = (username: string) => {
-    if (usernameCheckTimeout.current) {
-      clearTimeout(usernameCheckTimeout.current);
-    }
+			animationId = requestAnimationFrame(animate);
+		};
+		animate();
 
-    signupMethods.clearErrors("username");
-    setUsernameAvailable(null);
+		const resize = () => {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			buildFireflies();
+		};
 
-    usernameCheckTimeout.current = setTimeout(() => {
-      checkUsernameAvailability(username);
-    }, 800);
-  };
+		window.addEventListener("resize", resize);
 
-  const onSubmitLogin: SubmitHandler<LoginForm> = async (data) => {
-    setLoading(true);
-    try {
-      let req;
-      try {
-        req = await axios.post("/api/auth/login", data);
-      } catch (e: any) {
-        setLoading(false);
-        if (e.response.status === 403) {
-          const msg = e.response?.data?.error || 'Your account has been suspended.';
-          setSuspendedMessage(msg);
-          return;
-        }
-        if (e.response.status === 404) {
-          setErrLogin("username", {
-            type: "custom",
-            message: e.response.data.error,
-          });
-          return;
-        }
-        if (e.response.status === 401) {
-          // Only set error on password
-          setErrLogin("password", {
-            type: "custom",
-            message: e.response.data.error,
-          });
-          return;
-        }
-        setErrLogin("username", {
-          type: "custom",
-          message: "Something went wrong",
-        });
-        setErrLogin("password", {
-          type: "custom",
-          message: "Something went wrong",
-        });
-        return;
-      }
-      const { data: res } = req;
-      setLogin({ ...res.user, workspaces: res.workspaces });
-      Router.push("/");
-    } catch (e: any) {
-      const msg = e.response?.data?.error || "Something went wrong";
-      const status = e.response?.status;
+		return () => {
+			window.removeEventListener("resize", resize);
+			cancelAnimationFrame(animationId);
+		};
+	}, [mounted]);
 
-      if (status === 404 || status === 401) {
-        setErrLogin("username", { type: "custom", message: msg });
-        if (status === 401)
-          setErrLogin("password", { type: "custom", message: msg });
-      } else {
-        setErrLogin("username", { type: "custom", message: msg });
-        setErrLogin("password", { type: "custom", message: msg });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+	// Reset state when switching modes
+	useEffect(() => {
+		loginMethods.reset();
+		signupMethods.reset();
+		setVerificationError(null);
+		setSignupStep(0);
+		setLoading(false);
+		setUsernameCheckLoading(false);
+		setUsernameAvailable(null);
+		if (usernameCheckTimeout.current) {
+			clearTimeout(usernameCheckTimeout.current);
+		}
+	}, [mode]);
 
-  const onSubmitSignup: SubmitHandler<SignupForm> = async ({
-    username,
-    password,
-    verifypassword,
-  }) => {
-    if (password !== verifypassword) {
-      setErrSignup("verifypassword", {
-        type: "validate",
-        message: "Passwords must match",
-      });
-      return;
-    }
-    setLoading(true);
-    setVerificationError(null);
-    try {
-      // Start signup (get verification code)
-      const { data } = await axios.post("/api/auth/signup/start", { username });
-      setVerificationCode(data.code);
-      setSignupStep(2);
-    } catch (e: any) {
-      setErrSignup("username", {
-        type: "custom",
-        message: e.response?.data?.error || "Unexpected error occurred.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+	useEffect(() => {
+		return () => {
+			if (usernameCheckTimeout.current) {
+				clearTimeout(usernameCheckTimeout.current);
+			}
+		};
+	}, []);
 
-  const onVerifyAgain = async () => {
-    setLoading(true);
-    setVerificationError(null);
+	const checkUsernameAvailability = async (username: string) => {
+		if (!username || username.length < 2) {
+			setUsernameAvailable(null);
+			return;
+		}
 
-    const { password } = getSignupValues();
+		setUsernameCheckLoading(true);
+		setUsernameAvailable(null);
+		try {
+			await axios.post("/api/auth/checkUsername", { username });
+			signupMethods.clearErrors("username");
+			setUsernameAvailable(true);
+		} catch (e: any) {
+			const errorMessage = e?.response?.data?.error;
+			if (errorMessage) {
+				setErrSignup("username", {
+					type: "custom",
+					message: errorMessage,
+				});
+				setUsernameAvailable(false);
+			}
+		} finally {
+			setUsernameCheckLoading(false);
+		}
+	};
 
-    try {
-      const { data } = await axios.post("/api/auth/signup/finish", {
-        password,
-        code: verificationCode,
-      });
-      if (data.success) Router.push("/");
-      else setVerificationError("Verification failed. Please try again.");
-    } catch (e: any) {
-      const errorMessage =
-        e?.response?.data?.error || "Verification not found. Please try again.";
-      setVerificationError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+	const onUsernameChange = (username: string) => {
+		if (usernameCheckTimeout.current) {
+			clearTimeout(usernameCheckTimeout.current);
+		}
 
-  const StepButtons = ({
-    backStep,
-    forwardLabel,
-    onForward,
-  }: {
-    backStep?: () => void;
-    forwardLabel: string;
-    onForward: () => void;
-  }) => (
-    <div className="flex gap-4">
-      {backStep && (
-        <Button
-          onPress={backStep}
-          type="button"
-          classoverride="flex-1"
-          loading={loading}
-          disabled={loading}
-        >
-          Back
-        </Button>
-      )}
-      <Button
-        onPress={onForward}
-        classoverride="flex-1"
-        loading={loading}
-        disabled={loading}
-      >
-        {forwardLabel}
-      </Button>
-    </div>
-  );
+		signupMethods.clearErrors("username");
+		setUsernameAvailable(null);
 
-  return (
-    <div className="relative min-h-screen overflow-hidden">
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ zIndex: 0 }}
-      />
-      <div className="absolute inset-y-0 right-0 hidden w-full max-w-[34rem] bg-white/70 shadow-[-24px_0_80px_rgba(15,23,42,0.12)] dark:bg-zinc-900/80 lg:block" />
-      <div className="relative min-h-screen px-4 py-6 sm:px-6 lg:px-10 lg:py-0 lg:pr-0" style={{ zIndex: 1 }}>
-        <div className="pointer-events-none absolute left-10 top-8 hidden lg:block">
-          <img
-            src="/wlogo.svg"
-            alt="Firefli"
-            className="h-12 w-auto drop-shadow-[0_8px_24px_rgba(15,23,42,0.18)]"
-          />
-        </div>
-        <div className="absolute right-4 top-4 sm:right-6 sm:top-6 lg:hidden">
-          <ThemeToggle />
-        </div>
-        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl items-center lg:min-h-screen lg:max-w-none lg:items-stretch lg:gap-16">
-          <div className="hidden lg:block lg:flex-1" aria-hidden="true" />
+		usernameCheckTimeout.current = setTimeout(() => {
+			checkUsernameAvailability(username);
+		}, 800);
+	};
 
-          <div className="flex w-full items-center justify-center lg:ml-auto lg:min-w-[30rem] lg:max-w-[34rem] lg:justify-end lg:self-stretch">
-            <div className="relative w-full rounded-[2rem] bg-white/90 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-md dark:bg-zinc-800/80 sm:p-9 lg:flex lg:min-h-screen lg:rounded-none lg:border-l lg:border-zinc-200/70 lg:bg-white/88 lg:px-10 lg:py-24 lg:shadow-none lg:backdrop-blur-xl dark:lg:border-zinc-700/60 dark:lg:bg-zinc-900/82">
-              <div className="absolute right-8 top-8 hidden lg:block">
-                <ThemeToggle />
-              </div>
-              <div className="w-full lg:my-auto">
-              <div className="-mt-6 mb-5 flex justify-center">
-                <img
-                  src="/logo.svg"
-                  alt="Firefli logo"
-                  className="h-10 w-auto sm:h-12"
-                />
-              </div>
-              {suspendedMessage && (
-                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
-                  <p className="text-center text-sm font-medium text-red-800 dark:text-red-200">
-                    {suspendedMessage}
-                  </p>
-                </div>
-              )}
+	const onSubmitLogin: SubmitHandler<LoginForm> = async (data) => {
+		setLoading(true);
+		try {
+			let req;
+			try {
+				req = await axios.post("/api/auth/login", data);
+			} catch (e: any) {
+				setLoading(false);
+				if (e.response.status === 403) {
+					const msg = e.response?.data?.error || 'Your account has been suspended.';
+					setSuspendedMessage(msg);
+					return;
+				}
+				if (e.response.status === 404) {
+					setErrLogin("username", {
+						type: "custom",
+						message: e.response.data.error,
+					});
+					return;
+				}
+				if (e.response.status === 401) {
+					// Only set error on password
+					setErrLogin("password", {
+						type: "custom",
+						message: e.response.data.error,
+					});
+					return;
+				}
+				setErrLogin("username", {
+					type: "custom",
+					message: "Something went wrong",
+				});
+				setErrLogin("password", {
+					type: "custom",
+					message: "Something went wrong",
+				});
+				return;
+			}
+			const { data: res } = req;
+			setLogin({ ...res.user, workspaces: res.workspaces });
+			Router.push("/");
+		} catch (e: any) {
+			const msg = e.response?.data?.error || "Something went wrong";
+			const status = e.response?.status;
 
-              <div className="mb-6 flex justify-center space-x-8">
-                {["login", ...(oauthOnly ? [] : ["signup"])].map((m) => {
-                  const isActive = mode === m;
-                  const activeClass =
-                    theme === "dark"
-                      ? "border-b-2 border-blue-600 text-blue-600"
-                      : "border-b-2 border-pink-500 text-pink-500";
-                  return (
-                    <button
-                      key={m}
-                      onClick={() => setMode(m as any)}
-                      className={`pb-2 font-semibold text-lg ${
-                        isActive ? activeClass : "text-zinc-500"
-                      }`}
-                      type="button"
-                      disabled={loading}
-                    >
-                      {m === "login" ? "Login" : "Sign Up"}
-                    </button>
-                  );
-                })}
-              </div>
+			if (status === 404 || status === 401) {
+				setErrLogin("username", { type: "custom", message: msg });
+				if (status === 401)
+					setErrLogin("password", { type: "custom", message: msg });
+			} else {
+				setErrLogin("username", { type: "custom", message: msg });
+				setErrLogin("password", { type: "custom", message: msg });
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
 
-              {mode === "login" && (
-                <>
-                  <p className="mb-2 font-bold text-3xl text-zinc-700 dark:text-white">
-                    👋 Welcome to Firefli
-                  </p>
-                  <p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
-                    Login to your account to continue
-                  </p>
+	const onSubmitSignup: SubmitHandler<SignupForm> = async ({
+		username,
+		password,
+		verifypassword,
+	}) => {
+		if (password !== verifypassword) {
+			setErrSignup("verifypassword", {
+				type: "validate",
+				message: "Passwords must match",
+			});
+			return;
+		}
+		setLoading(true);
+		setVerificationError(null);
+		try {
+			// Start signup (get verification code)
+			const { data } = await axios.post("/api/auth/signup/start", { username });
+			setVerificationCode(data.code);
+			setSignupStep(2);
+		} catch (e: any) {
+			setErrSignup("username", {
+				type: "custom",
+				message: e.response?.data?.error || "Unexpected error occurred.",
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
 
-                  {!oauthOnly && (
-                    <FormProvider {...loginMethods}>
-                      <form
-                        onSubmit={submitLogin(onSubmitLogin)}
-                        className="mb-6 space-y-5"
-                        noValidate
-                      >
-                        <Input
-                          label="Username"
-                          placeholder="Username"
-                          id="username"
-                          {...regLogin("username", {
-                            required: "This field is required",
-                          })}
-                        />
-                        <Input
-                          label="Password"
-                          placeholder="Password"
-                          type={showPassword ? "text" : "password"}
-                          id="password"
-                          {...regLogin("password", {
-                            required: "This field is required",
-                          })}
-                        />
-                        <div className="mb-2 flex items-center">
-                          <input
-                            id="show-password"
-                            type="checkbox"
-                            checked={showPassword}
-                            onChange={() => setShowPassword((v) => !v)}
-                            className="mr-2 rounded-md border-gray-300 transition focus:border-primary focus:ring-primary"
-                          />
-                          <label
-                            htmlFor="show-password"
-                            className="select-none text-sm text-zinc-600 dark:text-zinc-300"
-                          >
-                            Show password
-                          </label>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Link
-                              href="/forgot-password"
-                              className="text-sm text-blue-600 hover:underline"
-                            >
-                              Forgot password?
-                            </Link>
-                            <Button
-                              type="submit"
-                              classoverride="rounded-lg px-6 py-2 text-sm"
-                              loading={loading}
-                              disabled={loading}
-                            >
-                              Login
-                            </Button>
-                          </div>
+	const onVerifyAgain = async () => {
+		setLoading(true);
+		setVerificationError(null);
 
-                          {isOAuth && (
-                            <>
-                              <div className="text-center">
-                                <div className="relative">
-                                  <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
-                                  </div>
-                                  <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white px-2 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
-                                      Or
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+		const { password } = getSignupValues();
 
-                              <div className="w-full">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    (window.location.href = "/api/auth/roblox/start")
-                                  }
-                                  disabled={loading}
-                                  className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                                >
-                                  <img
-                                    src="/roblox.svg"
-                                    alt="Roblox"
-                                    className="mr-2 h-5 w-5 invert dark:invert-0"
-                                  />
-                                  Continue with Roblox
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </form>
-                    </FormProvider>
-                  )}
+		try {
+			const { data } = await axios.post("/api/auth/signup/finish", {
+				password,
+				code: verificationCode,
+			});
+			if (data.success) Router.push("/");
+			else setVerificationError("Verification failed. Please try again.");
+		} catch (e: any) {
+			const errorMessage =
+				e?.response?.data?.error || "Verification not found. Please try again.";
+			setVerificationError(errorMessage);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-                  {isOAuth && oauthOnly && (
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          (window.location.href = "/api/auth/roblox/start")
-                        }
-                        disabled={loading}
-                        className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                      >
-                        <img
-                          src="/roblox.svg"
-                          alt="Roblox"
-                          className="mr-2 h-5 w-5 invert dark:invert-0"
-                        />
-                        Continue with Roblox
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
+	const StepButtons = ({
+		backStep,
+		forwardLabel,
+		onForward,
+	}: {
+		backStep?: () => void;
+		forwardLabel: string;
+		onForward: () => void;
+	}) => (
+		<div className="flex gap-4">
+			{backStep && (
+				<Button
+					onPress={backStep}
+					type="button"
+					classoverride="flex-1"
+					loading={loading}
+					disabled={loading}
+				>
+					Back
+				</Button>
+			)}
+			<Button
+				onPress={onForward}
+				classoverride="flex-1"
+				loading={loading}
+				disabled={loading}
+			>
+				{forwardLabel}
+			</Button>
+		</div>
+	);
 
-              {mode === "signup" && (
-                <>
-                  {signupStep === 0 && (
-                    <>
-                      <p className="mb-2 font-bold text-3xl text-zinc-700 dark:text-white">
-                        🔨 Create an account
-                      </p>
-                      <p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
-                        Create a new account for Firefli
-                      </p>
+	return (
+		<div className="relative min-h-screen overflow-hidden">
+			<canvas
+				ref={canvasRef}
+				className="absolute inset-0 w-full h-full"
+				style={{ zIndex: 0 }}
+			/>
+			<div className="absolute inset-y-0 right-0 hidden w-full max-w-[34rem] bg-white/70 shadow-[-24px_0_80px_rgba(15,23,42,0.12)] dark:bg-zinc-900/80 lg:block" />
+			<div className="relative min-h-screen px-4 py-6 sm:px-6 lg:px-10 lg:py-0 lg:pr-0" style={{ zIndex: 1 }}>
+				<div className="pointer-events-none absolute left-10 top-8 hidden lg:block">
 
-                      {!oauthOnly && (
-                        <FormProvider {...signupMethods}>
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              setSignupStep(1);
-                            }}
-                            className="mb-6 space-y-5"
-                            noValidate
-                          >
-                            <Input
-                              label="Username"
-                              placeholder="Username"
-                              id="signup-username"
-                              {...regSignup("username", {
-                                required: "This field is required",
-                                onChange: (e) => {
-                                  regSignup("username").onChange(e);
-                                  onUsernameChange(e.target.value);
-                                },
-                              })}
-                            />
-                            {usernameCheckLoading && (
-                              <p className="mt-1 text-sm text-blue-500">
-                                Checking username...
-                              </p>
-                            )}
-                            {!usernameCheckLoading && usernameAvailable === true && (
-                              <p className="mt-1 text-sm text-green-500">
-                                ✓ User signup is available
-                              </p>
-                            )}
-                            <div className="flex justify-end">
-                              <Button
-                                type="submit"
-                                loading={loading}
-                                disabled={
-                                  loading ||
-                                  usernameCheckLoading ||
-                                  usernameAvailable !== true ||
-                                  !!signupMethods.formState.errors.username
-                                }
-                              >
-                                Continue
-                              </Button>
-                            </div>
-                          </form>
-                        </FormProvider>
-                      )}
+					<img src="/logo.png" alt="Firefli" className="h-12 w-auto dark:hidden drop-shadow-[0_8px_24px_rgba(15,23,42,0.18)]" />
+					<img src="/wlogo.png" alt="Firefli" className="h-12 w-auto hidden dark:block drop-shadow-[0_8px_24px_rgba(15,23,42,0.18)]" />
+				</div>
+				<div className="absolute right-4 top-4 sm:right-6 sm:top-6 lg:hidden">
+					<ThemeToggle />
+				</div>
+				<div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl items-center lg:min-h-screen lg:max-w-none lg:items-stretch lg:gap-16">
+					<div className="hidden lg:block lg:flex-1" aria-hidden="true" />
 
-                      {isOAuth && (
-                        <>
-                          {!oauthOnly && (
-                            <div className="mt-4">
-                              <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                  <span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                  <span className="bg-white px-2 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
-                                    Or
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
+					<div className="flex w-full items-center justify-center lg:ml-auto lg:min-w-[30rem] lg:max-w-[34rem] lg:justify-end lg:self-stretch">
+						<div className="relative w-full rounded-[2rem] bg-white/90 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-md dark:bg-zinc-800/80 sm:p-9 lg:flex lg:min-h-screen lg:rounded-none lg:border-l lg:border-zinc-200/70 lg:bg-white/88 lg:px-10 lg:py-24 lg:shadow-none lg:backdrop-blur-xl dark:lg:border-zinc-700/60 dark:lg:bg-zinc-900/82">
+							<div className="absolute right-8 top-8 hidden lg:block">
+								<ThemeToggle />
+							</div>
+							<div className="w-full lg:my-auto">
+								<div className="-mt-6 mb-5 flex justify-center">
+									<img src="/logo.png" alt="Firefli" className="h-12 w-auto dark:hidden" />
+									<img src="/wlogo.png" alt="Firefli" className="h-12 w-auto hidden dark:block" />
+								</div>
+								{suspendedMessage && (
+									<div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
+										<p className="text-center text-sm font-medium text-red-800 dark:text-red-200">
+											{suspendedMessage}
+										</p>
+									</div>
+								)}
 
-                          <div className="mt-4">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                (window.location.href = "/api/auth/roblox/start")
-                              }
-                              disabled={loading}
-                              className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                            >
-                              <img
-                                src="/roblox.svg"
-                                alt="Roblox"
-                                className="mr-2 h-5 w-5 invert dark:invert-0"
-                              />
-                              Sign up with Roblox
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
+								<div className="mb-6 flex justify-center space-x-8">
+									{["login", ...(oauthOnly ? [] : ["signup"])].map((m) => {
+										const isActive = mode === m;
+										const activeClass =
+											theme === "dark"
+												? "border-b-2 border-blue-600 text-blue-600"
+												: "border-b-2 border-pink-500 text-pink-500";
+										return (
+											<button
+												key={m}
+												onClick={() => setMode(m as any)}
+												className={`pb-2 font-semibold text-lg ${isActive ? activeClass : "text-zinc-500"
+													}`}
+												type="button"
+												disabled={loading}
+											>
+												{m === "login" ? "Login" : "Sign Up"}
+											</button>
+										);
+									})}
+								</div>
 
-                  {signupStep === 1 && (
-                    <>
-                      <p className="mb-2 font-bold text-3xl text-zinc-700 dark:text-white">
-                        🔒 Set a password
-                      </p>
-                      <p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
-                        Choose a password for your new account
-                      </p>
+								{mode === "login" && (
+									<>
+										<p className="mb-2 font-bold text-3xl text-zinc-700 dark:text-white">
+											👋 Welcome to Firefli
+										</p>
+										<p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
+											Login to your account to continue
+										</p>
 
-                      <FormProvider {...signupMethods}>
-                        <form
-                          onSubmit={submitSignup(onSubmitSignup)}
-                          className="mb-6 space-y-5"
-                          noValidate
-                        >
-                          <Input
-                            label="Password"
-                            placeholder="Password"
-                            type="password"
-                            id="signup-password"
-                            {...regSignup("password", {
-                              required: "Password is required",
-                              minLength: {
-                                value: 7,
-                                message: "Password must be at least 7 characters",
-                              },
-                              pattern: {
-                                value: /^(?=.*[0-9!@#$%^&*])/,
-                                message:
-                                  "Password must contain at least one number or special character",
-                              },
-                            })}
-                          />
-                          <Input
-                            label="Verify password"
-                            placeholder="Verify Password"
-                            type="password"
-                            id="signup-verify-password"
-                            {...regSignup("verifypassword", {
-                              required: "Please verify your password",
-                              validate: (value) =>
-                                value === getSignupValues("password") ||
-                                "Passwords must match",
-                            })}
-                          />
-                          <div className="flex justify-between gap-2">
-                            <Button
-                              type="button"
-                              classoverride="flex-1 rounded-md px-3 py-1 text-sm"
-                              onPress={() => setSignupStep(0)}
-                              disabled={loading}
-                            >
-                              Back
-                            </Button>
-                            <Button
-                              type="submit"
-                              classoverride="flex-1 rounded-md px-3 py-1 text-sm"
-                              loading={loading}
-                              disabled={loading}
-                            >
-                              Continue
-                            </Button>
-                          </div>
+										{!oauthOnly && (
+											<FormProvider {...loginMethods}>
+												<form
+													onSubmit={submitLogin(onSubmitLogin)}
+													className="mb-6 space-y-5"
+													noValidate
+												>
+													<Input
+														label="Username"
+														placeholder="Username"
+														id="username"
+														{...regLogin("username", {
+															required: "This field is required",
+														})}
+													/>
+													<Input
+														label="Password"
+														placeholder="Password"
+														type={showPassword ? "text" : "password"}
+														id="password"
+														{...regLogin("password", {
+															required: "This field is required",
+														})}
+													/>
+													<div className="mb-2 flex items-center">
+														<input
+															id="show-password"
+															type="checkbox"
+															checked={showPassword}
+															onChange={() => setShowPassword((v) => !v)}
+															className="mr-2 rounded-md border-gray-300 transition focus:border-primary focus:ring-primary"
+														/>
+														<label
+															htmlFor="show-password"
+															className="select-none text-sm text-zinc-600 dark:text-zinc-300"
+														>
+															Show password
+														</label>
+													</div>
+													<div className="space-y-3">
+														<div className="flex items-center justify-between">
+															<Link
+																href="/forgot-password"
+																className="text-sm text-blue-600 hover:underline"
+															>
+																Forgot password?
+															</Link>
+															<Button
+																type="submit"
+																classoverride="rounded-lg px-6 py-2 text-sm"
+																loading={loading}
+																disabled={loading}
+															>
+																Login
+															</Button>
+														</div>
 
-                          {isOAuth && (
-                            <>
-                              <div className="mt-4">
-                                <div className="relative">
-                                  <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
-                                  </div>
-                                  <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white px-2 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
-                                      Or
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+														{isOAuth && (
+															<>
+																<div className="text-center">
+																	<div className="relative">
+																		<div className="absolute inset-0 flex items-center">
+																			<span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
+																		</div>
+																		<div className="relative flex justify-center text-xs uppercase">
+																			<span className="bg-white px-2 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+																				Or
+																			</span>
+																		</div>
+																	</div>
+																</div>
 
-                              <div className="mt-4">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    (window.location.href =
-                                      "/api/auth/roblox/start")
-                                  }
-                                  disabled={loading}
-                                  className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                                >
-                                  <img
-                                    src="/roblox.svg"
-                                    alt="Roblox"
-                                    className="mr-2 h-5 w-5"
-                                  />
-                                  Sign up with Roblox
-                                </button>
-                              </div>
-                            </>
-                          )}
+																<div className="w-full">
+																	<button
+																		type="button"
+																		onClick={() =>
+																			(window.location.href = "/api/auth/roblox/start")
+																		}
+																		disabled={loading}
+																		className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+																	>
+																		<img
+																			src="/roblox.svg"
+																			alt="Roblox"
+																			className="mr-2 h-5 w-5 invert dark:invert-0"
+																		/>
+																		Continue with Roblox
+																	</button>
+																</div>
+															</>
+														)}
+													</div>
+												</form>
+											</FormProvider>
+										)}
 
-                          <div className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                            <strong>Don't share your password.</strong>
-                            <br />
-                            <span>
-                              Do not use the same password as your Roblox account.
-                            </span>
-                          </div>
-                        </form>
-                      </FormProvider>
-                    </>
-                  )}
+										{isOAuth && oauthOnly && (
+											<div className="space-y-3">
+												<button
+													type="button"
+													onClick={() =>
+														(window.location.href = "/api/auth/roblox/start")
+													}
+													disabled={loading}
+													className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+												>
+													<img
+														src="/roblox.svg"
+														alt="Roblox"
+														className="mr-2 h-5 w-5 invert dark:invert-0"
+													/>
+													Continue with Roblox
+												</button>
+											</div>
+										)}
+									</>
+								)}
 
-                  {signupStep === 2 && (
-                    <>
-                      <p className="mb-2 font-bold text-3xl dark:text-white">
-                        Verify your account
-                      </p>
-                      <p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
-                        Paste this code into your Roblox profile bio:
-                      </p>
-                      <p className="mb-4 select-all rounded bg-zinc-700 py-3 text-center font-mono text-white">
-                        {verificationCode}
-                      </p>
-                      <div className="mb-4 space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
-                        <p>• Go to your Roblox profile</p>
-                        <p>• Click "Edit Profile"</p>
-                        <p>• Paste the code above into your Bio/About section</p>
-                        <p>• Save your profile and click "Verify" below</p>
-                      </div>
-                      {verificationError && (
-                        <p className="mb-4 text-center font-semibold text-red-500">
-                          {verificationError}
-                        </p>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          classoverride="flex-1"
-                          onPress={() => setSignupStep(1)}
-                          disabled={loading}
-                        >
-                          Back
-                        </Button>
-                        <Button
-                          classoverride="flex-1"
-                          loading={loading}
-                          disabled={loading}
-                          onPress={onVerifyAgain}
-                        >
-                          Verify
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-              </div>
-            </div>
-          </div>
-        </div>
+								{mode === "signup" && (
+									<>
+										{signupStep === 0 && (
+											<>
+												<p className="mb-2 font-bold text-3xl text-zinc-700 dark:text-white">
+													🔨 Create an account
+												</p>
+												<p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
+													Create a new account for Firefli
+												</p>
 
-      </div>
-    </div>
-  );
+												{!oauthOnly && (
+													<FormProvider {...signupMethods}>
+														<form
+															onSubmit={(e) => {
+																e.preventDefault();
+																setSignupStep(1);
+															}}
+															className="mb-6 space-y-5"
+															noValidate
+														>
+															<Input
+																label="Username"
+																placeholder="Username"
+																id="signup-username"
+																{...regSignup("username", {
+																	required: "This field is required",
+																	onChange: (e) => {
+																		regSignup("username").onChange(e);
+																		onUsernameChange(e.target.value);
+																	},
+																})}
+															/>
+															{usernameCheckLoading && (
+																<p className="mt-1 text-sm text-blue-500">
+																	Checking username...
+																</p>
+															)}
+															{!usernameCheckLoading && usernameAvailable === true && (
+																<p className="mt-1 text-sm text-green-500">
+																	✓ User signup is available
+																</p>
+															)}
+															<div className="flex justify-end">
+																<Button
+																	type="submit"
+																	loading={loading}
+																	disabled={
+																		loading ||
+																		usernameCheckLoading ||
+																		usernameAvailable !== true ||
+																		!!signupMethods.formState.errors.username
+																	}
+																>
+																	Continue
+																</Button>
+															</div>
+														</form>
+													</FormProvider>
+												)}
+
+												{isOAuth && (
+													<>
+														{!oauthOnly && (
+															<div className="mt-4">
+																<div className="relative">
+																	<div className="absolute inset-0 flex items-center">
+																		<span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
+																	</div>
+																	<div className="relative flex justify-center text-xs uppercase">
+																		<span className="bg-white px-2 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+																			Or
+																		</span>
+																	</div>
+																</div>
+															</div>
+														)}
+
+														<div className="mt-4">
+															<button
+																type="button"
+																onClick={() =>
+																	(window.location.href = "/api/auth/roblox/start")
+																}
+																disabled={loading}
+																className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+															>
+																<img
+																	src="/roblox.svg"
+																	alt="Roblox"
+																	className="mr-2 h-5 w-5 invert dark:invert-0"
+																/>
+																Sign up with Roblox
+															</button>
+														</div>
+													</>
+												)}
+											</>
+										)}
+
+										{signupStep === 1 && (
+											<>
+												<p className="mb-2 font-bold text-3xl text-zinc-700 dark:text-white">
+													🔒 Set a password
+												</p>
+												<p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
+													Choose a password for your new account
+												</p>
+
+												<FormProvider {...signupMethods}>
+													<form
+														onSubmit={submitSignup(onSubmitSignup)}
+														className="mb-6 space-y-5"
+														noValidate
+													>
+														<Input
+															label="Password"
+															placeholder="Password"
+															type="password"
+															id="signup-password"
+															{...regSignup("password", {
+																required: "Password is required",
+																minLength: {
+																	value: 7,
+																	message: "Password must be at least 7 characters",
+																},
+																pattern: {
+																	value: /^(?=.*[0-9!@#$%^&*])/,
+																	message:
+																		"Password must contain at least one number or special character",
+																},
+															})}
+														/>
+														<Input
+															label="Verify password"
+															placeholder="Verify Password"
+															type="password"
+															id="signup-verify-password"
+															{...regSignup("verifypassword", {
+																required: "Please verify your password",
+																validate: (value) =>
+																	value === getSignupValues("password") ||
+																	"Passwords must match",
+															})}
+														/>
+														<div className="flex justify-between gap-2">
+															<Button
+																type="button"
+																classoverride="flex-1 rounded-md px-3 py-1 text-sm"
+																onPress={() => setSignupStep(0)}
+																disabled={loading}
+															>
+																Back
+															</Button>
+															<Button
+																type="submit"
+																classoverride="flex-1 rounded-md px-3 py-1 text-sm"
+																loading={loading}
+																disabled={loading}
+															>
+																Continue
+															</Button>
+														</div>
+
+														{isOAuth && (
+															<>
+																<div className="mt-4">
+																	<div className="relative">
+																		<div className="absolute inset-0 flex items-center">
+																			<span className="w-full border-t border-zinc-300 dark:border-zinc-600" />
+																		</div>
+																		<div className="relative flex justify-center text-xs uppercase">
+																			<span className="bg-white px-2 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+																				Or
+																			</span>
+																		</div>
+																	</div>
+																</div>
+
+																<div className="mt-4">
+																	<button
+																		type="button"
+																		onClick={() =>
+																		(window.location.href =
+																			"/api/auth/roblox/start")
+																		}
+																		disabled={loading}
+																		className="w-full flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+																	>
+																		<img
+																			src="/roblox.svg"
+																			alt="Roblox"
+																			className="mr-2 h-5 w-5"
+																		/>
+																		Sign up with Roblox
+																	</button>
+																</div>
+															</>
+														)}
+
+														<div className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-400">
+															<strong>Don't share your password.</strong>
+															<br />
+															<span>
+																Do not use the same password as your Roblox account.
+															</span>
+														</div>
+													</form>
+												</FormProvider>
+											</>
+										)}
+
+										{signupStep === 2 && (
+											<>
+												<p className="mb-2 font-bold text-3xl dark:text-white">
+													Verify your account
+												</p>
+												<p className="mb-6 text-md text-zinc-600 dark:text-zinc-300">
+													Paste this code into your Roblox profile bio:
+												</p>
+												<p className="mb-4 select-all rounded bg-zinc-700 py-3 text-center font-mono text-white">
+													{verificationCode}
+												</p>
+												<div className="mb-4 space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+													<p>• Go to your Roblox profile</p>
+													<p>• Click "Edit Profile"</p>
+													<p>• Paste the code above into your Bio/About section</p>
+													<p>• Save your profile and click "Verify" below</p>
+												</div>
+												{verificationError && (
+													<p className="mb-4 text-center font-semibold text-red-500">
+														{verificationError}
+													</p>
+												)}
+												<div className="flex gap-2">
+													<Button
+														type="button"
+														classoverride="flex-1"
+														onPress={() => setSignupStep(1)}
+														disabled={loading}
+													>
+														Back
+													</Button>
+													<Button
+														classoverride="flex-1"
+														loading={loading}
+														disabled={loading}
+														onPress={onVerifyAgain}
+													>
+														Verify
+													</Button>
+												</div>
+											</>
+										)}
+									</>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	);
 };
 
 export default Login;

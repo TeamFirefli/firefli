@@ -32,7 +32,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   let xml_string = fs.readFileSync(path.join("Firefli-activity.rbxmx"), "utf8");
   res.setHeader(
     "Content-Disposition",
-    "attachment; filename=Firefli-activity.rbxmx"
+    `attachment; filename=Firefli-activity-${req.query.id as string}.rbxmx`
   );
 
   let protocol =
@@ -47,11 +47,19 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   const host = req.headers.host;
+  let minrole = "0"
+  if (!activityconfig?.role) {
+	minrole="0"
+  } else {
+	minrole = activityconfig.role as string
+  }
 
   let currentUrl = new URL(`${protocol}://${host}`);
   let xx = xml_string
     .replace("<apikey>", activityconfig.key)
-    .replace("<url>", currentUrl.origin);
+    .replace("<url>", currentUrl.origin)
+	.replace("<groupid>", req.query.id as string)
+	.replace("<minrole>", minrole)
 
   //send file and set content type
   res.setHeader("Content-Type", "application/rbxmx");
