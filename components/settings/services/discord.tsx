@@ -858,7 +858,7 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
             </div>
           </div>
           <a
-            href="https://discord.com/oauth2/authorize?client_id=1499467051104866435"
+            href="https://discord.com/oauth2/authorize?client_id=1499467051104866435&permissions=6773002364774400&integration_type=0&scope=bot+applications.commands"
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1.5 text-sm font-medium text-white bg-[#5865F2] rounded-lg hover:bg-[#4752c4] transition-colors"
