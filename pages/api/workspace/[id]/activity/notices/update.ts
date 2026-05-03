@@ -4,6 +4,7 @@ import prisma from '@/utils/database';
 import { logAudit } from '@/utils/logs';
 import { withPermissionCheck } from '@/utils/permissionsManager';
 import { sendNoticeNotification } from '@/utils/notice-notification';
+import { createNotification } from '@/utils/notifications';
 
 type Data = {
   success: boolean;
@@ -98,7 +99,6 @@ export async function handler(
       });
       try { await logAudit(after.workspaceGroupId, (req as any).session?.userid || null, status === 'approve' ? 'notice.approve' : 'notice.deny', `notice:${id}`, { before, after, reviewer: (req as any).session?.userid || null }); } catch (e) {}
 
-      // Send notice notification via Discord DM
       sendNoticeNotification(
         after.workspaceGroupId,
         Number(after.userId),
@@ -112,6 +112,16 @@ export async function handler(
           reviewedBy: req.session?.userid ? String(req.session.userid) : null,
         }
       ).catch((e) => console.error('[Notice] Failed to send notification:', e));
+      createNotification(
+        after.userId,
+        after.workspaceGroupId,
+        status === 'approve' ? 'notice_approved' : 'notice_denied',
+        status === 'approve' ? 'Notice Approved' : 'Notice Denied',
+        status === 'approve'
+          ? `Your inactivity notice has been approved.${reviewComment ? ` Comment: ${reviewComment}` : ''}`
+          : `Your inactivity notice has been denied.${reviewComment ? ` Reason: ${reviewComment}` : ''}`,
+        `/workspace/${after.workspaceGroupId}/notices`
+      ).catch(() => {});
     }
 
     return res.status(200).json({ success: true });

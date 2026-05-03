@@ -9,6 +9,7 @@ import { Fragment } from "react";
 import ThemeToggle from "./ThemeToggle";
 import VerifiedBadge from "./partners";
 import { usePartners } from "@/hooks/usePartners";
+import Notification from "./notifications";
 
 const BG_COLORS = [
   "bg-amber-200",
@@ -186,7 +187,11 @@ const Topbar: NextPage = () => {
 						<div className="sm:hidden">
 							<ThemeToggle />
 						</div>
-						<Menu as="div" className="relative">
+					{isInWorkspace && (
+						<div className="hidden sm:block">
+							<Notification variant="topbar" />
+						</div>
+					)}						<Menu as="div" className="relative">
 						<Menu.Button className="flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
 							<div className={`h-7 w-7 rounded-full ${getRandomBg(login?.userId)} flex items-center justify-center overflow-hidden`}>
 								<img

@@ -7,6 +7,7 @@ import { withSessionRoute } from "@/lib/withSession";
 import { withPermissionCheck } from "@/utils/permissionsManager";
 import { RankGunAPI, getRankGun, getRankingProvider } from "@/utils/rankgun";
 import { sendBloxlinkNotification } from "@/utils/bloxlink-notification";
+import { createNotification, type NotificationType } from "@/utils/notifications";
 
 import {
   getUsername,
@@ -613,6 +614,40 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
     );
   } catch (e) {}
+  {
+    const notifTypeMap: Record<string, NotificationType> = {
+      warning: 'userbook_warning',
+      promotion: 'userbook_promotion',
+      demotion: 'userbook_demotion',
+      termination: 'userbook_termination',
+      resignation: 'userbook_resignation',
+    };
+    const notifTitleMap: Record<string, string> = {
+      warning: 'Warning Issued',
+      promotion: 'Promotion',
+      demotion: 'Demotion',
+      termination: 'Termination',
+      resignation: 'Resignation Recorded',
+    };
+    const notifBodyMap: Record<string, string> = {
+      warning: `You have received a warning: ${notes}`,
+      promotion: rankNameAfter ? `You have been promoted to ${rankNameAfter}.` : `You have been promoted.`,
+      demotion: rankNameAfter ? `You have been demoted to ${rankNameAfter}.` : `You have been demoted.`,
+      termination: `Your membership has been terminated. Reason: ${notes}`,
+      resignation: `Your resignation has been recorded.`,
+    };
+    const notifType = notifTypeMap[type] as NotificationType | undefined;
+    if (notifType) {
+      createNotification(
+        BigInt(uid as string),
+        workspaceGroupId,
+        notifType,
+        notifTitleMap[type] ?? type,
+        notifBodyMap[type] ?? notes,
+        `/workspace/${workspaceGroupId}/profile/${uid}`
+      ).catch(() => {});
+    }
+  }
 
   // Send Bloxlink DM notification if requested and Bloxlink is configured
   if (notifyDiscord && (type === 'promotion' || type === 'demotion' || type === 'warning' || type === 'termination' || type === 'resignation')) {

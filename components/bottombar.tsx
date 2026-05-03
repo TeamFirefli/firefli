@@ -25,6 +25,7 @@ import { Dialog, Transition } from "@headlessui/react"
 import { Fragment } from "react"
 import axios from "axios"
 import { useSetRecoilState } from "recoil";
+import NotificationsPanel from "./notifications";
 
 const BottomBar: NextPage = () => {
   const [login] = useRecoilState(loginState)
@@ -123,7 +124,7 @@ const BottomBar: NextPage = () => {
               </button>
             )
           })}
-
+          <NotificationsPanel variant="bottombar" />
           {morePages.length > 0 && (
             <button
               onClick={() => { setShowMore(true); }}
