@@ -847,52 +847,24 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
         </div>
       </div>
 
-      {/* Session Notifications */}
       <div>
-        <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-2">Session Notifications</h4>
-        <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { key: 'create', label: 'On create', value: editSessionNotifyOnCreate, toggle: () => { setEditSessionNotifyOnCreate(!editSessionNotifyOnCreate); checkForChanges(); } },
-              { key: 'claim', label: 'On claim', value: editSessionNotifyOnClaim, toggle: () => { setEditSessionNotifyOnClaim(!editSessionNotifyOnClaim); checkForChanges(); } },
-              { key: 'start', label: 'On start', value: editSessionNotifyOnStart, toggle: () => { setEditSessionNotifyOnStart(!editSessionNotifyOnStart); checkForChanges(); } },
-            ].map(item => (
-              <div
-                key={item.key}
-                onClick={item.toggle}
-                className={`px-3 py-2 rounded-lg border text-sm text-center transition-colors cursor-pointer hover:opacity-80 ${
-                  item.value
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-medium'
-                    : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500'
-                }`}
-              >
-                {item.label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Session Channel */}
-      <div>
-        <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-2">Session Channel</h4>
-        <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+        <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-2">Session Integration</h4>
+        <div className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#5865F2]/30 dark:border-[#5865F2]/40 bg-[#5865F2]/5 dark:bg-[#5865F2]/10">
           <div className="flex items-center gap-2.5">
-            <IconCalendarEvent className="w-4 h-4 text-zinc-400" />
-            <p className="text-sm font-medium text-zinc-900 dark:text-white">Channel</p>
+            <IconBrandDiscord className="w-4 h-4 text-[#5865F2]" />
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Session Bot</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">This bot connects sessions to Discord</p>
+            </div>
           </div>
-          <select
-            value={editSessionChannelId}
-            onChange={(e) => { setEditSessionChannelId(e.target.value); checkForChanges(); }}
-            onFocus={fetchSessionChannels}
-            className="px-3 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white text-sm min-w-[180px]"
+          <a
+            href="https://discord.com/oauth2/authorize?client_id=1499467051104866435"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 text-sm font-medium text-white bg-[#5865F2] rounded-lg hover:bg-[#4752c4] transition-colors"
           >
-            <option value="">Using main channel</option>
-            {loadingSessionChannels && <option disabled>Loading channels...</option>}
-            {sessionChannels.map(ch => (
-              <option key={ch.id} value={ch.id}>#{ch.name}</option>
-            ))}
-          </select>
+            Invite Bot
+          </a>
         </div>
       </div>
 
@@ -970,10 +942,6 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     { key: 'notice-submit', label: 'Notice', icon: IconFileText, target: 'dm' as const },
     { key: 'notice-approval', label: 'Approved', icon: IconCircleCheck, target: 'dm' as const },
     { key: 'notice-denial', label: 'Denied', icon: IconCircleX, target: 'dm' as const },
-    { key: 'session-create', label: 'Created', icon: IconCalendarEvent, target: 'channel' as const },
-    { key: 'session-claim', label: 'Claimed', icon: IconCalendarEvent, target: 'channel' as const },
-    { key: 'session-start', label: 'Started', icon: IconCalendarEvent, target: 'channel' as const },
-    { key: 'session-review', label: 'Review', icon: IconClipboardCheck, target: 'dm' as const },
   ];
 
   const getEmbedValues = (cat: string) => {
