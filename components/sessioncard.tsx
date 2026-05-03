@@ -525,20 +525,17 @@ const SessionModal: React.FC<SessionModalProps> = ({
       }}
     >
       <div className="bg-white dark:bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl w-full max-w-3xl overflow-x-hidden fixed top-12 bottom-16 left-0 right-0 sm:relative sm:inset-auto sm:h-auto sm:max-h-[90vh] sm:mx-4 lg:mx-auto" style={{ overflowY: 'overlay' as any }}>
-
-        {/* ── BANNER ─────────────────────────────────────────── */}
         <div className="relative h-44 sm:h-52 overflow-hidden rounded-t-none sm:rounded-t-xl flex-shrink-0">
-          {/* Background image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center scale-105 transition-all"
-            style={{ backgroundImage: `url(${gameThumbnail || workspace.groupThumbnail || ""})` }}
-          />
-          {/* Darken + blur */}
+          {gameThumbnail ? (
+            <div
+              className="absolute inset-0 bg-cover bg-center scale-105 transition-all"
+              style={{ backgroundImage: `url(${gameThumbnail})` }}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-zinc-800" />
+          )}
           <div className="absolute inset-0 backdrop-blur-[2px] bg-black/50" />
-          {/* Bottom gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-
-          {/* Top row: type badges + close */}
           <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
             <div className="flex flex-wrap gap-1.5">
               {session.type && (
