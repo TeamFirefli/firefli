@@ -65,6 +65,7 @@ interface SessionModalProps {
   workspaceMembers: any[];
   canManage: boolean;
   canAddNotes?: boolean;
+  canEditConcluded?: boolean;
   sessionColors?: SessionColors;
   colorsReady?: boolean | undefined;
   currentUserRankId?: number | null;
@@ -80,6 +81,7 @@ const SessionModal: React.FC<SessionModalProps> = ({
   workspaceMembers,
   canManage,
   canAddNotes,
+  canEditConcluded,
   sessionColors,
   colorsReady,
   currentUserRankId,
@@ -646,10 +648,13 @@ const SessionModal: React.FC<SessionModalProps> = ({
                                       onValueChange={(value) => handleSlotClaim(slotData.id, i, value)}
                                       isSubmitting={isSubmitting}
                                       canEdit={
-                                        canManage ||
-                                        canAssignUsers(workspace.yourPermission, session.type) ||
-                                        workspace.yourPermission.includes("admin") ||
-                                        canClaimSelf(workspace.yourPermission, session.type)
+                                        (!isConcluded || !!canEditConcluded) &&
+                                        (
+                                          canManage ||
+                                          canAssignUsers(workspace.yourPermission, session.type) ||
+                                          workspace.yourPermission.includes("admin") ||
+                                          canClaimSelf(workspace.yourPermission, session.type)
+                                        )
                                       }
                                       availableUsers={availableUsers}
                                       currentUserId={login.userId}
@@ -707,10 +712,13 @@ const SessionModal: React.FC<SessionModalProps> = ({
           {(() => {
             const sessionType = session.type || "other";
             const canAssignTag =
-              canManage ||
-              workspace.isAdmin ||
-              workspace.yourPermission?.includes(`sessions_${sessionType}_assign_tag`) ||
-              workspace.yourPermission?.includes("admin");
+              (!isConcluded || !!canEditConcluded) &&
+              (
+                canManage ||
+                workspace.isAdmin ||
+                workspace.yourPermission?.includes(`sessions_${sessionType}_assign_tag`) ||
+                workspace.yourPermission?.includes("admin")
+              );
             if (!canAssignTag) return null;
 
             return (
@@ -810,7 +818,7 @@ const SessionModal: React.FC<SessionModalProps> = ({
 
           <NotesSection
             sessionId={session.id}
-            canManage={canAddNotes ?? canManage}
+            canManage={(canAddNotes ?? canManage) && (!isConcluded || !!canEditConcluded)}
             currentUser={login}
             refreshKey={refreshKey}
             onDataChange={refreshSessionData}

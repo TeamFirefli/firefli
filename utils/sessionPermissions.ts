@@ -3,7 +3,7 @@ export type SessionType = 'shift' | 'training' | 'event' | 'other';
 export function hasSessionPermission(
   permissions: string[],
   sessionType: string | null | undefined,
-  action: 'see' | 'assign' | 'claim' | 'unscheduled' | 'scheduled' | 'manage' | 'notes'
+  action: 'see' | 'assign' | 'claim' | 'unscheduled' | 'scheduled' | 'manage' | 'notes' | 'assign_tag' | 'edit_concluded'
 ): boolean {
   if (permissions.includes('admin')) return true;
   
@@ -39,6 +39,10 @@ export function canManageSession(permissions: string[], sessionType: string | nu
 
 export function canAddNotes(permissions: string[], sessionType: string | null | undefined): boolean {
   return hasSessionPermission(permissions, sessionType, 'notes');
+}
+
+export function canEditConcluded(permissions: string[], sessionType: string | null | undefined): boolean {
+  return hasSessionPermission(permissions, sessionType, 'edit_concluded');
 }
 
 export function canCreateAnySession(permissions: string[]): boolean {

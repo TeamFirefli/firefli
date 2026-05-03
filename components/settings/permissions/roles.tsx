@@ -68,6 +68,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       [`Manage ${typeCapitalized} Sessions`]: `sessions_${type}_manage`,
       [`Add Notes to ${typeCapitalized} Sessions`]: `sessions_${type}_notes`,
       [`Assign Tag to ${typeCapitalized} Sessions`]: `sessions_${type}_assign_tag`,
+      [`Edit Concluded ${typeCapitalized} Sessions`]: `sessions_${type}_edit_concluded`,
     };
   });
 
