@@ -235,8 +235,8 @@ export default function NewToTeam() {
 
   return (
     <>
-      <div className="overflow-visible">
-        <div className="flex gap-6 overflow-x-auto overflow-y-visible pb-4 px-1 -mx-1 sm:mx-0 sm:overflow-visible touch-pan-x">
+      <div className="overflow-hidden">
+        <div className="flex gap-6 overflow-x-auto overflow-y-visible pb-4 px-1 -mx-1 sm:mx-0 sm:overflow-hidden touch-pan-x">
           {members.map((m) => {
             const isCurrentUser = currentUserId && m.userid === currentUserId;
             const isPlaying = playingId === m.userid;
@@ -251,7 +251,7 @@ export default function NewToTeam() {
                   <img
                     src={m.picture || `/api/workspace/[id]/avatar/${m.userid}`}
                     alt={m.username}
-                    className={`w-20 h-20 ${getRandomBg(m.userid)} rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow transition-all dark:ring-primary/10 ring-white hover:border-blue-500 ring-2 hover:ring-blue-300`}
+                    className={`w-20 h-20 ${getRandomBg(m.userid)} rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow transition-all ring-2 ring-primary/10 hover:ring-primary`}
                     onError={(e) => { (e.target as HTMLImageElement).src = "/default-avatar.jpg"; }}
                   />
 
