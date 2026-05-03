@@ -38,15 +38,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# Planetary CLRUN
-.planetary
-.cl-run-featureflags
-.planetary-instanceconfig
 .env.example
 
 Frame_5_3.png
 /public/avatars
+/public/places
 /scripts
 
 # build

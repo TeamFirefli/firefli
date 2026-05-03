@@ -221,22 +221,18 @@ const SessionModal: React.FC<SessionModalProps> = ({
   }, [session.sessionTagId]);
 
   useEffect(() => {
-    const fetchGameThumbnail = async () => {
-      const placeId = session.sessionType?.gameId;
-      if (!placeId || !workspaceId) {
-        setGameThumbnail(null);
-        return;
-      }
-      try {
-        const res = await axios.get(
-          `/api/workspace/${workspaceId}/sessions/game-thumbnail?placeId=${placeId}`
-        );
-        setGameThumbnail(res.data?.thumbnailUrl || null);
-      } catch {
-        setGameThumbnail(null);
-      }
-    };
-    if (isOpen) fetchGameThumbnail();
+    if (!isOpen) return;
+    setGameThumbnail(null);
+    const placeId = session.sessionType?.gameId;
+    if (!placeId || !workspaceId) return;
+    let cancelled = false;
+    axios
+      .get(`/api/workspace/${workspaceId}/sessions/game-thumbnail?placeId=${placeId}`)
+      .then((res) => {
+        if (!cancelled) setGameThumbnail(res.data?.thumbnailUrl || null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [isOpen, session.sessionType?.gameId, workspaceId]);
 
   const handleTagAssignment = async (tagId: string | null) => {
@@ -526,13 +522,12 @@ const SessionModal: React.FC<SessionModalProps> = ({
     >
       <div className="bg-white dark:bg-zinc-900 rounded-none sm:rounded-xl shadow-2xl w-full max-w-3xl overflow-x-hidden fixed top-12 bottom-16 left-0 right-0 sm:relative sm:inset-auto sm:h-auto sm:max-h-[90vh] sm:mx-4 lg:mx-auto" style={{ overflowY: 'overlay' as any }}>
         <div className="relative h-44 sm:h-52 overflow-hidden rounded-t-none sm:rounded-t-xl flex-shrink-0">
-          {gameThumbnail ? (
+          <div className="absolute inset-0 bg-zinc-800" />
+          {gameThumbnail && (
             <div
-              className="absolute inset-0 bg-cover bg-center scale-105 transition-all"
+              className="absolute inset-0 bg-cover bg-center scale-105 transition-opacity duration-500"
               style={{ backgroundImage: `url(${gameThumbnail})` }}
             />
-          ) : (
-            <div className="absolute inset-0 bg-zinc-800" />
           )}
           <div className="absolute inset-0 backdrop-blur-[2px] bg-black/50" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />

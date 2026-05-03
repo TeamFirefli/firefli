@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withSessionRoute } from "@/lib/withSession";
 import axios from "axios";
+import fs from "fs";
+import path from "path";
+
+const CACHE_DIR = path.join(process.cwd(), "public", "places");
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 type Data = {
   success: boolean;
@@ -20,38 +25,61 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   if (!placeId || !/^\d+$/.test(placeId))
     return res.status(400).json({ success: false, error: "Invalid placeId" });
 
+  if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+
+  const cacheFile = path.join(CACHE_DIR, `${placeId}.png`);
+  const publicUrl = `/places/${placeId}.png`;
+  if (fs.existsSync(cacheFile)) {
+    const { mtimeMs } = fs.statSync(cacheFile);
+    if (Date.now() - mtimeMs < CACHE_TTL_MS) {
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      return res.status(200).json({ success: true, thumbnailUrl: publicUrl });
+    }
+  }
+
   const noThrow = { timeout: 8000, validateStatus: () => true };
 
-  try {
-    const directThumbRes = await axios.get(
-      `https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${placeId}&size=768x432&format=Png&isCircular=false`,
-      noThrow
-    );
-    const directUrl = directThumbRes.data?.data?.[0]?.thumbnails?.[0]?.imageUrl;
-    if (directUrl) {
-      res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
-      return res.status(200).json({ success: true, thumbnailUrl: directUrl });
-    }
-
-    const placeDetailsRes = await axios.get(
-      `https://games.roblox.com/v1/games/multiget-place-details?placeIds=${placeId}`,
-      noThrow
-    );
-    const universeId: number | undefined = placeDetailsRes.data?.[0]?.universeId;
-    if (!universeId)
-      return res.status(404).json({ success: false, error: "Universe not found" });
-
-    const thumbRes = await axios.get(
+  const getThumbnailByUniverseId = async (universeId: string | number) => {
+    const r = await axios.get(
       `https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${universeId}&size=768x432&format=Png&isCircular=false`,
       noThrow
     );
-    const thumbnailUrl: string | undefined = thumbRes.data?.data?.[0]?.thumbnails?.[0]?.imageUrl;
-    if (!thumbnailUrl)
-      return res.status(404).json({ success: false, error: "Thumbnail not found" });
+    const entry = r.data?.data?.[0];
+    const url: string | undefined = entry?.thumbnails?.[0]?.imageUrl;
+    return url && entry?.thumbnails?.[0]?.state === "Completed" ? url : undefined;
+  };
 
-    res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
-    return res.status(200).json({ success: true, thumbnailUrl });
+  try {
+    let robloxUrl: string | undefined;
+    robloxUrl = await getThumbnailByUniverseId(placeId);
+    if (!robloxUrl) {
+      const universeRes = await axios.get(
+        `https://apis.roblox.com/universes/v1/places/${placeId}/universe`,
+        noThrow
+      );
+      const universeId: number | undefined = universeRes.data?.universeId;
+      if (universeId) robloxUrl = await getThumbnailByUniverseId(universeId);
+    }
+
+    if (!robloxUrl) {
+      if (fs.existsSync(cacheFile)) {
+        return res.status(200).json({ success: true, thumbnailUrl: publicUrl });
+      }
+      return res.status(404).json({ success: false, error: "Thumbnail not found" });
+    }
+
+    const imgRes = await axios.get<ArrayBuffer>(robloxUrl, {
+      responseType: "arraybuffer",
+      timeout: 8000,
+    });
+    fs.writeFileSync(cacheFile, Buffer.from(imgRes.data));
+
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    return res.status(200).json({ success: true, thumbnailUrl: publicUrl });
   } catch {
+    if (fs.existsSync(cacheFile)) {
+      return res.status(200).json({ success: true, thumbnailUrl: publicUrl });
+    }
     return res.status(502).json({ success: false, error: "Failed to fetch thumbnail" });
   }
 }
