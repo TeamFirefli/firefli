@@ -51,4 +51,4 @@ Frame_5_3.png
 
 # build
 deploy.sh
-deploy.sh
+ecosystem.config.js
