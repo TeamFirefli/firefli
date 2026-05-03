@@ -22,7 +22,6 @@ export async function handler(
 	try {
 		const date = new Date();
 		const groupId = req.body.groupId
-		const notes = req.body.notes || "This note is empty"
 		const reps = req.body.reps
 
 		const groupInfo = await noblox.getGroup(groupId)
@@ -33,7 +32,6 @@ export async function handler(
 
 		await prisma.ally.create({
 			data: {
-				notes: [notes],
 				workspaceGroupId: parseInt(req.query.id as string),
 				groupId: groupId,
 				name: groupInfo.name,
