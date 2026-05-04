@@ -1,5 +1,4 @@
 import { getIronSession, SessionOptions } from "iron-session";
-import * as crypto from "crypto";
 import zxcvbn from 'zxcvbn';
 import {
   GetServerSidePropsContext,
@@ -10,17 +9,20 @@ import {
 } from "next";
 import { isUserBlocked, logBlockedAccess } from "@/utils/blocklist";
 
-if (process.env.NODE_ENV === 'production') {
-  const secret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
-  const strength = zxcvbn(secret);
-  if (strength.score < 4) { 
-    throw new Error(
-      `SESSION_SECRET is not strong enough. Score: ${strength.score}/4. Please generate a secret, e.g using "openssl rand -base64 32" or use a password manager to generate a secure password.`
-    );
-  }
+if (!process.env.SESSION_SECRET) {
+  throw new Error(
+    'SESSION_SECRET environment variable is not set. Generate one with "openssl rand -base64 32".'
+  );
 }
 
-const code = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const strength = zxcvbn(process.env.SESSION_SECRET);
+if (strength.score < 4) {
+  throw new Error(
+    `SESSION_SECRET is not strong enough. Score: ${strength.score}/4. Please generate a secret, e.g using "openssl rand -base64 32" or use a password manager to generate a secure password.`
+  );
+}
+
+const code = process.env.SESSION_SECRET;
 
 const sessionOptions: SessionOptions = {
   password: code,
