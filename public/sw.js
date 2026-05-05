@@ -47,8 +47,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (
-    url.pathname.startsWith('/_next/image') ||
-    /\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/.test(url.pathname)
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/_next/image') ||
+    /\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/.test(url.pathname))
   ) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
