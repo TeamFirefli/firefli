@@ -154,11 +154,14 @@ const Activity: pageWithLayout = () => {
         }
 
         if (sessionHistoryData.length > 0) {
+          const now = new Date();
           timelineData.push(
-            ...sessionHistoryData.map((s: any) => ({
-              ...s,
-              __type: "sessionEntry",
-            }))
+            ...sessionHistoryData
+              .filter((s: any) => new Date(s.date) <= now)
+              .map((s: any) => ({
+                ...s,
+                __type: "sessionEntry",
+              }))
           );
         }
 
