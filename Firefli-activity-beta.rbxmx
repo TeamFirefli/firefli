@@ -44,8 +44,8 @@ local Configuration = {
 	-- Do not touch
 	url = "<url>",
 	auth = "<apikey>",
-	minTrackedRank = <minrole>,
-	groupId = <groupid>,
+	minTrackedRank = '<minrole>',
+	groupId = '<groupid>',
 	-- Edit to your liking
 	privateEnabled = false, -- Set to false if you do not want Fire to track private servers (or studio)
 	cooldownPeriod = 30, -- The interval (seconds) between retrying failed HTTP requests
