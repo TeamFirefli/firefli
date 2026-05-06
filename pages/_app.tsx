@@ -14,7 +14,6 @@ import type { pageWithLayout } from "@/layoutTypes";
 import { useEffect, useState, useRef } from "react";
 import Head from "next/head";
 import Router from "next/router";
-import packageJson from "../package.json";
 import {
   Chart as ChartJS,
   CategoryScale,
