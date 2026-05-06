@@ -1,0 +1,29 @@
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm.
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm.
+npm warn Unknown project config "shamefully-hoist". This will stop working in the next major version of npm.
+npm warn Unknown project config "package-manager-strict". This will stop working in the next major version of npm.
+
+> firefli@1.1.0 build
+> next build
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+▲ Next.js 16.1.6 (Turbopack)
+
+  Running TypeScript ...
+Failed to compile.
+
+./components/profile/activity.tsx:8:15
+Type error: Module '"@prisma/client"' has no exported member 'ActivitySession'.
+
+[0m [90m  6 |[39m [36mimport[39m { [33mChart[39m[33m,[39m [33mChartData[39m[33m,[39m [33mScatterDataPoint[39m } [36mfrom[39m [32m"chart.js"[39m[33m;[39m
+ [90m  7 |[39m [36mimport[39m { [33mLine[39m } [36mfrom[39m [32m"react-chartjs-2"[39m[33m;[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m type { [33mActivitySession[39m[33m,[39m [33mQuota[39m[33m,[39m inactivityNotice } [36mfrom[39m [32m"@prisma/client"[39m[33m;[39m
+ [90m    |[39m               [31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m [33mTooltip[39m [36mfrom[39m [32m"@/components/tooltip"[39m[33m;[39m
+ [90m 10 |[39m [36mimport[39m moment [36mfrom[39m [32m"moment"[39m[33m;[39m
+ [90m 11 |[39m [36mimport[39m { [33mDialog[39m[33m,[39m [33mTransition[39m[33m,[39m [33mTab[39m } [36mfrom[39m [32m"@headlessui/react"[39m[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null
