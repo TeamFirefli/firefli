@@ -178,7 +178,6 @@
       "core-js",
       "esbuild",
       "prisma",
-      "protobufjs",
       "sharp",
       "unrs-resolver"
     ]
