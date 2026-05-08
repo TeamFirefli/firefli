@@ -302,6 +302,9 @@ async function performReset(workspaceGroupId: bigint | number) {
             currentMinutes: 0,
             completed: false,
             completionType: (quota as any).completionType || null,
+            linkedVia: "role",
+            linkedName: role.name,
+            linkedColor: role.color,
           };
         }
       }
@@ -320,6 +323,9 @@ async function performReset(workspaceGroupId: bigint | number) {
             currentMinutes: 0,
             completed: false,
             completionType: (quota as any).completionType || null,
+            linkedVia: "department",
+            linkedName: departmentMember.department.name,
+            linkedColor: departmentMember.department.color,
           };
         }
       }

@@ -404,7 +404,7 @@ while true do
 			table.remove(afkTable, index)
 		end
 	end
-	task.wait(1)
+	task.wait(60)
 end]]></ProtectedString>
 			<int64 name="SourceAssetId">-1</int64>
 			<BinaryString name="Tags"></BinaryString>
