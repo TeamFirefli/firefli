@@ -252,6 +252,7 @@ async function performReset(workspaceGroupId: bigint | number) {
         session: {
           select: {
             id: true,
+            type: true,
             sessionType: {
               select: {
                 slots: true,
@@ -268,11 +269,48 @@ async function performReset(workspaceGroupId: bigint | number) {
       return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
     }).length;
 
+    const sessionsPrimaryHostedCount = allSessionParticipations.filter((participation) => {
+      const sessionSlots = participation.session.sessionType.slots as any[];
+      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "primary";
+    }).length;
+
+    const sessionsSecondaryHostedCount = allSessionParticipations.filter((participation) => {
+      const sessionSlots = participation.session.sessionType.slots as any[];
+      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+      return matchingSlot?.hostRole === "secondary";
+    }).length;
+
     const sessionsAttendedCount = allSessionParticipations.filter((participation) => {
       const sessionSlots = participation.session.sessionType.slots as any[];
       const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
       return !matchingSlot?.hostRole;
     }).length;
+
+    const sessionsLoggedCount = new Set(allSessionParticipations.map(p => p.sessionid)).size;
+
+    const sessionsByType: Record<string, number> = {};
+    const secondaryHostedByType: Record<string, number> = {};
+    for (const p of allSessionParticipations) {
+      const sessionType = (p.session as any).type || 'other';
+      sessionsByType[sessionType] = (sessionsByType[sessionType] || 0) + 1;
+      const pSlots = (p.session as any)?.sessionType?.slots as any[] || [];
+      const pSlot = pSlots.find((s: any) => s.id === p.roleID);
+      if (pSlot?.hostRole === "secondary") {
+        secondaryHostedByType[sessionType] = (secondaryHostedByType[sessionType] || 0) + 1;
+      }
+    }
+
+    const allianceVisitsCount = await prisma.allyVisit.count({
+      where: {
+        ally: { workspaceGroupId },
+        time: { gte: periodStart, lte: periodEnd },
+        OR: [
+          { hostId: userId },
+          { participants: { has: userId } }
+        ]
+      }
+    });
 
     const wallPosts = await prisma.wallPost.findMany({
       where: {
@@ -366,10 +404,52 @@ async function performReset(workspaceGroupId: bigint | number) {
           quotaProgress[quotaId].completedByUsername = completion.completedByUser?.username || null;
           quotaProgress[quotaId].completionNotes = completion.notes;
         }
+        quotaProgress[quotaId].percentage = quotaProgress[quotaId].completed ? 100 : 0;
+        quotaProgress[quotaId].value = quotaProgress[quotaId].completed ? 1 : 0;
+        quotaProgress[quotaId].currentMinutes = quotaProgress[quotaId].value;
       } else {
-        quotaProgress[quotaId].currentMinutes = totalMinutes;
-        quotaProgress[quotaId].completed =
-          totalMinutes >= quotaProgress[quotaId].targetMinutes;
+        const requirement = quotaProgress[quotaId].targetMinutes;
+        let currentValue = 0;
+        let percentage = 0;
+        switch (quota?.type) {
+          case 'mins':
+            currentValue = totalMinutes;
+            percentage = requirement > 0 ? (totalMinutes / requirement) * 100 : 0;
+            break;
+          case 'sessions_hosted':
+            currentValue = quota.sessionType && quota.sessionType !== 'all'
+              ? sessionsByType[quota.sessionType] || 0
+              : sessionsPrimaryHostedCount;
+            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          case 'sessions_secondary_host':
+            currentValue = quota.sessionType && quota.sessionType !== 'all'
+              ? secondaryHostedByType[quota.sessionType] || 0
+              : sessionsSecondaryHostedCount;
+            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          case 'sessions_attended':
+            currentValue = sessionsAttendedCount;
+            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          case 'sessions_logged':
+            currentValue = quota.sessionType && quota.sessionType !== 'all'
+              ? sessionsByType[quota.sessionType] || 0
+              : sessionsLoggedCount;
+            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          case 'alliance_visits':
+            currentValue = allianceVisitsCount;
+            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          default:
+            currentValue = 0;
+            percentage = 0;
+        }
+        quotaProgress[quotaId].currentMinutes = currentValue;
+        quotaProgress[quotaId].value = currentValue;
+        quotaProgress[quotaId].percentage = percentage;
+        quotaProgress[quotaId].completed = percentage >= 100;
       }
     }
 

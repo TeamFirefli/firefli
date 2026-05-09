@@ -224,20 +224,37 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       const totalWallPosts = wallPosts.length;
 
       const quotaProgress: any = {};
-      const roleQuotas = user.roles
-        .flatMap((role) => role.quotaRoles)
-        .map((qr) => qr.quota);
-      
-      const departmentQuotas = departmentMembers
-        .flatMap((dm) => dm.department.quotaDepartments)
-        .map((qd) => qd.quota);
+      const quotaMap = new Map<string, any>();
+      const quotaSourceMap = new Map<string, { linkedVia: string; linkedName: string; linkedColor: string | null }>();
 
-      const quotaMap = new Map();
-      [...roleQuotas, ...departmentQuotas].forEach((quota) => {
-        if (!quotaMap.has(quota.id)) {
-          quotaMap.set(quota.id, quota);
+      for (const role of user.roles) {
+        for (const qr of role.quotaRoles) {
+          const quota = qr.quota;
+          if (!quotaMap.has(quota.id)) {
+            quotaMap.set(quota.id, quota);
+            quotaSourceMap.set(quota.id, {
+              linkedVia: 'role',
+              linkedName: role.name,
+              linkedColor: (role as any).color ?? null,
+            });
+          }
         }
-      });
+      }
+
+      for (const dm of departmentMembers) {
+        for (const qd of dm.department.quotaDepartments) {
+          const quota = qd.quota;
+          if (!quotaMap.has(quota.id)) {
+            quotaMap.set(quota.id, quota);
+            quotaSourceMap.set(quota.id, {
+              linkedVia: 'department',
+              linkedName: dm.department.name,
+              linkedColor: dm.department.color ?? null,
+            });
+          }
+        }
+      }
+
       const userQuotas = Array.from(quotaMap.values());
       const quotaIds = userQuotas.map(q => q.id);
       const customQuotaCompletions = quotaIds.length > 0 ? await prisma.userQuotaCompletion.findMany({
@@ -329,6 +346,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           type: quota.type,
           requirement: quota.value,
           completionType: (quota as any).completionType || null,
+          ...quotaSourceMap.get(quota.id),
         };
 
         if (quota.type === "custom") {

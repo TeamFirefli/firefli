@@ -59,6 +59,9 @@ export function QuotasProgress({
     if (!quota || !quota.value) {
       return 0;
     }
+    if (isHistorical && quota.type !== "custom" && quota.currentValue !== undefined) {
+      return (quota.currentValue / quota.value) * 100;
+    }
     if (quota.type !== "custom" && quota.percentage !== undefined) {
       return quota.percentage;
     }
