@@ -12,7 +12,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const workspaceId = Number.parseInt(req.query.id as string)
   if (!workspaceId) return res.status(400).json({ success: false, error: "Missing workspace ID" })
 
-  const targetUserId = Number.parseInt(req.query.userId as string)
+  const rawUserId = req.query.userId ?? req.query.userid
+  const targetUserId = Number.parseInt(rawUserId as string)
   if (!targetUserId || targetUserId <= 0) {
     return res.status(400).json({ success: false, error: "Invalid userId" })
   }
@@ -29,7 +30,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (current === "true") {
-      // Active cases only: open status, not revoked, not expired
       where.status = "open"
       where.revokedAt = null
       where.OR = [
