@@ -5,7 +5,8 @@
 > The best and easiest way to get started with Firefli is our cloud hosting solution. It's easy, secure, and superfast. See https://www.firefli.net to get started. The best part? It's **FREE**!
 <div>
   <div align="left">
-    <img height="40px" src=".github/logo.png"></img>
+       <img height="40px" src=".github/logo.png?raw=true#gh-light-mode-only"></img>
+	  <img height="40px" src="public/wlogo.png?raw=true#gh-dark-mode-only"></img>
     <h1>Firefli by Cloudysatrn & Max Croft (Original Orbit Maintainers)</h1>
   </div>
     <img src="https://img.shields.io/badge/version-v1.1.10-purple"></img>
