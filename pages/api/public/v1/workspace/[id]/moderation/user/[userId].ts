@@ -33,7 +33,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       where.action = { not: "kick" }
       where.OR = [
         { isPermanent: true },
-        { expiresAt: null },
         { expiresAt: { gt: new Date() } },
       ]
     } else if (startDate || endDate) {
