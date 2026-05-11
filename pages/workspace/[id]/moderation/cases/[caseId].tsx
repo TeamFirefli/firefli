@@ -529,7 +529,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
               Case ID: {caseId}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {caseData.action && !caseData.revokedAt && canRevokePunishments && (
               <Tooltip
                 orientation="bottom"
@@ -540,7 +540,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
                 >
                   <IconX size={18} />
-                  <span className="hidden sm:inline">Revoke Action</span>
+                  <span>Revoke Action</span>
                 </button>
               </Tooltip>
             )}
@@ -558,7 +558,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                         className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
                       >
                         <IconBan size={18} />
-                        <span className="hidden sm:inline">Execute Ban</span>
+                        <span>Execute Ban</span>
                       </button>
                     </Tooltip>
                   )}
@@ -573,7 +573,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                         className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
                       >
                         <IconAlertTriangle size={18} />
-                        <span className="hidden sm:inline">Execute Kick</span>
+                        <span>Execute Kick</span>
                       </button>
                     </Tooltip>
                   )}
@@ -584,10 +584,8 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Case Info */}
-          <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-6">
+          <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-4 sm:p-6">
             <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
               Case Information
             </h2>
@@ -599,15 +597,15 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                     `/api/workspace/${workspaceId}/avatar/${caseData.targetUserId}`
                   }
                   alt=""
-                  className="w-16 h-16 rounded-full ring-2 ring-white dark:ring-zinc-700"
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full ring-2 ring-white dark:ring-zinc-700"
                 />
-                <div>
-                  <div className="text-lg font-semibold text-zinc-900 dark:text-white">
+                <div className="min-w-0 flex-1">
+                  <div className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white truncate">
                     {caseData.targetUsername ||
                       caseData.targetUser?.username ||
                       "Unknown"}
                   </div>
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 truncate">
                     User ID: {caseData.targetUserId}
                   </div>
                 </div>
@@ -619,14 +617,46 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                 </div>
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${
-                    STATUS_COLORS[caseData.status] ||
-                    "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
+                    caseData.revokedAt
+                      ? STATUS_COLORS["revoked"]
+                      : STATUS_COLORS[caseData.status] ||
+                        "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white"
                   }`}
                 >
-                  {caseData.status.charAt(0).toUpperCase() +
-                    caseData.status.slice(1)}
-                </span>{" "}
+                  {caseData.revokedAt
+                    ? "Revoked"
+                    : caseData.status.charAt(0).toUpperCase() +
+                      caseData.status.slice(1)}
+                </span>
               </div>
+
+              {caseData.action && (
+                <div>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    Punishment Type
+                  </div>
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${
+                      caseData.action === "kick"
+                        ? "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800"
+                        : caseData.action === "warning"
+                        ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
+                        : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
+                    }`}
+                  >
+                    {caseData.action === "kick"
+                      ? "Kick"
+                      : caseData.action === "warning"
+                      ? "Warning"
+                      : caseData.action === "temp_ban"
+                      ? "Temporary Ban"
+                      : caseData.action === "perm_ban"
+                      ? "Permanent Ban"
+                      : caseData.action.charAt(0).toUpperCase() + caseData.action.slice(1)}
+                  </span>
+                </div>
+              )}
+              
               <div>
                 <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
                   Reason
@@ -647,19 +677,6 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                 </div>
               )}
 
-              {caseData.action && (
-                <div>
-                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
-                    Planned Action
-                  </div>
-                  <div className="text-lg text-zinc-900 dark:text-white">
-                    {caseData.action
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </div>
-                </div>
-              )}
-
               {caseData.internalNotes && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                   <div className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-1">
@@ -674,15 +691,15 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
           </div>
 
           {/* Evidence */}
-          <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
                 Evidence
               </h2>
               <button
                 onClick={() => setShowEvidenceModal(true)}
                 disabled={uploadingEvidence}
-                className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-lg transition-colors disabled:opacity-50 text-sm font-medium"
+                className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-lg transition-colors disabled:opacity-50 text-sm font-medium w-full sm:w-auto"
               >
                 <IconUpload size={16} />
                 Upload Evidence
@@ -690,8 +707,20 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
             </div>
 
             {caseData.evidence.length === 0 ? (
-              <div className="text-center py-12 text-zinc-500 dark:text-zinc-400">
-                No evidence uploaded yet
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                  <IconFileText
+                    className="text-primary"
+                    size={32}
+                    strokeWidth={1.5}
+                  />
+                </div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-1">
+                  No Evidence Yet
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Upload images, videos, or add links to document this case.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -700,8 +729,6 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   const isImage = ev.fileType?.startsWith("image/");
                   const isVideo = ev.fileType?.startsWith("video/");
                   const canPreview = isImage || isVideo || isExternalLink;
-
-                  // Check if user can delete this evidence
                   const isUploader =
                     ev.uploadedBy?.toString() === userState.userId?.toString();
                   const canDeleteEvidence = isUploader || canEditCase;
@@ -709,19 +736,19 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   return (
                     <div
                       key={ev.id}
-                      className="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         {isExternalLink ? (
-                          <IconLink className="text-primary" size={24} />
+                          <IconLink className="text-primary flex-shrink-0" size={24} />
                         ) : (
                           <IconFileText
-                            className="text-zinc-400 dark:text-zinc-500"
+                            className="text-zinc-400 dark:text-zinc-500 flex-shrink-0"
                             size={24}
                           />
                         )}
-                        <div>
-                          <div className="font-medium text-zinc-900 dark:text-white">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-zinc-900 dark:text-white truncate">
                             {ev.fileName}
                           </div>
                           <div className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -740,13 +767,13 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                             )}
                           </div>
                           {ev.description && (
-                            <div className="text-sm text-zinc-600 dark:text-zinc-300 mt-1">
+                            <div className="text-sm text-zinc-600 dark:text-zinc-300 mt-1 line-clamp-2">
                               {ev.description}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-end sm:justify-start">
                         {canPreview && (
                           <Tooltip orientation="left" tooltipText="Preview">
                             <button
