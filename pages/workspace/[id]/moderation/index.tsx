@@ -387,11 +387,18 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {filteredCases.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400"
-                  >
-                    No cases found
+                  <td colSpan={7} className="px-4 py-12">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                        <IconShield className="w-8 h-8 text-primary" />
+                      </div>
+                      <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
+                        No cases found
+                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        No moderation cases match your criteria.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -519,8 +526,18 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
         </div>
         <div className="md:hidden divide-y divide-zinc-200 dark:divide-zinc-700">
           {filteredCases.length === 0 ? (
-            <div className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400">
-              No cases found
+            <div className="px-4 py-12">
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <IconShield className="w-8 h-8 text-primary" />
+                </div>
+                <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
+                  No cases found
+                </p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  No moderation cases match your criteria.
+                </p>
+              </div>
             </div>
           ) : (
             filteredCases.map((c) => (
