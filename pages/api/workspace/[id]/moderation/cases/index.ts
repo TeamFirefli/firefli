@@ -17,16 +17,28 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         limit = "50",
         sortBy = "createdAt",
         sortOrder = "desc",
+        search,
       } = req.query;
 
       const where: any = {
         workspaceGroupId: groupId,
       };
 
-      if (status) where.status = status as string;
+      if (status === "revoked") {
+        where.revokedAt = { not: null };
+      } else if (status) {
+        where.status = status as string;
+        where.revokedAt = null;
+      }
       if (action) where.action = action as string;
       if (targetUserId) where.targetUserId = BigInt(targetUserId as string);
       if (createdBy) where.createdBy = BigInt(createdBy as string);
+      if (search && typeof search === "string" && search.trim()) {
+        where.OR = [
+          { targetUsername: { contains: search.trim(), mode: "insensitive" } },
+          { reason: { contains: search.trim(), mode: "insensitive" } },
+        ];
+      }
 
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);

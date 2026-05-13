@@ -1,6 +1,6 @@
 {
   "name": "firefli",
-  "version": "1.1.11",
+  "version": "1.1.12-beta",
   "private": true,
   "packageManager": "pnpm@10.20.0",
   "scripts": {

@@ -2,7 +2,7 @@ import workspace from "@/layouts/workspace";
 import { pageWithLayout } from "@/layoutTypes";
 import axios from "axios";
 import { useRouter } from "next/router";
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
 import prisma from "@/utils/database";
@@ -70,6 +70,8 @@ interface ModerationStats {
 interface ModerationDashboardProps {
   cases: ModerationCaseListItem[];
   stats: ModerationStats;
+  initialTotal: number;
+  initialPages: number;
 }
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -87,6 +89,8 @@ export const getServerSideProps = withPermissionCheckSsr(
         props: {
           cases: [],
           stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
+          initialTotal: 0,
+          initialPages: 0,
         },
       };
     }
@@ -121,7 +125,8 @@ export const getServerSideProps = withPermissionCheckSsr(
         orderBy: {
           createdAt: "desc",
         },
-        take: 50,
+        take: 20,
+        skip: 0,
       });
 
       // Get stats
@@ -146,6 +151,8 @@ export const getServerSideProps = withPermissionCheckSsr(
             ),
           ),
           stats: { total, open, resolved, activeBans },
+          initialTotal: total,
+          initialPages: Math.ceil(total / 20),
         },
       };
     } catch (error) {
@@ -154,6 +161,8 @@ export const getServerSideProps = withPermissionCheckSsr(
         props: {
           cases: [],
           stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
+          initialTotal: 0,
+          initialPages: 0,
         },
       };
     }
@@ -164,6 +173,8 @@ export const getServerSideProps = withPermissionCheckSsr(
 const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   cases: initialCases,
   stats,
+  initialTotal,
+  initialPages,
 }) => {
   const router = useRouter();
   const { id: workspaceId } = router.query;
@@ -180,6 +191,10 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(initialPages);
+  const [totalCases, setTotalCases] = useState(initialTotal);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canCreateCases =
     workspaceData.yourPermission?.includes("create_moderation_cases") ||
     workspaceData.isAdmin;
@@ -189,42 +204,45 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   const canRevokePunishments =
     workspaceData.yourPermission?.includes("revoke_punishments") ||
     workspaceData.isAdmin;
-  const filteredCases = useMemo(() => {
-    return cases.filter((c) => {
-      const isRevoked = !!c.revokedAt;
-      
-      let matchesStatus;
-      if (filterStatus === "all") {
-        matchesStatus = true;
-      } else if (filterStatus === "revoked") {
-        matchesStatus = isRevoked;
-      } else {
-        // For other statuses, only match if not revoked and status matches
-        matchesStatus = !isRevoked && c.status === filterStatus;
-      }
-      
-      const matchesSearch =
-        !searchQuery ||
-        c.targetUsername?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.reason?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesStatus && matchesSearch;
-    });
-  }, [cases, filterStatus, searchQuery]);
 
-  const refreshCases = async () => {
+  const refreshCases = async (page: number, search: string, status: string) => {
     setLoading(true);
     try {
+      const params = new URLSearchParams({ page: String(page), limit: "20" });
+      if (search.trim()) params.set("search", search.trim());
+      if (status !== "all") params.set("status", status);
       const response = await axios.get(
-        `/api/workspace/${workspaceId}/moderation/cases`,
+        `/api/workspace/${workspaceId}/moderation/cases?${params}`,
       );
       if (response.data.success) {
         setCases(response.data.data.cases);
+        setCurrentPage(response.data.data.pagination.page);
+        setTotalPages(response.data.data.pagination.pages);
+        setTotalCases(response.data.data.pagination.total);
       }
     } catch (error) {
       toast.error("Failed to refresh cases");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      refreshCases(1, value, filterStatus);
+    }, 400);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setFilterStatus(value);
+    refreshCases(1, searchQuery, value);
+  };
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages || loading) return;
+    refreshCases(page, searchQuery, filterStatus);
   };
 
   const handleCreateCase = async (formData: any) => {
@@ -236,7 +254,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
       if (response.data.success) {
         toast.success("Case created successfully");
         setShowCreateModal(false);
-        refreshCases();
+        refreshCases(1, searchQuery, filterStatus);
       }
     } catch (error) {
       toast.error("Failed to create case");
@@ -258,7 +276,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
       );
       if (response.data.success) {
         toast.success(response.data.data.message);
-        refreshCases();
+        refreshCases(currentPage, searchQuery, filterStatus);
       }
     } catch (error) {
       toast.error("Failed to execute ban");
@@ -290,7 +308,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
         setShowRevokeModal(false);
         setRevokeReason("");
         setCaseToRevoke(null);
-        refreshCases();
+        refreshCases(currentPage, searchQuery, filterStatus);
       }
     } catch (error) {
       toast.error("Failed to revoke case action");
@@ -336,14 +354,14 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                 type="text"
                 placeholder="Search by username or reason..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-sm"
               />
             </div>
           </div>
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary text-sm"
           >
             <option value="all">All Status</option>
@@ -352,7 +370,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
             <option value="revoked">Revoked</option>
           </select>
           <button
-            onClick={refreshCases}
+            onClick={() => refreshCases(currentPage, searchQuery, filterStatus)}
             disabled={loading}
             className="px-4 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 border border-zinc-200 dark:border-zinc-600 text-zinc-900 dark:text-white rounded-lg transition-colors disabled:opacity-50 text-sm font-medium"
           >
@@ -391,7 +409,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {filteredCases.length === 0 ? (
+              {cases.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12">
                     <div className="flex flex-col items-center justify-center text-center">
@@ -408,7 +426,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredCases.map((c) => (
+                cases.map((c) => (
                   <tr
                     key={c.id}
                     onClick={() =>
@@ -531,7 +549,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
           </table>
         </div>
         <div className="md:hidden divide-y divide-zinc-200 dark:divide-zinc-700">
-          {filteredCases.length === 0 ? (
+          {cases.length === 0 ? (
             <div className="px-4 py-12">
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -546,7 +564,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
               </div>
             </div>
           ) : (
-            filteredCases.map((c) => (
+            cases.map((c) => (
               <div
                 key={c.id}
                 onClick={() =>
@@ -652,6 +670,48 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
         </div>
       </div>
 
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-1">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 order-2 sm:order-1">
+          {totalCases === 0
+            ? "No cases found"
+            : `Showing ${Math.min((currentPage - 1) * 20 + 1, totalCases)}-${Math.min(currentPage * 20, totalCases)} of ${totalCases} cases`}
+        </p>
+        <div className="flex items-center gap-1 order-1 sm:order-2">
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1 || loading}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            ← Prev
+          </button>
+          {getPageNumbers(currentPage, totalPages).map((p, i) =>
+            p === "..." ? (
+              <span key={`ellipsis-${i}`} className="px-2 py-1.5 text-sm text-zinc-400">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => goToPage(p as number)}
+                disabled={loading}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                  p === currentPage
+                    ? "bg-primary text-white"
+                    : "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                }`}
+              >
+                {p}
+              </button>
+            )
+          )}
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages || loading}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl border border-white/10">
@@ -718,6 +778,13 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
     </div>
   );
 };
+
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, "...", total];
+  if (current >= total - 3) return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
 
 const isBanAction = (action?: string) =>
   action === "temp_ban" || action === "perm_ban";

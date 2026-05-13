@@ -9,13 +9,18 @@
 	  <img height="40px" src="public/wlogo.png?raw=true#gh-dark-mode-only"></img>
     <h1>Firefli by Cloudysatrn & Max Croft (Original Orbit Maintainers)</h1>
   </div>
-    <img src="https://img.shields.io/badge/version-v1.1.10-purple"></img>
+    <img src="https://img.shields.io/badge/version-v1.1.11beta-purple"></img>
   <ul>
     <li><a href="#about">About</a></li>
     <li><a href="#why-consider">Why consider</a></li>
     <li><a href="#quicklinks">Quicklinks</a></li>
     <li><a href="#license">License</a></li>
   </ul>
+
+  <h2>WARNING! - THIS IS THE BETA BRANCH</h2>
+  <p>
+    We cannot ensure full reliability - it is advised to use the main branch for production use.
+  </p>
 
   <h2>About</h2>
   <p>
