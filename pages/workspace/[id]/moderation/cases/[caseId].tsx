@@ -460,6 +460,21 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
     }
   };
 
+  const handleExecuteKick = async () => {
+    try {
+      const response = await axios.post(
+        `/api/workspace/${workspaceId}/moderation/cases/${caseId}/execute-kick`,
+      );
+
+      if (response.data.success) {
+        toast.success("Kick executed successfully");
+        router.replace(router.asPath);
+      }
+    } catch (error) {
+      toast.error("Failed to execute kick");
+    }
+  };
+
   const handleRevoke = async () => {
     if (!revokeReason.trim()) {
       toast.error("Please provide a reason for revocation");
@@ -575,7 +590,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                       tooltipText="Mark this kick as executed"
                     >
                       <button
-                        onClick={() => handleUpdateStatus("resolved")}
+                        onClick={handleExecuteKick}
                         className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
                       >
                         <IconAlertTriangle size={18} />

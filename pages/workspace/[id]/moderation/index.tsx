@@ -283,6 +283,20 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
     }
   };
 
+  const handleExecuteKick = async (caseData: ModerationCaseListItem) => {
+    try {
+      const response = await axios.post(
+        `/api/workspace/${workspaceId}/moderation/cases/${caseData.id}/execute-kick`,
+      );
+      if (response.data.success) {
+        toast.success("Kick executed successfully");
+        refreshCases(currentPage, searchQuery, filterStatus);
+      }
+    } catch (error) {
+      toast.error("Failed to execute kick");
+    }
+  };
+
   const handleOpenRevokeModal = (caseData: ModerationCaseListItem) => {
     setCaseToRevoke(caseData);
     setShowRevokeModal(true);
@@ -540,6 +554,22 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                               </button>
                             </Tooltip>
                           )}
+                        {c.status === "open" &&
+                          c.action === "kick" &&
+                          !c.revokedAt &&
+                          canExecutePunishments && (
+                            <Tooltip
+                              orientation="top"
+                              tooltipText="Execute Kick"
+                            >
+                              <button
+                                onClick={() => handleExecuteKick(c)}
+                                className="text-orange-500 hover:text-orange-600 transition-colors"
+                              >
+                                <IconAlertTriangle size={18} />
+                              </button>
+                            </Tooltip>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -639,7 +669,8 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
 
                 {(c.action && !c.revokedAt && canRevokePunishments) ||
                 (c.status === "open" &&
-                  isBanAction(c.action) &&
+                  (isBanAction(c.action) || c.action === "kick") &&
+                  !c.revokedAt &&
                   canExecutePunishments) ? (
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     {c.action && !c.revokedAt && canRevokePunishments && (
@@ -660,6 +691,18 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                         >
                           <IconBan size={16} />
                           Execute Ban
+                        </button>
+                      )}
+                    {c.status === "open" &&
+                      c.action === "kick" &&
+                      !c.revokedAt &&
+                      canExecutePunishments && (
+                        <button
+                          onClick={() => handleExecuteKick(c)}
+                          className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                        >
+                          <IconAlertTriangle size={16} />
+                          Execute Kick
                         </button>
                       )}
                   </div>

@@ -196,6 +196,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         },
       });
 
+      const logDetails: Record<string, any> = {};
+      for (const [k, v] of Object.entries(updateData)) {
+        logDetails[k] = typeof v === "bigint" ? v.toString() : v instanceof Date ? v.toISOString() : v;
+      }
+
       await prisma.moderationLog.create({
         data: {
           workspaceGroupId: groupId,
@@ -204,7 +209,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           targetUser: existingCase.targetUserId,
           targetUsername: existingCase.targetUsername,
           caseId: caseId as string,
-          details: updateData,
+          details: logDetails,
         },
       });
 
