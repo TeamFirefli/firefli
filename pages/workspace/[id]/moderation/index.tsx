@@ -11,7 +11,7 @@ import Tooltip from "@/components/tooltip";
 import { useRecoilValue } from "recoil";
 import { workspacestate } from "@/state";
 import {
-  IconShield,
+  IconFile,
   IconAlertTriangle,
   IconBan,
   IconCheck,
@@ -390,7 +390,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                   <td colSpan={7} className="px-4 py-12">
                     <div className="flex flex-col items-center justify-center text-center">
                       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <IconShield className="w-8 h-8 text-primary" />
+                        <IconFile className="w-8 h-8 text-primary" />
                       </div>
                       <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
                         No cases found
@@ -529,7 +529,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
             <div className="px-4 py-12">
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <IconShield className="w-8 h-8 text-primary" />
+                  <IconFile className="w-8 h-8 text-primary" />
                 </div>
                 <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">
                   No cases found
