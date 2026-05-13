@@ -12,7 +12,7 @@ type ResetResult = {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -40,14 +40,22 @@ export default async function handler(
     const results: ResetResult[] = [];
     const now = new Date();
     const currentDay = now.getDay();
-    const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const dayNames = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
     const currentDayName = dayNames[currentDay];
 
     for (const workspace of workspaces) {
       try {
         const schedule = await getConfig(
           "activity_reset_schedule",
-          workspace.groupId
+          workspace.groupId,
         );
 
         if (!schedule || !schedule.enabled) {
@@ -60,22 +68,24 @@ export default async function handler(
 
         const startOfToday = new Date(now);
         startOfToday.setHours(0, 0, 0, 0);
-        
+
         const endOfToday = new Date(now);
         endOfToday.setHours(23, 59, 59, 999);
 
         // Check if there's already an auto-reset today (resetById not set)
         const allTodayResets = await prisma.activityReset.findMany({
-          where: { 
+          where: {
             workspaceGroupId: workspace.groupId,
             resetAt: {
               gte: startOfToday,
               lte: endOfToday,
-            }
+            },
           },
         });
-        
-        const todayReset = allTodayResets.find(reset => reset.resetById === null);
+
+        const todayReset = allTodayResets.find(
+          (reset) => reset.resetById === null,
+        );
 
         if (todayReset) {
           continue;
@@ -83,13 +93,15 @@ export default async function handler(
 
         // Find last auto-reset (resetById not set)
         const allResets = await prisma.activityReset.findMany({
-          where: { 
+          where: {
             workspaceGroupId: workspace.groupId,
           },
           orderBy: { resetAt: "desc" },
         });
-        
-        const lastAutoReset = allResets.find(reset => reset.resetById === null);
+
+        const lastAutoReset = allResets.find(
+          (reset) => reset.resetById === null,
+        );
 
         let shouldReset = false;
 
@@ -97,14 +109,21 @@ export default async function handler(
           shouldReset = true;
         } else {
           const daysSinceLastAutoReset = Math.floor(
-            (now.getTime() - lastAutoReset.resetAt.getTime()) / (1000 * 60 * 60 * 24)
+            (now.getTime() - lastAutoReset.resetAt.getTime()) /
+              (1000 * 60 * 60 * 24),
           );
 
           if (schedule.frequency === "weekly" && daysSinceLastAutoReset >= 6) {
             shouldReset = true;
-          } else if (schedule.frequency === "biweekly" && daysSinceLastAutoReset >= 13) {
+          } else if (
+            schedule.frequency === "biweekly" &&
+            daysSinceLastAutoReset >= 13
+          ) {
             shouldReset = true;
-          } else if (schedule.frequency === "monthly" && daysSinceLastAutoReset >= 27) {
+          } else if (
+            schedule.frequency === "monthly" &&
+            daysSinceLastAutoReset >= 27
+          ) {
             shouldReset = true;
           }
         }
@@ -113,14 +132,16 @@ export default async function handler(
           await performReset(workspace.groupId);
           results.push({
             workspaceId: workspace.groupId,
-            workspaceName: workspace.groupName || `Workspace ${workspace.groupId}`,
+            workspaceName:
+              workspace.groupName || `Workspace ${workspace.groupId}`,
             success: true,
           });
         }
       } catch (error: any) {
         results.push({
           workspaceId: workspace.groupId,
-          workspaceName: workspace.groupName || `Workspace ${workspace.groupId}`,
+          workspaceName:
+            workspace.groupName || `Workspace ${workspace.groupId}`,
           success: false,
           error: error.message,
         });
@@ -192,6 +213,7 @@ async function performReset(workspaceGroupId: bigint | number) {
     minutes: number;
     messages: number;
     sessionsHosted: number;
+    sessionsSecondaryHosted: number;
     sessionsAttended: number;
     idleTime: number;
     wallPosts: number;
@@ -208,6 +230,10 @@ async function performReset(workspaceGroupId: bigint | number) {
         workspaceGroupId,
         endTime: { not: null },
         archived: { not: true },
+        startTime: {
+          gte: periodStart,
+          lte: periodEnd,
+        },
       },
     });
 
@@ -218,7 +244,7 @@ async function performReset(workspaceGroupId: bigint | number) {
     sessions.forEach((session) => {
       if (session.endTime) {
         const duration = Math.round(
-          (session.endTime.getTime() - session.startTime.getTime()) / 60000
+          (session.endTime.getTime() - session.startTime.getTime()) / 60000,
         );
         sessionMinutes += duration;
       }
@@ -227,12 +253,20 @@ async function performReset(workspaceGroupId: bigint | number) {
     });
 
     const adjustments = await prisma.activityAdjustment.findMany({
-      where: { userId, workspaceGroupId, archived: { not: true } },
+      where: {
+        userId,
+        workspaceGroupId,
+        archived: { not: true },
+        createdAt: {
+          gte: periodStart,
+          lte: periodEnd,
+        },
+      },
     });
 
     const adjustmentMinutes = adjustments.reduce(
       (sum, adj) => sum + adj.minutes,
-      0
+      0,
     );
     const totalMinutes = sessionMinutes + adjustmentMinutes;
 
@@ -263,41 +297,62 @@ async function performReset(workspaceGroupId: bigint | number) {
       },
     });
 
-    const sessionsHostedCount = allSessionParticipations.filter((participation) => {
-      const sessionSlots = participation.session.sessionType.slots as any[];
-      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
-      return matchingSlot?.hostRole === "primary" || matchingSlot?.hostRole === "secondary";
-    }).length;
+    const sessionsPrimaryHostedCount = allSessionParticipations.filter(
+      (participation) => {
+        const sessionSlots = participation.session.sessionType.slots as any[];
+        const matchingSlot = sessionSlots.find(
+          (s: any) => s.id === participation.roleID,
+        );
+        return matchingSlot?.hostRole === "primary";
+      },
+    ).length;
 
-    const sessionsPrimaryHostedCount = allSessionParticipations.filter((participation) => {
-      const sessionSlots = participation.session.sessionType.slots as any[];
-      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
-      return matchingSlot?.hostRole === "primary";
-    }).length;
+    const sessionsSecondaryHostedCount = allSessionParticipations.filter(
+      (participation) => {
+        const sessionSlots = participation.session.sessionType.slots as any[];
+        const matchingSlot = sessionSlots.find(
+          (s: any) => s.id === participation.roleID,
+        );
+        return matchingSlot?.hostRole === "secondary";
+      },
+    ).length;
 
-    const sessionsSecondaryHostedCount = allSessionParticipations.filter((participation) => {
-      const sessionSlots = participation.session.sessionType.slots as any[];
-      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
-      return matchingSlot?.hostRole === "secondary";
-    }).length;
+    const sessionsAttendedCount = allSessionParticipations.filter(
+      (participation) => {
+        const sessionSlots = participation.session.sessionType.slots as any[];
+        const matchingSlot = sessionSlots.find(
+          (s: any) => s.id === participation.roleID,
+        );
+        return !matchingSlot?.hostRole;
+      },
+    ).length;
 
-    const sessionsAttendedCount = allSessionParticipations.filter((participation) => {
-      const sessionSlots = participation.session.sessionType.slots as any[];
-      const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
-      return !matchingSlot?.hostRole;
-    }).length;
+    const sessionsLoggedCount = new Set(
+      allSessionParticipations.map((p) => p.sessionid),
+    ).size;
 
-    const sessionsLoggedCount = new Set(allSessionParticipations.map(p => p.sessionid)).size;
-
-    const sessionsByType: Record<string, number> = {};
+    const primaryHostedByType: Record<string, number> = {};
     const secondaryHostedByType: Record<string, number> = {};
+    const attendedByType: Record<string, number> = {};
+    const loggedByType: Record<string, Set<string>> = {};
+
     for (const p of allSessionParticipations) {
-      const sessionType = (p.session as any).type || 'other';
-      sessionsByType[sessionType] = (sessionsByType[sessionType] || 0) + 1;
-      const pSlots = (p.session as any)?.sessionType?.slots as any[] || [];
+      const sessionType = (p.session as any).type || "other";
+      const pSlots = ((p.session as any)?.sessionType?.slots as any[]) || [];
       const pSlot = pSlots.find((s: any) => s.id === p.roleID);
-      if (pSlot?.hostRole === "secondary") {
-        secondaryHostedByType[sessionType] = (secondaryHostedByType[sessionType] || 0) + 1;
+
+      if (!loggedByType[sessionType])
+        loggedByType[sessionType] = new Set<string>();
+      loggedByType[sessionType].add(p.sessionid);
+
+      if (pSlot?.hostRole === "primary") {
+        primaryHostedByType[sessionType] =
+          (primaryHostedByType[sessionType] || 0) + 1;
+      } else if (pSlot?.hostRole === "secondary") {
+        secondaryHostedByType[sessionType] =
+          (secondaryHostedByType[sessionType] || 0) + 1;
+      } else {
+        attendedByType[sessionType] = (attendedByType[sessionType] || 0) + 1;
       }
     }
 
@@ -305,11 +360,8 @@ async function performReset(workspaceGroupId: bigint | number) {
       where: {
         ally: { workspaceGroupId },
         time: { gte: periodStart, lte: periodEnd },
-        OR: [
-          { hostId: userId },
-          { participants: { has: userId } }
-        ]
-      }
+        OR: [{ hostId: userId }, { participants: { has: userId } }],
+      },
     });
 
     const wallPosts = await prisma.wallPost.findMany({
@@ -326,7 +378,7 @@ async function performReset(workspaceGroupId: bigint | number) {
     const quotaProgress: any = {};
     const userRoles = user.roles;
     const allQuotas: any[] = [];
-    
+
     for (const role of userRoles) {
       for (const quotaRole of role.quotaRoles) {
         const quota = quotaRole.quota;
@@ -349,7 +401,8 @@ async function performReset(workspaceGroupId: bigint | number) {
     }
 
     for (const departmentMember of departmentMembers) {
-      for (const quotaDepartment of departmentMember.department.quotaDepartments) {
+      for (const quotaDepartment of departmentMember.department
+        .quotaDepartments) {
         const quota = quotaDepartment.quota;
         if (!quotaProgress[quota.id]) {
           allQuotas.push(quota);
@@ -369,42 +422,50 @@ async function performReset(workspaceGroupId: bigint | number) {
       }
     }
 
-    const quotaIds = allQuotas.map(q => q.id);
-    const customQuotaCompletions = quotaIds.length > 0 ? await prisma.userQuotaCompletion.findMany({
-      where: {
-        quotaId: { in: quotaIds },
-        userId,
-        workspaceGroupId,
-        archived: { not: true },
-      },
-      include: {
-        completedByUser: {
-          select: {
-            userid: true,
-            username: true,
-          },
-        },
-      },
-    }) : [];
+    const quotaIds = allQuotas.map((q) => q.id);
+    const customQuotaCompletions =
+      quotaIds.length > 0
+        ? await prisma.userQuotaCompletion.findMany({
+            where: {
+              quotaId: { in: quotaIds },
+              userId,
+              workspaceGroupId,
+              archived: { not: true },
+            },
+            include: {
+              completedByUser: {
+                select: {
+                  userid: true,
+                  username: true,
+                },
+              },
+            },
+          })
+        : [];
 
     const completionMap = new Map();
-    customQuotaCompletions.forEach(completion => {
+    customQuotaCompletions.forEach((completion) => {
       completionMap.set(completion.quotaId, completion);
     });
 
     for (const quotaId in quotaProgress) {
-      const quota = allQuotas.find(q => q.id === quotaId);
-      
-      if (quota?.type === 'custom') {
+      const quota = allQuotas.find((q) => q.id === quotaId);
+
+      if (quota?.type === "custom") {
         const completion = completionMap.get(quotaId);
         if (completion) {
           quotaProgress[quotaId].completed = completion.completed || false;
           quotaProgress[quotaId].completedAt = completion.completedAt;
-          quotaProgress[quotaId].completedBy = completion.completedBy ? completion.completedBy.toString() : null;
-          quotaProgress[quotaId].completedByUsername = completion.completedByUser?.username || null;
+          quotaProgress[quotaId].completedBy = completion.completedBy
+            ? completion.completedBy.toString()
+            : null;
+          quotaProgress[quotaId].completedByUsername =
+            completion.completedByUser?.username || null;
           quotaProgress[quotaId].completionNotes = completion.notes;
         }
-        quotaProgress[quotaId].percentage = quotaProgress[quotaId].completed ? 100 : 0;
+        quotaProgress[quotaId].percentage = quotaProgress[quotaId].completed
+          ? 100
+          : 0;
         quotaProgress[quotaId].value = quotaProgress[quotaId].completed ? 1 : 0;
         quotaProgress[quotaId].currentMinutes = quotaProgress[quotaId].value;
       } else {
@@ -412,35 +473,47 @@ async function performReset(workspaceGroupId: bigint | number) {
         let currentValue = 0;
         let percentage = 0;
         switch (quota?.type) {
-          case 'mins':
+          case "mins":
             currentValue = totalMinutes;
-            percentage = requirement > 0 ? (totalMinutes / requirement) * 100 : 0;
+            percentage =
+              requirement > 0 ? (totalMinutes / requirement) * 100 : 0;
             break;
-          case 'sessions_hosted':
-            currentValue = quota.sessionType && quota.sessionType !== 'all'
-              ? sessionsByType[quota.sessionType] || 0
-              : sessionsPrimaryHostedCount;
-            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+          case "sessions_hosted":
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? primaryHostedByType[quota.sessionType] || 0
+                : sessionsPrimaryHostedCount;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
             break;
-          case 'sessions_secondary_host':
-            currentValue = quota.sessionType && quota.sessionType !== 'all'
-              ? secondaryHostedByType[quota.sessionType] || 0
-              : sessionsSecondaryHostedCount;
-            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+          case "sessions_secondary_host":
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? secondaryHostedByType[quota.sessionType] || 0
+                : sessionsSecondaryHostedCount;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
             break;
-          case 'sessions_attended':
-            currentValue = sessionsAttendedCount;
-            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+          case "sessions_attended":
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? attendedByType[quota.sessionType] || 0
+                : sessionsAttendedCount;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
             break;
-          case 'sessions_logged':
-            currentValue = quota.sessionType && quota.sessionType !== 'all'
-              ? sessionsByType[quota.sessionType] || 0
-              : sessionsLoggedCount;
-            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+          case "sessions_logged":
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? loggedByType[quota.sessionType]?.size || 0
+                : sessionsLoggedCount;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
             break;
-          case 'alliance_visits':
+          case "alliance_visits":
             currentValue = allianceVisitsCount;
-            percentage = requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
             break;
           default:
             currentValue = 0;
@@ -454,7 +527,7 @@ async function performReset(workspaceGroupId: bigint | number) {
     }
 
     const hasQuotas = Object.keys(quotaProgress).length > 0;
-    const hasActivity = 
+    const hasActivity =
       totalMinutes > 0 ||
       totalMessages > 0 ||
       allSessionParticipations.length > 0 ||
@@ -468,9 +541,10 @@ async function performReset(workspaceGroupId: bigint | number) {
         periodEnd,
         minutes: totalMinutes,
         messages: totalMessages,
-        sessionsHosted: sessionsHostedCount,
+        sessionsHosted: sessionsPrimaryHostedCount,
+        sessionsSecondaryHosted: sessionsSecondaryHostedCount,
         sessionsAttended: sessionsAttendedCount,
-        idleTime: totalIdleTime,
+        idleTime: Math.round(totalIdleTime / 60),
         wallPosts: wallPosts.length,
         quotaProgress,
       });
@@ -492,7 +566,7 @@ async function performReset(workspaceGroupId: bigint | number) {
   });
 
   await prisma.activitySession.updateMany({
-    where: { 
+    where: {
       workspaceGroupId,
       archived: { not: true },
     },
@@ -504,7 +578,7 @@ async function performReset(workspaceGroupId: bigint | number) {
   });
 
   await prisma.activityAdjustment.updateMany({
-    where: { 
+    where: {
       workspaceGroupId,
       archived: { not: true },
     },

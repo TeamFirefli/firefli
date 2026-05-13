@@ -32,9 +32,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const periodStart = await getResetStart(workspaceGroupId);
 
     const periodEnd = new Date();
-    
-    console.log(`[RESET] Period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`);
-    
+
+    console.log(
+      `[RESET] Period: ${periodStart.toISOString()} to ${periodEnd.toISOString()}`,
+    );
+
     const workspaceUsers = await prisma.user.findMany({
       where: {
         OR: [
@@ -75,9 +77,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         },
       },
     });
-    
+
     console.log(`[RESET] Found ${workspaceUsers.length} workspace-accessible users`);
-    
+
     const quotas = await prisma.quota.findMany({
       where: { workspaceGroupId },
     });
@@ -89,6 +91,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       minutes: number;
       messages: number;
       sessionsHosted: number;
+      sessionsSecondaryHosted: number;
       sessionsAttended: number;
       idleTime: number;
       wallPosts: number;
@@ -105,6 +108,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           workspaceGroupId,
           endTime: { not: null },
           archived: { not: true },
+          startTime: {
+            gte: periodStart,
+            lte: periodEnd,
+          },
         },
       });
 
@@ -115,7 +122,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       sessions.forEach((session) => {
         if (session.endTime) {
           const duration = Math.round(
-            (session.endTime.getTime() - session.startTime.getTime()) / 60000
+            (session.endTime.getTime() - session.startTime.getTime()) / 60000,
           );
           sessionMinutes += duration;
         }
@@ -123,16 +130,20 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         totalIdleTime += Number(session.idleTime) || 0;
       });
       const adjustments = await prisma.activityAdjustment.findMany({
-        where: { 
-          userId, 
+        where: {
+          userId,
           workspaceGroupId,
           archived: { not: true },
+          createdAt: {
+            gte: periodStart,
+            lte: periodEnd,
+          },
         },
       });
 
       const adjustmentMinutes = adjustments.reduce(
         (sum, adj) => sum + adj.minutes,
-        0
+        0,
       );
       const totalMinutes = sessionMinutes + adjustmentMinutes;
 
@@ -164,34 +175,57 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         },
       });
 
-      const sessionsHosted = allSessionParticipations.filter((participation) => {
+      const sessionsHosted = allSessionParticipations.filter(
+        (participation) => {
           const sessionSlots = participation.session.sessionType.slots as any[];
-          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          const matchingSlot = sessionSlots.find(
+            (s: any) => s.id === participation.roleID,
+          );
           return matchingSlot?.hostRole === "primary";
-        }).length;
+        },
+      ).length;
 
-      const sessionsSecondaryHosted = allSessionParticipations.filter((participation) => {
+      const sessionsSecondaryHosted = allSessionParticipations.filter(
+        (participation) => {
           const sessionSlots = participation.session.sessionType.slots as any[];
-          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          const matchingSlot = sessionSlots.find(
+            (s: any) => s.id === participation.roleID,
+          );
           return matchingSlot?.hostRole === "secondary";
-        }).length;
+        },
+      ).length;
 
-      const sessionsAttended = allSessionParticipations.filter((participation) => {
+      const sessionsAttended = allSessionParticipations.filter(
+        (participation) => {
           const sessionSlots = participation.session.sessionType.slots as any[];
-          const matchingSlot = sessionSlots.find((s: any) => s.id === participation.roleID);
+          const matchingSlot = sessionSlots.find(
+            (s: any) => s.id === participation.roleID,
+          );
           return !matchingSlot?.hostRole;
-        }).length;
+        },
+      ).length;
 
-      const sessionsLogged = new Set(allSessionParticipations.map(p => p.sessionid)).size;
-      const sessionsByType: Record<string, number> = {};
+      const sessionsLogged = new Set(
+        allSessionParticipations.map((p) => p.sessionid),
+      ).size;
+      const primaryHostedByType: Record<string, number> = {};
       const secondaryHostedByType: Record<string, number> = {};
+      const attendedByType: Record<string, number> = {};
+      const loggedByType: Record<string, Set<string>> = {};
       for (const p of allSessionParticipations) {
-        const type = (p.session as any).type || 'other';
-        sessionsByType[type] = (sessionsByType[type] || 0) + 1;
-        const pSlots = (p.session as any)?.sessionType?.slots as any[] || [];
+        const type = (p.session as any).type || "other";
+        const pSlots = ((p.session as any)?.sessionType?.slots as any[]) || [];
         const pSlot = pSlots.find((s: any) => s.id === p.roleID);
-        if (pSlot?.hostRole === "secondary") {
+
+        if (!loggedByType[type]) loggedByType[type] = new Set<string>();
+        loggedByType[type].add(p.sessionid);
+
+        if (pSlot?.hostRole === "primary") {
+          primaryHostedByType[type] = (primaryHostedByType[type] || 0) + 1;
+        } else if (pSlot?.hostRole === "secondary") {
           secondaryHostedByType[type] = (secondaryHostedByType[type] || 0) + 1;
+        } else {
+          attendedByType[type] = (attendedByType[type] || 0) + 1;
         }
       }
 
@@ -204,11 +238,8 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             gte: periodStart,
             lte: periodEnd,
           },
-          OR: [
-            { hostId: userId },
-            { participants: { has: userId } }
-          ]
-        }
+          OR: [{ hostId: userId }, { participants: { has: userId } }],
+        },
       });
 
       const wallPosts = await prisma.wallPost.findMany({
@@ -225,7 +256,10 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
       const quotaProgress: any = {};
       const quotaMap = new Map<string, any>();
-      const quotaSourceMap = new Map<string, { linkedVia: string; linkedName: string; linkedColor: string | null }>();
+      const quotaSourceMap = new Map<
+        string,
+        { linkedVia: string; linkedName: string; linkedColor: string | null }
+      >();
 
       for (const role of user.roles) {
         for (const qr of role.quotaRoles) {
@@ -233,7 +267,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           if (!quotaMap.has(quota.id)) {
             quotaMap.set(quota.id, quota);
             quotaSourceMap.set(quota.id, {
-              linkedVia: 'role',
+              linkedVia: "role",
               linkedName: role.name,
               linkedColor: (role as any).color ?? null,
             });
@@ -247,7 +281,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           if (!quotaMap.has(quota.id)) {
             quotaMap.set(quota.id, quota);
             quotaSourceMap.set(quota.id, {
-              linkedVia: 'department',
+              linkedVia: "department",
               linkedName: dm.department.name,
               linkedColor: dm.department.color ?? null,
             });
@@ -256,26 +290,29 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
 
       const userQuotas = Array.from(quotaMap.values());
-      const quotaIds = userQuotas.map(q => q.id);
-      const customQuotaCompletions = quotaIds.length > 0 ? await prisma.userQuotaCompletion.findMany({
-        where: {
-          quotaId: { in: quotaIds },
-          userId,
-          workspaceGroupId,
-          archived: { not: true },
-        },
-        include: {
-          completedByUser: {
-            select: {
-              userid: true,
-              username: true,
-            },
-          },
-        },
-      }) : [];
+      const quotaIds = userQuotas.map((q) => q.id);
+      const customQuotaCompletions =
+        quotaIds.length > 0
+          ? await prisma.userQuotaCompletion.findMany({
+              where: {
+                quotaId: { in: quotaIds },
+                userId,
+                workspaceGroupId,
+                archived: { not: true },
+              },
+              include: {
+                completedByUser: {
+                  select: {
+                    userid: true,
+                    username: true,
+                  },
+                },
+              },
+            })
+          : [];
 
       const completionMap = new Map();
-      customQuotaCompletions.forEach(completion => {
+      customQuotaCompletions.forEach((completion) => {
         completionMap.set(completion.quotaId, completion);
       });
 
@@ -294,8 +331,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             if (completion) {
               completed = completion.completed || false;
               completedAt = completion.completedAt;
-              completedBy = completion.completedBy ? completion.completedBy.toString() : null;
-              completedByUsername = completion.completedByUser?.username || null;
+              completedBy = completion.completedBy
+                ? completion.completedBy.toString()
+                : null;
+              completedByUsername =
+                completion.completedByUser?.username || null;
               completionNotes = completion.notes;
               percentage = completed ? 100 : 0;
               currentValue = completed ? 1 : 0;
@@ -303,39 +343,62 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             break;
           case "mins":
             currentValue = totalMinutes;
-            percentage = (totalMinutes / quota.value) * 100;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
             break;
+
           case "sessions_hosted":
-            if (quota.sessionType && quota.sessionType !== 'all') {
-              currentValue = sessionsByType[quota.sessionType] || 0;
-            } else {
-              currentValue = sessionsHosted;
-            }
-            percentage = (currentValue / quota.value) * 100;
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? primaryHostedByType[quota.sessionType] || 0
+                : sessionsHosted;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
             break;
+
           case "sessions_secondary_host":
-            if (quota.sessionType && quota.sessionType !== 'all') {
-              currentValue = secondaryHostedByType[quota.sessionType] || 0;
-            } else {
-              currentValue = sessionsSecondaryHosted;
-            }
-            percentage = (currentValue / quota.value) * 100;
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? secondaryHostedByType[quota.sessionType] || 0
+                : sessionsSecondaryHosted;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
             break;
+
           case "sessions_attended":
-            currentValue = sessionsAttended;
-            percentage = (sessionsAttended / quota.value) * 100;
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? attendedByType[quota.sessionType] || 0
+                : sessionsAttended;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
             break;
+
           case "sessions_logged":
-            if (quota.sessionType && quota.sessionType !== 'all') {
-              currentValue = sessionsByType[quota.sessionType] || 0;
-            } else {
-              currentValue = sessionsLogged;
-            }
-            percentage = (currentValue / quota.value) * 100;
+            currentValue =
+              quota.sessionType && quota.sessionType !== "all"
+                ? loggedByType[quota.sessionType]?.size || 0
+                : sessionsLogged;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
             break;
+
           case "alliance_visits":
             currentValue = allianceVisits;
-            percentage = (allianceVisits / quota.value) * 100;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
             break;
         }
 
@@ -353,13 +416,15 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           quotaProgress[quota.id].completed = completed;
           if (completedAt) quotaProgress[quota.id].completedAt = completedAt;
           if (completedBy) quotaProgress[quota.id].completedBy = completedBy;
-          if (completedByUsername) quotaProgress[quota.id].completedByUsername = completedByUsername;
-          if (completionNotes) quotaProgress[quota.id].completionNotes = completionNotes;
+          if (completedByUsername)
+            quotaProgress[quota.id].completedByUsername = completedByUsername;
+          if (completionNotes)
+            quotaProgress[quota.id].completionNotes = completionNotes;
         }
       }
 
       const hasQuotas = userQuotas.length > 0;
-      const hasActivity = 
+      const hasActivity =
         totalMinutes > 0 ||
         totalMessages > 0 ||
         sessionsHosted > 0 ||
@@ -367,7 +432,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         totalWallPosts > 0;
 
       if (hasActivity || hasQuotas) {
-        console.log(`[RESET] Saving history for user ${userId}: activity=${hasActivity}, quotas=${hasQuotas} (${userQuotas.length} quotas)`);
+        console.log(
+          `[RESET] Saving history for user ${userId}: activity=${hasActivity}, quotas=${hasQuotas} (${userQuotas.length} quotas)`,
+        );
         historyRecords.push({
           userId,
           workspaceGroupId,
@@ -376,21 +443,28 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           minutes: totalMinutes,
           messages: totalMessages,
           sessionsHosted,
+          sessionsSecondaryHosted,
           sessionsAttended,
           idleTime: Math.round(totalIdleTime / 60),
           wallPosts: totalWallPosts,
           quotaProgress,
         });
       } else {
-        console.log(`[RESET] Skipping user ${userId}: no activity and no quotas`);
+        console.log(
+          `[RESET] Skipping user ${userId}: no activity and no quotas`,
+        );
       }
     }
-    
-    console.log(`[RESET] Total history records to save: ${historyRecords.length}`);
-    
+
+    console.log(
+      `[RESET] Total history records to save: ${historyRecords.length}`,
+    );
+
     await prisma.$transaction(async (tx) => {
       if (historyRecords.length > 0) {
-        console.log(`[RESET] Creating ${historyRecords.length} ActivityHistory records`);
+        console.log(
+          `[RESET] Creating ${historyRecords.length} ActivityHistory records`,
+        );
         await tx.activityHistory.createMany({
           data: historyRecords,
         });
@@ -420,9 +494,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           archiveEndDate: periodEnd,
         },
       });
-      
+
       await tx.activitySession.updateMany({
-        where: { 
+        where: {
           workspaceGroupId,
           archived: { not: true },
         },
@@ -432,9 +506,9 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           archiveEndDate: periodEnd,
         },
       });
-      
+
       await tx.activityAdjustment.updateMany({
-        where: { 
+        where: {
           workspaceGroupId,
           archived: { not: true },
         },
@@ -444,7 +518,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           archiveEndDate: periodEnd,
         },
       });
-      
+
       await tx.session.updateMany({
         where: {
           sessionType: { workspaceGroupId },
@@ -472,11 +546,16 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       });
     });
 
-    console.log(`[RESET] Manual reset completed successfully for workspace ${workspaceGroupId}`);
+    console.log(
+      `[RESET] Manual reset completed successfully for workspace ${workspaceGroupId}`,
+    );
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    console.error(`[RESET] Error during manual reset for workspace ${workspaceGroupId}:`, error);
+    console.error(
+      `[RESET] Error during manual reset for workspace ${workspaceGroupId}:`,
+      error,
+    );
     return res
       .status(500)
       .json({ success: false, error: "Something went wrong" });

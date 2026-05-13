@@ -636,6 +636,7 @@ model ActivityHistory {
   minutes          Int
   messages         Int
   sessionsHosted   Int
+  sessionsSecondaryHosted Int @default(0)
   sessionsAttended Int
   idleTime         Int
   wallPosts        Int       @default(0)
