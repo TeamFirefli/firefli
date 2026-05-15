@@ -894,6 +894,7 @@ const AutocompleteInput: React.FC<{
 
   useEffect(() => {
     const userHasAssignPermission = canAssignUsers(workspace?.yourPermission || [], sessionType) || workspace?.yourPermission?.includes("admin") || false;
+    const userHasClaimPermission = canClaimSelf(workspace?.yourPermission || [], sessionType) || workspace?.yourPermission?.includes("admin") || false;
     let usersForSuggestions = availableUsers;
     
     if (!userHasAssignPermission) {
@@ -916,7 +917,7 @@ const AutocompleteInput: React.FC<{
     
     if (inputValue.trim() === "") {
       const isCurrentUserAssigned = assignedUserId === currentUserId.toString();
-      if (currentUserUsername && !isCurrentUserAssigned && (currentUserEligible || userHasAssignPermission)) {
+      if (currentUserUsername && !isCurrentUserAssigned && (currentUserEligible || userHasAssignPermission || userHasClaimPermission)) {
         suggestions.push({
           userid: currentUserId.toString(),
           username: currentUserUsername,
@@ -938,7 +939,7 @@ const AutocompleteInput: React.FC<{
           const matchesInput = user.username.toLowerCase().includes(inputValue.toLowerCase());
           const isAssigned = user.userid.toString() === assignedUserId;
           const isSelf = user.userid.toString() === currentUserId.toString();
-          if (isSelf && !currentUserEligible && !userHasAssignPermission) return false;
+          if (isSelf && !currentUserEligible && !userHasAssignPermission && !userHasClaimPermission) return false;
           return matchesInput || isAssigned;
         })
         .map((user) => ({
@@ -974,7 +975,7 @@ const AutocompleteInput: React.FC<{
     if (!targetUser) return false;
     const isAssigningToSelf = targetUser.userid.toString() === currentUserId.toString();
     
-    if (isAssigningToSelf && !hasAssignPermission && !currentUserEligible) {
+    if (isAssigningToSelf && !hasAssignPermission && !hasClaimPermission && !currentUserEligible) {
       return false;
     }
 

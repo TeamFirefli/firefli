@@ -71,10 +71,10 @@ export const getServerSideProps: GetServerSideProps = withPermissionCheckSsr(
     try {
       const fetchedGames = await fetchGroupGames(Number(id));
       games = fetchedGames
-        .filter((game: any) => game.rootPlace?.type === "Place")
+        .filter((game: any) => game.rootPlaceId)
         .map((game: any) => ({
           name: game.name,
-          id: Number(game.rootPlace.id),
+          id: Number(game.rootPlaceId),
         }))
         .filter((game: any) => !isNaN(game.id) && game.id > 0);
     } catch (err) {

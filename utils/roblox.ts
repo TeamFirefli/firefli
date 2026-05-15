@@ -160,9 +160,21 @@ export async function fetchUniverseInfo(universeId: number) {
 
 export async function fetchGroupGames(groupId: number) {
   try {
-    const result = await fetchApi(getGroupsGroupidGames, { groupId });
-    if (isAnyErrorResponse(result)) return [];
-    return result.data ?? [];
+    const groupResult = await fetchApi(getGroupsGroupidGames, { groupId, limit: 100 });
+    if (isAnyErrorResponse(groupResult)) return [];
+    const groupGames = groupResult.data ?? [];
+    if (groupGames.length === 0) return [];
+    const universeIds = groupGames.map((g: any) => g.id);
+    const batchSize = 50;
+    const detailed: any[] = [];
+    for (let i = 0; i < universeIds.length; i += batchSize) {
+      const batch = universeIds.slice(i, i + batchSize);
+      const detailResult = await fetchApi(getGames, { universeIds: batch });
+      if (!isAnyErrorResponse(detailResult)) {
+        detailed.push(...(detailResult.data ?? []));
+      }
+    }
+    return detailed;
   } catch (error) {
     console.error(`Error getting games for group ${groupId}:`, error);
     return [];
