@@ -339,6 +339,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
         } else {
           toast.error(response.data.error || "Failed to add video link");
         }
+        setUploadingEvidence(false);
       } else {
         // For file uploads
         const reader = new FileReader();
