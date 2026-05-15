@@ -188,14 +188,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         ? (matchingSlot as any).groupRoles
         : [];
       if (slotGroupRoles.length > 0 && !isAdmin && !hasAssignPermission && isAssigningToSelf) {
+        const workspaceGroupId = parseInt(req.query.id as string);
         const targetRank = await prisma.rank.findFirst({
           where: {
             userId: BigInt(userId),
-            workspaceGroupId: parseInt(req.query.id as string),
+            workspaceGroupId,
           },
         });
         const targetRankId = targetRank ? Number(targetRank.rankId) : null;
-        if (targetRankId === null || !slotGroupRoles.includes(targetRankId)) {
+        const rankMatches = targetRankId !== null && slotGroupRoles.includes(targetRankId);
+
+        let roleMatches = false;
+        if (!rankMatches) {
+          const eligibleWorkspaceRoles = await prisma.role.findMany({
+            where: {
+              workspaceGroupId,
+              groupRoles: { hasSome: slotGroupRoles },
+              members: { some: { userid: BigInt(userId) } },
+            },
+            select: { id: true },
+          });
+          roleMatches = eligibleWorkspaceRoles.length > 0;
+        }
+
+        if (!rankMatches && !roleMatches) {
           return res.status(403).json({
             success: false,
             error: "This user does not meet the rank requirements for this slot",
