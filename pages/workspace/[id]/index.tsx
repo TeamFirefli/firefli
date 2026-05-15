@@ -380,7 +380,7 @@ const Home: pageWithLayout = () => {
                   "text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-2 pb-1 break-words",
                   bannerUrl?.startsWith('data:')
                     ? "text-white drop-shadow-md"
-                    : "bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70"
+                    : "text-zinc-900 dark:text-white"
                 )}>
                   {text}
                 </h1>

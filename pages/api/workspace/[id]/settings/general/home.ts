@@ -38,10 +38,9 @@ export async function handler(
 		const allowedWidgets = new Set(['sessions', 'wall', 'documents', 'notices', 'birthdays', 'new_members', 'sticky_notes', 'quota', 'games']);
 		const requestedWidgets = Array.isArray(req.body?.widgets) ? req.body.widgets : [];
 		const sanitizedWidgets = requestedWidgets.filter((w: unknown): w is string => typeof w === 'string' && allowedWidgets.has(w));
-		
-		// Support both old format (widgets array) and new format (widgets + layout)
-		const after: { widgets: string[]; layout?: WidgetLayout[] } = { 
-			widgets: sanitizedWidgets 
+		const after: { widgets: string[]; layout?: WidgetLayout[]; bannerImage?: string | null } = { 
+			widgets: sanitizedWidgets,
+			...(before?.bannerImage != null ? { bannerImage: before.bannerImage } : {}),
 		};
 		
 		// If layout is provided, store it
