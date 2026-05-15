@@ -214,7 +214,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         if (!rankMatches && !roleMatches) {
           return res.status(403).json({
             success: false,
-            error: "This user does not meet the rank requirements for this slot",
+            error: "This user does not meet the requirements.",
           });
         }
       }

@@ -35,7 +35,7 @@ export async function handler(
 	try {
 		const workspaceId = parseInt(req.query.id as string);
 		const before = await getConfig('home', workspaceId);
-		const allowedWidgets = new Set(['sessions', 'wall', 'documents', 'notices', 'birthdays', 'new_members']);
+		const allowedWidgets = new Set(['sessions', 'wall', 'documents', 'notices', 'birthdays', 'new_members', 'sticky_notes', 'quota', 'games']);
 		const requestedWidgets = Array.isArray(req.body?.widgets) ? req.body.widgets : [];
 		const sanitizedWidgets = requestedWidgets.filter((w: unknown): w is string => typeof w === 'string' && allowedWidgets.has(w));
 		
@@ -53,10 +53,10 @@ export async function handler(
 					i: item.i,
 					x: Number.isFinite(item.x) ? item.x : 0,
 					y: Number.isFinite(item.y) ? item.y : 0,
-					w: [4, 6, 8, 12].includes(item.w) ? item.w : 6,
+					w: Number.isFinite(item.w) && item.w >= 1 && item.w <= 12 ? Math.round(item.w) : 6,
 					h: Number.isFinite(item.h) && item.h > 0 ? item.h : 4,
 					minW: 4,
-					minH: 3,
+					minH: 1,
 					maxW: 12,
 					maxH: item.maxH,
 				});
@@ -71,7 +71,7 @@ export async function handler(
 					w: 6,
 					h: 4,
 					minW: 4,
-					minH: 3,
+					minH: 1,
 					maxW: 12,
 				};
 			});

@@ -54,6 +54,7 @@ const workspacestate = atom({
 			recommendationsEnabled: false,
 			moderationEnabled: false,
 			widgets: [] as string[],
+			bannerImage: null as string | null,
 			layout: undefined as Array<{
 				i: string;
 				x: number;
@@ -74,4 +75,9 @@ const createWorkspaceModalState = atom({
 	default: false
 });
 
-export {loginState, workspacestate, createWorkspaceModalState};
+const dashboardEditingState = atom({
+	key: "dashboardEditingState",
+	default: false
+});
+
+export {loginState, workspacestate, createWorkspaceModalState, dashboardEditingState};
