@@ -92,6 +92,7 @@ const Home: pageWithLayout = () => {
   const [editLayout, setEditLayout] = useState<WidgetLayout[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [droppingWidgetId, setDroppingWidgetId] = useState<string | null>(null)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null)
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() =>
     typeof window !== 'undefined' ? window.innerWidth : undefined
   )
@@ -202,6 +203,16 @@ const Home: pageWithLayout = () => {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    const id = router.query.id
+    if (!id) return
+    axios.get(`/api/workspace/${id}/home/banner`)
+      .then(res => {
+        if (typeof res.data.bannerImage === 'string') setBannerUrl(res.data.bannerImage)
+      })
+      .catch(() => {})
+  }, [router.query.id])
 
   useEffect(() => {
     const update = () => setWindowWidth(window.innerWidth)
@@ -342,15 +353,15 @@ const Home: pageWithLayout = () => {
         <div
           className={clsx(
             "relative rounded-2xl overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8",
-            workspace.settings.bannerImage?.startsWith('data:') ? "p-8 min-h-[140px]" : ""
+            bannerUrl?.startsWith('data:') ? "p-8 min-h-[140px]" : ""
           )}
-          style={workspace.settings.bannerImage?.startsWith('data:') ? {
-            backgroundImage: `url(${workspace.settings.bannerImage})`,
+          style={bannerUrl?.startsWith('data:') ? {
+            backgroundImage: `url(${bannerUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           } : {}}
         >
-          {workspace.settings.bannerImage?.startsWith('data:') && (
+          {bannerUrl?.startsWith('data:') && (
             <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
           )}
           <div className="relative max-w-2xl">
@@ -362,12 +373,12 @@ const Home: pageWithLayout = () => {
                   titleVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
                 )}
               >
-                <span className={clsx("text-sm font-medium mb-1 block", workspace.settings.bannerImage?.startsWith('data:') ? "text-white/80" : "text-primary/80")}>
+                <span className={clsx("text-sm font-medium mb-1 block", bannerUrl?.startsWith('data:') ? "text-white/80" : "text-primary/80")}>
                   Welcome back
                 </span>
                 <h1 className={clsx(
-                  "text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold mb-2 pb-1 break-words",
-                  workspace.settings.bannerImage?.startsWith('data:')
+                  "text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-2 pb-1 break-words",
+                  bannerUrl?.startsWith('data:')
                     ? "text-white drop-shadow-md"
                     : "bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70"
                 )}>
@@ -376,11 +387,11 @@ const Home: pageWithLayout = () => {
                 <div
                   className={clsx(
                     "h-1 w-16 rounded-full mb-3 transition-all duration-1000 transform",
-                    workspace.settings.bannerImage?.startsWith('data:') ? "bg-white/60" : "bg-gradient-to-r from-primary to-primary/30",
+                    bannerUrl?.startsWith('data:') ? "bg-white/60" : "bg-gradient-to-r from-primary to-primary/30",
                     titleVisible ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0",
                   )}
                 ></div>
-                <p className={clsx("text-sm max-w-md", workspace.settings.bannerImage?.startsWith('data:') ? "text-white/70" : "text-zinc-500 dark:text-zinc-400")}>
+                <p className={clsx("text-sm max-w-md", bannerUrl?.startsWith('data:') ? "text-white/70" : "text-zinc-500 dark:text-zinc-400")}>
                   Here's what's happening in your workspace today
                 </p>
               </div>
@@ -391,7 +402,7 @@ const Home: pageWithLayout = () => {
               onClick={enterEditMode}
               className={clsx(
                 "relative self-start md:self-auto flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium shadow-sm transition-all",
-                workspace.settings.bannerImage?.startsWith('data:') ? "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
+                bannerUrl?.startsWith('data:') ? "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
                   : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary"
               )}
             >

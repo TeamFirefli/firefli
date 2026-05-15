@@ -210,7 +210,7 @@ export async function handler(
 			moderationEnabled: moderationConfig?.enabled || false,
 			widgets: homeConfig?.widgets || [],
 			layout: homeConfig?.layout || [],
-			bannerImage: homeConfig?.bannerImage ?? null
+			bannerImage: null as string | null,
 		}
 	} })
 }

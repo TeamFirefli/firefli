@@ -74,13 +74,18 @@ const home: FC<props> = ({ triggerToast }) => {
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const rawBanner = (workspace.settings as any)?.bannerImage ?? null;
-  const [bannerPreview, setBannerPreview] = useState<string | null>(
-    typeof rawBanner === "string" && rawBanner.startsWith("data:")
-      ? rawBanner
-      : null,
-  );
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [bannerSaving, setBannerSaving] = useState(false);
+
+  useEffect(() => {
+    if (!workspace.groupId) return;
+    axios
+      .get(`/api/workspace/${workspace.groupId}/home/banner`)
+      .then((res) => {
+        if (typeof res.data.bannerImage === 'string') setBannerPreview(res.data.bannerImage);
+      })
+      .catch(() => {});
+  }, [workspace.groupId]);
 
   const handleBannerFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
