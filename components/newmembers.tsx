@@ -360,9 +360,7 @@ export default function NewToTeam() {
                   ✕
                 </button>
               </div>
-              <div className="p-6">
-                <MemberIntroEditor />
-              </div>
+              <MemberIntroEditor />
             </div>
           </div>,
           document.body,
