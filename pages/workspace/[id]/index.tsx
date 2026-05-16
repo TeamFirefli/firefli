@@ -171,7 +171,7 @@ const Home: pageWithLayout = () => {
     new_members: {
       component: NewToTeam,
       icon: IconPlus,
-      title: "New Members",
+      title: "New to the Team",
       description: "Recently joined team members",
       color:
         "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20",
