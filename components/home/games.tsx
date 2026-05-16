@@ -37,14 +37,11 @@ const GamesWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div
-        className="h-full grid grid-cols-6 gap-2"
-        style={{ gridAutoRows: "1fr" }}
-      >
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-700 min-h-[3rem]"
+            className="animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-700 aspect-video"
           />
         ))}
       </div>
@@ -76,14 +73,11 @@ const GamesWidget: React.FC = () => {
   }
 
   return (
-    <div
-      className="h-full grid grid-cols-6 gap-2"
-      style={{ gridAutoRows: "1fr" }}
-    >
+    <div className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
       {games.map((game) => (
         <div
           key={game.placeId}
-          className="relative rounded-lg overflow-hidden min-h-[3rem] bg-zinc-800 shadow-sm group"
+          className="relative rounded-lg overflow-hidden aspect-video bg-zinc-800 shadow-sm group"
         >
           {game.thumbnail ? (
             <img

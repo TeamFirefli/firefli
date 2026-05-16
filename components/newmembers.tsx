@@ -235,8 +235,8 @@ export default function NewToTeam() {
 
   return (
     <>
-      <div className="overflow-visible">
-        <div className="flex gap-6 overflow-x-auto overflow-y-visible pb-6 px-3 -mx-3 sm:mx-0 sm:px-3 touch-pan-x">
+      <div className="overflow-y-auto sm:overflow-visible">
+        <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:gap-6 sm:overflow-x-auto sm:overflow-y-visible pb-2 sm:pb-6 px-1 sm:px-3 sm:-mx-3 touch-pan-x">
           {members.map((m) => {
             const isCurrentUser = currentUserId && m.userid === currentUserId;
             const isPlaying = playingId === m.userid;
@@ -244,7 +244,7 @@ export default function NewToTeam() {
             return (
               <div
                 key={m.userid}
-                className={`relative flex flex-col items-center shrink-0 group ${isCurrentUser ? "cursor-pointer" : ""}`}
+                className={`relative flex flex-col items-center sm:shrink-0 group ${isCurrentUser ? "cursor-pointer" : ""}`}
                 onClick={() => isCurrentUser && handleCardClick(m)}
               >
                 <div className="relative p-1">

@@ -561,7 +561,7 @@ const Home: pageWithLayout = () => {
             {bannerUrl?.startsWith("data:") && (
               <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
             )}
-            <div className="relative max-w-2xl">
+            <div className="relative w-full max-w-2xl">
               <div className="absolute -left-3 -top-3 w-20 h-20 bg-primary/5 rounded-full blur-2xl"></div>
               <div className="relative">
                 <div
@@ -605,7 +605,7 @@ const Home: pageWithLayout = () => {
                   ></div>
                   <p
                     className={clsx(
-                      "text-sm max-w-md",
+                      "text-sm break-words",
                       bannerUrl?.startsWith("data:")
                         ? "text-white/70"
                         : "text-zinc-500 dark:text-zinc-400",
@@ -859,7 +859,7 @@ const Home: pageWithLayout = () => {
                         key={item.i}
                         style={
                           isMobile
-                            ? {}
+                            ? { minHeight: item.h * 80 }
                             : {
                                 gridColumnStart: item.x + 1,
                                 gridColumnEnd: item.x + item.w + 1,

@@ -110,8 +110,8 @@ const StickyWidget: React.FC = () => {
 
   if (isEditing && editData) {
     return (
-      <div className="flex flex-col gap-3 h-full">
-        <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
+      <div className="flex flex-col gap-3">
+        <div className="space-y-3 overflow-y-auto max-h-52 pr-1">
         <div>
           <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">Title</label>
           <input
