@@ -76,6 +76,9 @@ import {
   IconCopy,
   IconBeach,
   IconMinus,
+  IconClock,
+  IconMessage,
+  IconUser,
 } from "@tabler/icons-react";
 import { UserGroupIcon, UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -362,7 +365,7 @@ const Views: pageWithLayout<pageProps> = ({
       ),
     },
     columnHelper.accessor("info", {
-      header: "User",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconUser className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />User</span>,
       cell: (row) => {
         return (
           <div
@@ -467,7 +470,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("rankName", {
-      header: "Rank",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconStar className="w-3.5 h-3.5 text-amber-400" />Rank</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue() || "Guest"}</p>;
       },
@@ -478,7 +481,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("departments", {
-      header: "Department",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconBriefcase className="w-3.5 h-3.5 text-indigo-400" />Department</span>,
       cell: (row) => {
         const userDepts = row.getValue();
         if (!userDepts || userDepts.length === 0) {
@@ -514,7 +517,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("hostedSessions", {
-      header: "Hosted sessions",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconCalendarWeekFilled className="w-3.5 h-3.5 text-emerald-400" />Hosted sessions</span>,
       cell: (row) => {
         const hosted = row.getValue() as any;
         const len =
@@ -523,33 +526,33 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("sessionsAttended", {
-      header: "Sessions Attended",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconSchool className="w-3.5 h-3.5 text-sky-400" />Sessions Attended</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("lastPeriodSessionsHosted", {
-      header: "Last Period Hosted",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconCalendarWeekFilled className="w-3.5 h-3.5 text-slate-400" />Last Period Hosted</span>,
       cell: (row) => {
         const val = row.getValue();
         return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("lastPeriodSessionsAttended", {
-      header: "Last Period Attended",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconSchool className="w-3.5 h-3.5 text-slate-400" />Last Period Attended</span>,
       cell: (row) => {
         const val = row.getValue();
         return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("allianceVisits", {
-      header: "Alliance Visits",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconTarget className="w-3.5 h-3.5 text-rose-400" />Alliance Visits</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("book", {
-      header: "Warnings",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconAlertTriangle className="w-3.5 h-3.5 text-amber-400" />Warnings</span>,
       cell: (row) => {
         const book = row.getValue() as any[];
         const warnings = Array.isArray(book)
@@ -559,44 +562,44 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("inactivityNotices", {
-      header: "Inactivity notices",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconBeach className="w-3.5 h-3.5 text-orange-400" />Inactivity notices</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue().length}</p>;
       },
     }),
     columnHelper.accessor("minutes", {
-      header: "Minutes",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconClock className="w-3.5 h-3.5 text-sky-400" />Minutes</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("lastPeriodMinutes", {
-      header: "Last Period Activity",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconClock className="w-3.5 h-3.5 text-slate-400" />Last Period Activity</span>,
       cell: (row) => {
         const val = row.getValue();
         return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("idleMinutes", {
-      header: "Idle minutes",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconCoffee className="w-3.5 h-3.5 text-yellow-500" />Idle minutes</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("messages", {
-      header: "Messages",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconMessage className="w-3.5 h-3.5 text-violet-400" />Messages</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("registered", {
-      header: "Registered",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconId className="w-3.5 h-3.5 text-green-400" />Registered</span>,
       cell: (row) => {
         return <p>{row.getValue() ? "✅" : "❌"}</p>;
       },
     }),
     columnHelper.accessor("quota", {
-      header: "Quota Complete",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconSparkles className="w-3.5 h-3.5 text-emerald-400" />Quota Complete</span>,
       cell: (row) => {
         const user = row.row.original;
         if (user.quotaTotal === 0) return <p>-</p>;
@@ -608,7 +611,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("quotaFailed", {
-      header: "Quota Failed",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconAlertCircle className="w-3.5 h-3.5 text-red-400" />Quota Failed</span>,
       cell: (row) => {
         const user = row.row.original;
         if (user.quotaTotal === 0) return <p>-</p>;
