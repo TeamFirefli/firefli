@@ -625,27 +625,7 @@ const Home: pageWithLayout = () => {
               })}
             </div>
           </div>
-        ) : (
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm p-6 sm:p-12 text-center border border-zinc-100 dark:border-zinc-700">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center">
-              <IconHome className="w-8 h-8 sm:w-12 sm:h-12 text-primary" />
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white mb-3">
-              Your dashboard is empty
-            </h3>
-            <p className="text-zinc-500 dark:text-zinc-400 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base">
-              Add widgets to your workspace to see important information at a glance
-            </p>
-            <button
-              onClick={() => (window.location.href = `/workspace/${workspace.groupId}/settings`)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow group text-sm sm:text-base"
-            >
-              <IconPlus className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-              <span>Configure Dashboard</span>
-              <IconChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-            </button>
-          </div>
-        )}
+        ) : null}
 
       </div>
       </div>
