@@ -187,7 +187,7 @@ const Home: pageWithLayout = () => {
     sticky_notes: {
       component: StickyWidget,
       icon: IconPin,
-      title: "Announcement",
+      title: "Sticky Notes",
       description: "Pinned workspace announcement",
       color:
         "bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20",
