@@ -76,6 +76,11 @@ export interface WidgetLayout {
   maxH?: number;
 }
 
+const FIXED_HEIGHT: Record<string, number> = {
+  new_members: 2,
+  birthdays: 2,
+}
+
 const Home: pageWithLayout = () => {
   const [login, setLogin] = useRecoilState(loginState)
   const [workspace, setWorkspace] = useRecoilState(workspacestate)
@@ -110,14 +115,16 @@ const Home: pageWithLayout = () => {
 
     return wids.map((widget: string, index: number) => {
       const existing = savedByWidget.get(widget)
+      const fh = FIXED_HEIGHT[widget]
       return {
         i: widget,
         x: existing?.x ?? (index % 2) * 6,
         y: existing?.y ?? Math.floor(index / 2) * 4,
         w: existing?.w ?? 6,
-        h: existing?.h ?? 4,
+        h: fh ?? (existing?.h ?? 4),
         minW: 4,
-        minH: 1,
+        minH: fh ?? 1,
+        ...(fh ? { maxH: fh } : {}),
       }
     })
   }, [workspace.settings?.widgets, workspace.settings?.layout]);
@@ -294,12 +301,15 @@ const Home: pageWithLayout = () => {
 
   const applyLayoutUpdate = useCallback((newLayout: readonly any[]) => {
     setEditLayout(
-      newLayout.map((l) => ({ i: l.i, x: l.x, y: l.y, w: l.w, h: l.h, minW: 4, minH: 1 }))
+      newLayout.map((l) => {
+        const fh = FIXED_HEIGHT[l.i]
+        return { i: l.i, x: l.x, y: l.y, w: l.w, h: fh ?? l.h, minW: 4, minH: fh ?? 1, ...(fh ? { maxH: fh } : {}) }
+      })
     )
   }, [])
 
   const droppingItem = droppingWidgetId
-    ? { i: droppingWidgetId, x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 1 }
+    ? (() => { const fh = FIXED_HEIGHT[droppingWidgetId]; return { i: droppingWidgetId, x: 0, y: 0, w: 6, h: fh ?? 4, minW: 4, minH: fh ?? 1, ...(fh ? { maxH: fh } : {}) } })()
     : undefined
 
   const handleDrop = useCallback(
@@ -309,7 +319,10 @@ const Home: pageWithLayout = () => {
       setDroppingWidgetId(null)
       setEditWidgets((prev) => [...prev, widgetId])
       setEditLayout(
-        newLayout.map((l) => ({ i: l.i, x: l.x, y: l.y, w: l.w, h: l.h, minW: 4, minH: 1 }))
+        newLayout.map((l) => {
+          const fh = FIXED_HEIGHT[l.i]
+          return { i: l.i, x: l.x, y: l.y, w: l.w, h: fh ?? l.h, minW: 4, minH: fh ?? 1, ...(fh ? { maxH: fh } : {}) }
+        })
       )
     },
     [droppingWidgetId]
@@ -352,8 +365,8 @@ const Home: pageWithLayout = () => {
       <div>
         <div
           className={clsx(
-            "relative rounded-2xl overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8",
-            bannerUrl?.startsWith('data:') ? "p-8 min-h-[140px]" : ""
+            "relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8",
+            bannerUrl?.startsWith('data:') ? "rounded-2xl p-8 min-h-[140px]" : ""
           )}
           style={bannerUrl?.startsWith('data:') ? {
             backgroundImage: `url(${bannerUrl})`,
@@ -450,6 +463,8 @@ const Home: pageWithLayout = () => {
                   layout={editLayout}
                   cols={12}
                   rowHeight={80}
+                  compactType={null}
+                  preventCollision={false}
                   isDraggable
                   isResizable
                   isDroppable
@@ -459,7 +474,7 @@ const Home: pageWithLayout = () => {
                   onResizeStop={(newLayout) => applyLayoutUpdate(newLayout)}
                   margin={[12, 12]}
                   containerPadding={[12, 12]}
-                  resizeHandles={["se", "sw", "ne", "nw"]}
+                  resizeHandles={["s", "se", "sw"]}
                 >
                   {editWidgets.map((widgetId) => {
                     const wc = widgets[widgetId]
@@ -533,7 +548,7 @@ const Home: pageWithLayout = () => {
                           const maxY = editLayout.reduce((m, l) => Math.max(m, l.y + l.h), 0)
                           const col = (editWidgets.length % 2) * 6
                           setEditWidgets((prev) => [...prev, widgetId])
-                          setEditLayout((prev) => [...prev, { i: widgetId, x: col, y: maxY, w: 6, h: 4, minW: 4, minH: 1 }])
+                          setEditLayout((prev) => { const fh = FIXED_HEIGHT[widgetId]; return [...prev, { i: widgetId, x: col, y: maxY, w: 6, h: fh ?? 4, minW: 4, minH: fh ?? 1, ...(fh ? { maxH: fh } : {}) }] })
                         }}
                         onDragStart={(e) => {
                           e.dataTransfer.setData("text/plain", "")
@@ -588,7 +603,8 @@ const Home: pageWithLayout = () => {
                       gridRowEnd: item.y + item.h + 1,
                     }}
                     className={clsx(
-                      "flex flex-col bg-white dark:bg-zinc-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-zinc-100 dark:border-zinc-700",
+                      "flex flex-col bg-white dark:bg-zinc-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-zinc-100 dark:border-zinc-700",
+                      item.i !== 'new_members' && "overflow-hidden",
                       "transform hover:-translate-y-1",
                     )}
                   >
@@ -601,7 +617,7 @@ const Home: pageWithLayout = () => {
                       )}
                     </div>
 
-                    <div className="px-6 pb-6 flex-1 min-h-0 overflow-hidden">
+                    <div className={clsx("px-6 pb-6 flex-1 min-h-0", item.i === 'new_members' ? "overflow-visible" : "overflow-hidden")}>
                       <Widget />
                     </div>
                   </div>

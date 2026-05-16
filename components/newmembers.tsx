@@ -235,8 +235,8 @@ export default function NewToTeam() {
 
   return (
     <>
-      <div className="overflow-hidden">
-        <div className="flex gap-6 overflow-x-auto overflow-y-visible pb-4 px-1 -mx-1 sm:mx-0 sm:overflow-hidden touch-pan-x">
+      <div className="overflow-visible">
+        <div className="flex gap-6 overflow-x-auto overflow-y-visible pb-6 px-3 -mx-3 sm:mx-0 sm:px-3 touch-pan-x">
           {members.map((m) => {
             const isCurrentUser = currentUserId && m.userid === currentUserId;
             const isPlaying = playingId === m.userid;
