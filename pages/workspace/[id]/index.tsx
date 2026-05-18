@@ -81,6 +81,14 @@ const FIXED_HEIGHT: Record<string, number> = {
   birthdays: 2,
 };
 
+const DEFAULT_WIDGETS = ["birthdays", "new_members", "sessions", "sticky_notes"];
+const DEFAULT_LAYOUT: WidgetLayout[] = [
+  { i: "birthdays",    x: 0, y: 0, w: 12, h: 2, minW: 4, minH: 2, maxH: 2 },
+  { i: "new_members",  x: 0, y: 2, w: 12, h: 2, minW: 4, minH: 2, maxH: 2 },
+  { i: "sessions",     x: 0, y: 4, w: 6,  h: 4, minW: 4, minH: 1 },
+  { i: "sticky_notes", x: 6, y: 4, w: 6,  h: 4, minW: 4, minH: 1 },
+];
+
 const Home: pageWithLayout = () => {
   const [login, setLogin] = useRecoilState(loginState);
   const [workspace, setWorkspace] = useRecoilState(workspacestate);
@@ -111,6 +119,9 @@ const Home: pageWithLayout = () => {
     const wids = Array.isArray(workspace.settings?.widgets)
       ? workspace.settings.widgets
       : [];
+
+    if (wids.length === 0) return DEFAULT_LAYOUT;
+
     const savedLayout = Array.isArray(workspace.settings?.layout)
       ? workspace.settings.layout
       : [];
@@ -277,7 +288,8 @@ const Home: pageWithLayout = () => {
   };
 
   const enterEditMode = useCallback(() => {
-    setEditWidgets([...(workspace.settings?.widgets ?? [])]);
+    const savedWidgets = workspace.settings?.widgets ?? [];
+    setEditWidgets(savedWidgets.length > 0 ? [...savedWidgets] : [...DEFAULT_WIDGETS]);
     setEditLayout([...layout]);
     setIsEditing(true);
     setDashboardEditing(true);
