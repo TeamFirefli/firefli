@@ -50,7 +50,7 @@ const SANITIZE_OPTIONS = {
   allowedTags: [],
   allowedAttributes: {},
   disallowedTagsMode: "recursiveEscape" as const,
-  nonTextTags: ["style", "script", "textarea", "option", "xmp"],
+  nonTextTags: ["style", "script", "textarea", "option"],
 };
 
 const WALLMSGS = [
