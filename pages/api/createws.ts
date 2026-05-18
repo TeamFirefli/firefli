@@ -189,6 +189,19 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             workspaceGroupId: groupId,
             value: { enabled: false },
           },
+          {
+            key: "home",
+            workspaceGroupId: groupId,
+            value: {
+              widgets: ["birthdays", "new_members", "sessions", "sticky_notes"],
+              layout: [
+                { i: "birthdays",    x: 0, y: 0, w: 12, h: 2 },
+                { i: "new_members",  x: 0, y: 2, w: 12, h: 2 },
+                { i: "sessions",     x: 0, y: 4, w: 6,  h: 4 },
+                { i: "sticky_notes", x: 6, y: 4, w: 6,  h: 4 },
+              ],
+            },
+          },
         ],
       });
 
