@@ -108,6 +108,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const sanitizedReason = sanitizeHtml(reason.toString().trim(), {
       allowedTags: [],
       allowedAttributes: {},
+      nonTextTags: ["style", "script", "textarea", "option", "xmp"],
     });
 
     if (!sanitizedReason || sanitizedReason.length > 5000) {

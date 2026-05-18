@@ -85,6 +85,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   content = content ? sanitizeHtml(content.toString().trim(), {
     allowedTags: [],
     allowedAttributes: {},
+    nonTextTags: ["style", "script", "textarea", "option", "xmp"],
   }) : "";
 
   if (content.length > 5000) {

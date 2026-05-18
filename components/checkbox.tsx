@@ -17,7 +17,7 @@ const Checkbox = ({ indeterminate, className = "", ...rest }: Props & HTMLProps<
 		<input
 			type="checkbox"
 			ref={ref}
-			className={className + " w-4 h-4 text-primary bg-zinc-100 rounded border-gray-300 focus:ring-primary cursor-pointer"}
+			className={className + " w-4 h-4 text-primary bg-white dark:bg-zinc-700 rounded border-gray-300 dark:border-zinc-500 checked:!bg-primary checked:!border-primary focus:ring-primary cursor-pointer"}
 			{...rest}
 		/>
 	)

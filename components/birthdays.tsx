@@ -100,12 +100,12 @@ export default function Birthdays() {
 
   if (usersWithDays.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <IconGift className="w-8 h-8 text-primary" />
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <div className="w-[clamp(2rem,15cqh,4rem)] h-[clamp(2rem,15cqh,4rem)] rounded-full bg-primary/10 flex items-center justify-center mb-[clamp(0.5rem,4cqh,1rem)]">
+          <IconGift className="w-[clamp(1rem,8cqh,2rem)] h-[clamp(1rem,8cqh,2rem)] text-primary" />
         </div>
-        <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">No upcoming birthdays</p>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No upcoming birthdays in the next 7 days</p>
+        <p className="text-[clamp(0.875rem,5cqh,1.125rem)] font-medium text-zinc-900 dark:text-white mb-1">No upcoming birthdays</p>
+        <p className="text-[clamp(0.75rem,3.5cqh,0.875rem)] text-zinc-500 dark:text-zinc-400">No upcoming birthdays in the next 7 days</p>
       </div>
     );
   }

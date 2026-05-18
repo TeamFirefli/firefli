@@ -44,7 +44,9 @@ Frame_5_3.png
 /public/avatars
 /public/places
 /public/evidence
+/public/banners
 /public/evidence/*/*
+/public/banners/*
 /scripts
 
 # build

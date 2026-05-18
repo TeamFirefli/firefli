@@ -7,10 +7,12 @@ import toast, { Toaster } from "react-hot-toast";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
 import prisma from "@/utils/database";
 import { getConfig } from "@/utils/configEngine";
+import { fetchGroupGames } from "@/utils/roblox";
 import moment from "moment";
 import Tooltip from "@/components/tooltip";
 import { useRecoilValue } from "recoil";
 import { workspacestate } from "@/state";
+import { Listbox } from "@headlessui/react";
 import {
   IconFile,
   IconAlertTriangle,
@@ -24,6 +26,9 @@ import {
   IconFilter,
   IconEye,
   IconLoader2,
+  IconTrash,
+  IconChevronDown,
+  IconDeviceGamepad2,
 } from "@tabler/icons-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -47,6 +52,7 @@ interface ModerationCaseListItem {
   banDuration?: number;
   isPermanent?: boolean;
   revokedAt?: string;
+  placeIds?: string[];
   targetUser?: {
     userid: string;
     username?: string;
@@ -72,6 +78,7 @@ interface ModerationDashboardProps {
   stats: ModerationStats;
   initialTotal: number;
   initialPages: number;
+  games: Array<{ name: string; id: number }>;
 }
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -91,8 +98,20 @@ export const getServerSideProps = withPermissionCheckSsr(
           stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
           initialTotal: 0,
           initialPages: 0,
+          games: [],
         },
       };
+    }
+
+    let games: Array<{ name: string; id: number }> = [];
+    try {
+      const fetchedGames = await fetchGroupGames(Number(groupId));
+      games = fetchedGames
+        .filter((game: any) => game.rootPlaceId)
+        .map((game: any) => ({ name: game.name, id: Number(game.rootPlaceId) }))
+        .filter((game: any) => !isNaN(game.id) && game.id > 0);
+    } catch {
+      // empty
     }
 
     try {
@@ -153,6 +172,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           stats: { total, open, resolved, activeBans },
           initialTotal: total,
           initialPages: Math.ceil(total / 20),
+          games,
         },
       };
     } catch (error) {
@@ -163,6 +183,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           stats: { total: 0, open: 0, resolved: 0, activeBans: 0 },
           initialTotal: 0,
           initialPages: 0,
+          games: [],
         },
       };
     }
@@ -175,6 +196,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   stats,
   initialTotal,
   initialPages,
+  games,
 }) => {
   const router = useRouter();
   const { id: workspaceId } = router.query;
@@ -195,6 +217,10 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   const [totalPages, setTotalPages] = useState(initialPages);
   const [totalCases, setTotalCases] = useState(initialTotal);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [caseToDelete, setCaseToDelete] =
+    useState<ModerationCaseListItem | null>(null);
+  const [showDeleteCaseModal, setShowDeleteCaseModal] = useState(false);
+  const [deletingCase, setDeletingCase] = useState(false);
   const canCreateCases =
     workspaceData.yourPermission?.includes("create_moderation_cases") ||
     workspaceData.isAdmin;
@@ -203,6 +229,9 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
     workspaceData.isAdmin;
   const canRevokePunishments =
     workspaceData.yourPermission?.includes("revoke_punishments") ||
+    workspaceData.isAdmin;
+  const canDeleteCase =
+    workspaceData.yourPermission?.includes("delete_moderation_cases") ||
     workspaceData.isAdmin;
 
   const refreshCases = async (page: number, search: string, status: string) => {
@@ -300,6 +329,33 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
   const handleOpenRevokeModal = (caseData: ModerationCaseListItem) => {
     setCaseToRevoke(caseData);
     setShowRevokeModal(true);
+  };
+
+  const handleOpenDeleteCaseModal = (caseData: ModerationCaseListItem) => {
+    setCaseToDelete(caseData);
+    setShowDeleteCaseModal(true);
+  };
+
+  const handleDeleteCase = async () => {
+    if (!caseToDelete) return;
+    setDeletingCase(true);
+    try {
+      const response = await axios.delete(
+        `/api/workspace/${workspaceId}/moderation/cases/${caseToDelete.id}`,
+      );
+      if (response.data.success) {
+        toast.success("Case deleted successfully");
+        setShowDeleteCaseModal(false);
+        setCaseToDelete(null);
+        refreshCases(currentPage, searchQuery, filterStatus);
+      } else {
+        toast.error(response.data.error || "Failed to delete case.");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to delete case.");
+    } finally {
+      setDeletingCase(false);
+    }
   };
 
   const handleRevoke = async () => {
@@ -570,6 +626,19 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                               </button>
                             </Tooltip>
                           )}
+                        {canDeleteCase && (
+                          <Tooltip
+                            orientation="top"
+                            tooltipText="Delete Case"
+                          >
+                            <button
+                              onClick={() => handleOpenDeleteCaseModal(c)}
+                              className="text-red-500 hover:text-red-600 transition-colors"
+                            >
+                              <IconTrash size={18} />
+                            </button>
+                          </Tooltip>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -671,7 +740,8 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                 (c.status === "open" &&
                   (isBanAction(c.action) || c.action === "kick") &&
                   !c.revokedAt &&
-                  canExecutePunishments) ? (
+                  canExecutePunishments) ||
+                canDeleteCase ? (
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     {c.action && !c.revokedAt && canRevokePunishments && (
                       <button
@@ -705,6 +775,15 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                           Execute Kick
                         </button>
                       )}
+                    {canDeleteCase && (
+                      <button
+                        onClick={() => handleOpenDeleteCaseModal(c)}
+                        className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <IconTrash size={16} />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -764,6 +843,8 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
             <CreateCaseForm
               onSubmit={handleCreateCase}
               onCancel={() => setShowCreateModal(false)}
+              workspaceId={workspaceId as string}
+              games={games}
             />
           </div>
         </div>
@@ -818,6 +899,51 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {showDeleteCaseModal && caseToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg">
+                <IconTrash className="text-red-600 dark:text-red-400" size={24} />
+              </div>
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+                Delete Case
+              </h2>
+            </div>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+              Are you sure you want to permanently delete this case? This will also remove any linked bans and evidence. This action cannot be undone.
+            </p>
+            <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 mb-6">
+              <div className="font-medium text-zinc-900 dark:text-white mb-1">
+                {caseToDelete.targetUsername || `User ${caseToDelete.targetUserId}`}
+              </div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                {caseToDelete.reason}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCase}
+                disabled={deletingCase}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingCase ? "Deleting..." : "Delete Case"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteCaseModal(false);
+                  setCaseToDelete(null);
+                }}
+                disabled={deletingCase}
+                className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -850,9 +976,13 @@ const getActionLabel = (action?: string) => {
 const CreateCaseForm = ({
   onSubmit,
   onCancel,
+  workspaceId,
+  games,
 }: {
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  workspaceId: string;
+  games: Array<{ name: string; id: number }>;
 }) => {
   const [usernameSearch, setUsernameSearch] = useState("");
   const [searching, setSearching] = useState(false);
@@ -866,6 +996,7 @@ const CreateCaseForm = ({
     action: "",
     expiresAt: "",
   });
+  const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
 
   const handleSearchUser = async () => {
     if (!usernameSearch.trim()) {
@@ -885,7 +1016,7 @@ const CreateCaseForm = ({
           userId: user.id.toString(),
           username: user.name,
         });
-        toast.success(`User found: ${user.name}`);
+        toast.success(`Found ${user.name}!`);
       } else {
         setUserFound(null);
         toast.error("Roblox user not found");
@@ -915,6 +1046,7 @@ const CreateCaseForm = ({
       expiresAt: formData.expiresAt
         ? new Date(formData.expiresAt).toISOString()
         : undefined,
+      placeIds: selectedGameIds.map(String),
     });
   };
 
@@ -925,7 +1057,14 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Target Username <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {userFound && (
+              <img
+                src={`/api/workspace/${workspaceId}/avatar/${userFound.userId}`}
+                alt={userFound.username}
+                className="w-10 h-10 rounded-full ring-2 ring-zinc-200 dark:ring-zinc-600 flex-shrink-0"
+              />
+            )}
             <input
               type="text"
               value={usernameSearch}
@@ -966,7 +1105,7 @@ const CreateCaseForm = ({
             <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
               <IconCheck size={16} />
               <span>
-                User found: {userFound.username} (ID: {userFound.userId})
+                {userFound.username} (ID: {userFound.userId})
               </span>
             </div>
           )}
@@ -975,6 +1114,9 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Reason
           </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Publically Visible reason.
+          </p>
           <input
             type="text"
             required
@@ -990,6 +1132,9 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Description
           </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Internal notes for moderators, provide as much detail as possible.
+          </p>
           <textarea
             value={formData.description}
             onChange={(e) =>
@@ -1004,6 +1149,9 @@ const CreateCaseForm = ({
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
             Planned Action
           </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Action you propose to take against this user.
+          </p>
           <select
             value={formData.action}
             onChange={(e) => {
@@ -1042,6 +1190,86 @@ const CreateCaseForm = ({
             </p>
           </div>
         )}
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Affected Places
+          </label>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+            Restrict this action to specific experiences.
+          </p>
+          {games.length > 0 ? (
+            <div className="relative">
+              <Listbox
+                value={selectedGameIds}
+                onChange={setSelectedGameIds}
+                multiple
+              >
+                <Listbox.Button className="flex items-center justify-between w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-left focus:ring-2 focus:ring-primary focus:border-transparent transition-colors">
+                  <span className="flex items-center gap-2 truncate text-sm text-zinc-700 dark:text-zinc-300">
+                    <IconDeviceGamepad2 size={16} className="text-zinc-400 flex-shrink-0" />
+                    {selectedGameIds.length === 0
+                      ? "All experiences"
+                      : selectedGameIds.length === 1
+                      ? games.find((g) => g.id === selectedGameIds[0])?.name ?? `Experience ${selectedGameIds[0]}`
+                      : `${selectedGameIds.length} experiences selected`}
+                  </span>
+                  <IconChevronDown size={16} className="text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+                </Listbox.Button>
+                <Listbox.Options className="absolute z-20 w-full mt-1 overflow-auto bg-white dark:bg-zinc-800 rounded-lg shadow-lg max-h-48 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  {games.map((game) => (
+                    <Listbox.Option
+                      key={game.id}
+                      value={game.id}
+                      className={({ active }) =>
+                        `${active ? "bg-primary/10 text-primary" : "text-zinc-900 dark:text-white"} cursor-pointer select-none relative py-2.5 pl-10 pr-4 text-sm`
+                      }
+                    >
+                      {({ selected, active }) => (
+                        <>
+                          <span className={`${selected ? "font-medium" : "font-normal"} block truncate`}>
+                            {game.name}
+                          </span>
+                          {selected && (
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-primary">
+                              <IconCheck size={16} aria-hidden="true" />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </Listbox.Options>
+              </Listbox>
+              {selectedGameIds.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedGameIds.map((gid) => {
+                    const game = games.find((g) => g.id === gid);
+                    return (
+                      <span
+                        key={gid}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium"
+                      >
+                        {game?.name ?? `Place ${gid}`}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGameIds(selectedGameIds.filter((id) => id !== gid))}
+                          className="hover:text-primary/60 transition-colors"
+                          aria-label={`Remove ${game?.name ?? gid}`}
+                        >
+                          <IconX size={12} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+              No games found for this workspace; unavailable.
+            </p>
+          )}
+        </div>
       </div>
       <div className="flex gap-3 mt-6">
         <button

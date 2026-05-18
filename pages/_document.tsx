@@ -16,6 +16,7 @@ export default function Document() {
             "img-src 'self' data: https: blob:; " +
             "connect-src 'self' https://m.firefli.net https://events.posthog.com https://app.posthog.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://us.i.posthog.com https://us-assets.i.posthog.com https://apis.roblox.com https://thumbnails.roblox.com https://users.roblox.com https://api-iam.intercom.io https://api-iam.eu.intercom.io https://api-iam.au.intercom.io wss://nexus-websocket-a.intercom.io wss://nexus-websocket-b.intercom.io wss://*.intercom.io; " +
             "media-src 'self' https://audio-ssl.itunes.apple.com https://cdn.freesound.org; " +
+            "manifest-src 'self' https://firefli.cloudflareaccess.com; " +
             "frame-src 'self' https://www.youtube.com; " +
             "worker-src 'self' blob:; " +
             "base-uri 'self'; form-action 'self';"
@@ -31,6 +32,7 @@ export default function Document() {
           content="strict-origin-when-cross-origin"
         />
         <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Firefli" />

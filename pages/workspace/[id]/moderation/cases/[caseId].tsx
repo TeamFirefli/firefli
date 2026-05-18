@@ -7,11 +7,13 @@ import toast, { Toaster } from "react-hot-toast";
 import { withPermissionCheckSsr } from "@/utils/permissionsManager";
 import prisma from "@/utils/database";
 import { getConfig } from "@/utils/configEngine";
+import { fetchGroupGames } from "@/utils/roblox";
 import moment from "moment";
 import Tooltip from "@/components/tooltip";
 import { useRecoilValue } from "recoil";
 import { workspacestate } from "@/state";
 import { loginState } from "@/state";
+import { Listbox } from "@headlessui/react";
 import {
   IconShield,
   IconAlertTriangle,
@@ -26,6 +28,9 @@ import {
   IconClock,
   IconLink,
   IconEye,
+  IconPencil,
+  IconChevronDown,
+  IconDeviceGamepad2,
 } from "@tabler/icons-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -62,6 +67,7 @@ interface CaseData {
   revokedAt?: string;
   revokedBy?: string;
   revokeReason?: string;
+  placeIds?: string[];
   targetUser?: {
     userid: string;
     username?: string;
@@ -124,6 +130,7 @@ interface LogData {
 interface CaseDetailProps {
   case: CaseData;
   logs: LogData[];
+  games: Array<{ name: string; id: number }>;
 }
 
 export const getServerSideProps = withPermissionCheckSsr(
@@ -229,6 +236,17 @@ export const getServerSideProps = withPermissionCheckSsr(
         take: 50,
       });
 
+      let games: Array<{ name: string; id: number }> = [];
+      try {
+        const fetchedGames = await fetchGroupGames(Number(groupId));
+        games = fetchedGames
+          .filter((game: any) => game.rootPlaceId)
+          .map((game: any) => ({ name: game.name, id: Number(game.rootPlaceId) }))
+          .filter((game: any) => !isNaN(game.id) && game.id > 0);
+      } catch {
+        // games will be empty; display will fall back to place IDs
+      }
+
       return {
         props: {
           case: JSON.parse(
@@ -241,6 +259,7 @@ export const getServerSideProps = withPermissionCheckSsr(
               typeof value === "bigint" ? value.toString() : value,
             ),
           ),
+          games,
         },
       };
     } catch (error) {
@@ -254,6 +273,7 @@ export const getServerSideProps = withPermissionCheckSsr(
 const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
   case: caseData,
   logs,
+  games,
 }) => {
   const router = useRouter();
   const { id: workspaceId, caseId } = router.query;
@@ -275,6 +295,15 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [evidenceToDelete, setEvidenceToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteCaseModal, setShowDeleteCaseModal] = useState(false);
+  const [deletingCase, setDeletingCase] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editReason, setEditReason] = useState(caseData.reason);
+  const [editDescription, setEditDescription] = useState(caseData.description ?? "");
+  const [editSelectedGameIds, setEditSelectedGameIds] = useState<number[]>(
+    (caseData.placeIds ?? []).map(Number).filter((n) => !isNaN(n) && n > 0)
+  );
+  const [savingEdit, setSavingEdit] = useState(false);
   const canExecutePunishments =
     workspaceData.yourPermission?.includes("execute_punishments") ||
     workspaceData.isAdmin;
@@ -285,6 +314,39 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
     workspaceData.yourPermission?.includes("edit_moderation_cases") ||
     workspaceData.isAdmin ||
     caseData.createdBy === userState.userId?.toString();
+  const canDeleteCase =
+    workspaceData.yourPermission?.includes("delete_moderation_cases") ||
+    workspaceData.isAdmin;
+
+  const handleEditCase = async () => {
+    if (!editReason.trim()) {
+      toast.error("Reason is required");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const response = await axios.put(
+        `/api/workspace/${workspaceId}/moderation/cases/${caseId}`,
+        {
+          reason: editReason.trim(),
+          description: editDescription.trim() || undefined,
+          placeIds: editSelectedGameIds.map(String),
+        },
+      );
+      if (response.data.success) {
+        toast.success("Case updated!");
+        setShowEditModal(false);
+        router.replace(router.asPath);
+      } else {
+        toast.error(response.data.error || "Failed to update case.");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Failed to update case.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const isBanAction =
     caseData.action === "temp_ban" || caseData.action === "perm_ban";
   const isKickAction = caseData.action === "kick";
@@ -502,6 +564,25 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
     }
   };
 
+  const handleDeleteCase = async () => {
+    setDeletingCase(true);
+    try {
+      const response = await axios.delete(
+        `/api/workspace/${workspaceId}/moderation/cases/${caseId}`,
+      );
+      if (response.data.success) {
+        toast.success("Case deleted successfully");
+        router.push(`/workspace/${workspaceId}/moderation`);
+      } else {
+        toast.error(response.data.error || "Failed to delete case");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to delete case");
+    } finally {
+      setDeletingCase(false);
+    }
+  };
+
   const handleDeleteEvidence = async () => {
     if (!evidenceToDelete) return;
 
@@ -552,6 +633,38 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {canEditCase && (
+              <Tooltip orientation="bottom" tooltipText="Edit reason, description, and place restrictions">
+                <button
+                  onClick={() => {
+                    setEditReason(caseData.reason);
+                    setEditDescription(caseData.description ?? "");
+                    setEditSelectedGameIds(
+                      (caseData.placeIds ?? []).map(Number).filter((n) => !isNaN(n) && n > 0)
+                    );
+                    setShowEditModal(true);
+                  }}
+                  className="flex items-center gap-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+                >
+                  <IconPencil size={18} />
+                  <span>Edit Case</span>
+                </button>
+              </Tooltip>
+            )}
+            {canDeleteCase && (
+              <Tooltip
+                orientation="bottom"
+                tooltipText="Permanently delete this case"
+              >
+                <button
+                  onClick={() => setShowDeleteCaseModal(true)}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+                >
+                  <IconTrash size={18} />
+                  <span>Delete Case</span>
+                </button>
+              </Tooltip>
+            )}
             {caseData.action && !caseData.revokedAt && canRevokePunishments && (
               <Tooltip
                 orientation="bottom"
@@ -709,6 +822,34 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   </div>
                 </div>
               )}
+
+              <div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-400 mb-1.5">
+                  Affected Places
+                </div>
+                {!caseData.placeIds || caseData.placeIds.length === 0 ? (
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+                    All places
+                  </span>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {caseData.placeIds.map((pid) => {
+                      const game = games.find((g) => g.id.toString() === pid);
+                      return (
+                        <a
+                          key={pid}
+                          href={`https://www.roblox.com/games/${pid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium hover:bg-primary/20 transition-colors"
+                        >
+                          {game ? game.name : pid}
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1285,6 +1426,48 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
         </div>
       )}
 
+      {showDeleteCaseModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg">
+                <IconTrash className="text-red-600 dark:text-red-400" size={24} />
+              </div>
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">
+                Delete Case
+              </h2>
+            </div>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+              Are you sure you want to permanently delete this case? This will also remove any linked bans and evidence. This action cannot be undone.
+            </p>
+            <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 mb-6">
+              <div className="font-medium text-zinc-900 dark:text-white mb-1">
+                {caseData.targetUsername || caseData.targetUser?.username || `User ${caseData.targetUserId}`}
+              </div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                {caseData.reason}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCase}
+                disabled={deletingCase}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingCase ? "Deleting..." : "Delete Case"}
+              </button>
+              <button
+                onClick={() => setShowDeleteCaseModal(false)}
+                disabled={deletingCase}
+                className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDeleteModal && evidenceToDelete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
@@ -1327,6 +1510,143 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   setEvidenceToDelete(null);
                 }}
                 disabled={deleting}
+                className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-lg w-full mx-4 shadow-xl border border-white/10">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <IconPencil className="text-primary" size={22} />
+              </div>
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+                Edit Case
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  Reason <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editReason}
+                  onChange={(e) => setEditReason(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                  placeholder="Brief reason for case"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+                  rows={3}
+                  placeholder="Detailed description..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                  Affected Places
+                </label>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+                  Restrict this action to specific experiences.
+                </p>
+                {games.length > 0 ? (
+                  <div className="relative">
+                    <Listbox value={editSelectedGameIds} onChange={setEditSelectedGameIds} multiple>
+                      <Listbox.Button className="flex items-center justify-between w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-left focus:ring-2 focus:ring-primary focus:border-transparent transition-colors">
+                        <span className="flex items-center gap-2 truncate text-sm text-zinc-700 dark:text-zinc-300">
+                          <IconDeviceGamepad2 size={16} className="text-zinc-400 flex-shrink-0" />
+                          {editSelectedGameIds.length === 0
+                            ? "All experiences"
+                            : editSelectedGameIds.length === 1
+                            ? games.find((g) => g.id === editSelectedGameIds[0])?.name ?? `Experience ${editSelectedGameIds[0]}`
+                            : `${editSelectedGameIds.length} experiences selected`}
+                        </span>
+                        <IconChevronDown size={16} className="text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute z-20 w-full mt-1 overflow-auto bg-white dark:bg-zinc-800 rounded-lg shadow-lg max-h-48 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        {games.map((game) => (
+                          <Listbox.Option
+                            key={game.id}
+                            value={game.id}
+                            className={({ active }) =>
+                              `${active ? "bg-primary/10 text-primary" : "text-zinc-900 dark:text-white"} cursor-pointer select-none relative py-2.5 pl-10 pr-4 text-sm`
+                            }
+                          >
+                            {({ selected }) => (
+                              <>
+                                <span className={`${selected ? "font-medium" : "font-normal"} block truncate`}>
+                                  {game.name}
+                                </span>
+                                {selected && (
+                                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-primary">
+                                    <IconCheck size={16} aria-hidden="true" />
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                    {editSelectedGameIds.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {editSelectedGameIds.map((gid) => {
+                          const game = games.find((g) => g.id === gid);
+                          return (
+                            <span
+                              key={gid}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium"
+                            >
+                              {game?.name ?? `Place ${gid}`}
+                              <button
+                                type="button"
+                                onClick={() => setEditSelectedGameIds(editSelectedGameIds.filter((id) => id !== gid))}
+                                className="hover:text-primary/60 transition-colors"
+                                aria-label={`Remove ${game?.name ?? gid}`}
+                              >
+                                <IconX size={12} />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+                    No games found for this workspace — place restriction is unavailable.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleEditCase}
+                disabled={savingEdit || !editReason.trim()}
+                className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                disabled={savingEdit}
                 className="px-6 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white py-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-medium disabled:opacity-50"
               >
                 Cancel

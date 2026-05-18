@@ -222,7 +222,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
           <div className="flex h-screen dark:bg-zinc-900">
             <svg
               aria-hidden="true"
-              className="w-24 h-24 text-zinc-200 animate-spin dark:text-zinc-600 fill-orbit my-auto mx-auto"
+              className="w-24 h-24 text-zinc-200 animate-spin dark:text-zinc-600 fill-firefli my-auto mx-auto"
               viewBox="0 0 100 101"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"

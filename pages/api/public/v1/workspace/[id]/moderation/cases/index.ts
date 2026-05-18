@@ -57,7 +57,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
 
       const [cases, total] = await Promise.all([
-        prisma.moderationCase.findMany({
+        (prisma.moderationCase.findMany as any)({
           where,
           select: {
             id: true,
@@ -72,11 +72,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             createdAt: true,
             resolvedAt: true,
             revokedAt: true,
+            placeIds: true,
           },
           orderBy: { createdAt: "desc" },
           skip,
           take: PAGE_SIZE,
-        }),
+        }) as Promise<any[]>,
         prisma.moderationCase.count({ where }),
       ])
 
@@ -87,6 +88,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             ...c,
             targetUserId: Number(c.targetUserId),
             createdBy: Number(c.createdBy),
+            placeIds: ((c as any).placeIds ?? []).map(String),
           })),
           pagination: {
             total,
@@ -111,6 +113,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       publicNote,
       banDuration,
       expiresAt,
+      placeIds,
     } = req.body
 
     if (!targetUserId || !authorUserId || !reason) {
@@ -152,6 +155,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
+    const parsedPlaceIds: bigint[] = Array.isArray(placeIds)
+      ? placeIds
+          .map((id: any) => { try { return BigInt(id); } catch { return null; } })
+          .filter((id: bigint | null): id is bigint => id !== null)
+      : []
+
     // Ensure target and author users exist (they may be Roblox users not yet in the system)
     await Promise.all([
       prisma.user.upsert({
@@ -180,6 +189,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         banDuration: banDuration != null ? Number(banDuration) : null,
         isPermanent: finalIsPermanent,
         expiresAt: parsedExpiresAt,
+        placeIds: parsedPlaceIds,
       },
     })
 
@@ -210,6 +220,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         banDuration: moderationCase.banDuration,
         isPermanent: moderationCase.isPermanent,
         expiresAt: moderationCase.expiresAt,
+        placeIds: ((moderationCase as any).placeIds ?? []).map(String),
         createdAt: moderationCase.createdAt,
       },
     })

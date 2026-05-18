@@ -25,6 +25,8 @@ type Data = {
 			recommendationsEnabled: boolean
 			moderationEnabled: boolean
 			widgets: string[]
+			layout: any[]
+			bannerImage: string | null
 		}
 	}
 }
@@ -206,7 +208,9 @@ export async function handler(
 			policiesEnabled: policiesConfig?.enabled || false,
 			recommendationsEnabled: recommendationsConfig?.enabled || false,
 			moderationEnabled: moderationConfig?.enabled || false,
-			widgets: homeConfig?.widgets || []
+			widgets: homeConfig?.widgets || [],
+			layout: homeConfig?.layout || [],
+			bannerImage: null as string | null,
 		}
 	} })
 }

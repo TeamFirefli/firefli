@@ -469,28 +469,6 @@ const SessionRoles = () => {
               {isConverting ? "Importing…" : `Import ${legacySlotsCount} legacy slot${legacySlotsCount !== 1 ? "s" : ""}`}
             </button>
           )}
-          {patchableCount > 0 && (
-            <button
-              onClick={handlePatchHostRoles}
-              disabled={isPatching}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-600 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 disabled:opacity-50 transition-colors"
-              title="Back-fill host role on slots in active/ended non-archived sessions to fix quota counts"
-            >
-              <IconRefresh size={14} className={isPatching ? "animate-spin" : ""} />
-              {isPatching ? "Patching…" : `Fix host roles on ${patchableCount} active slot${patchableCount !== 1 ? "s" : ""}`}
-            </button>
-          )}
-          {hostRecordsCount > 0 && (
-            <button
-              onClick={handleAddHostRecords}
-              disabled={isAddingHostRecords}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 transition-colors"
-              title="Create missing sessionUser records for session owners so their host quota is tracked"
-            >
-              <IconRefresh size={14} className={isAddingHostRecords ? "animate-spin" : ""} />
-              {isAddingHostRecords ? "Adding…" : `Add host records for ${hostRecordsCount} session${hostRecordsCount !== 1 ? "s" : ""}`}
-            </button>
-          )}
         </div>
       </div>
 

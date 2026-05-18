@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import ReactGridLayout, { WidthProvider } from "react-grid-layout/legacy";
 import { IconGripVertical } from "@tabler/icons-react";
+const GridLayout = WidthProvider(ReactGridLayout);
 
 interface WidgetLayout {
   i: string;
@@ -36,38 +38,59 @@ export default function LayoutEditor({ layout, onLayoutChange, widgetTitles }: L
     );
   }
 
-  // Show actual preview using 12-column grid system
+  const handleLayoutChange = (newLayout: readonly any[]) => {
+    onLayoutChange(
+      newLayout.map((l) => ({
+        i: l.i,
+        x: l.x,
+        y: l.y,
+        w: l.w,
+        h: l.h,
+        minW: 4,
+        minH: 1,
+      }))
+    );
+  };
+
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <GridLayout
+      layout={layout}
+      cols={12}
+      rowHeight={60}
+      isDraggable
+      isResizable
+      onDragStop={handleLayoutChange}
+      onResizeStop={handleLayoutChange}
+      margin={[8, 8]}
+      containerPadding={[0, 0]}
+      resizeHandles={["se", "sw", "ne", "nw"]}
+    >
       {layout.map((item) => {
         if (!widgetTitles[item.i]) return null;
 
-        const colSpanClass = 
-          item.w === 12 ? 'col-span-12' :
-          item.w === 8 ? 'col-span-8' :
-          item.w === 6 ? 'col-span-6' :
-          'col-span-4';
-        
         return (
           <div
             key={item.i}
-            className={`${colSpanClass} bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 shadow-sm p-4 min-h-[150px] flex items-center justify-center`}
+            className="bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 shadow-sm flex flex-col overflow-hidden"
           >
-            <div className="text-center">
-              <IconGripVertical className="w-6 h-6 mx-auto mb-2 text-zinc-400 dark:text-zinc-500" />
-              <div className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                {widgetTitles[item.i] || item.i}
-              </div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                {item.w === 12 ? 'Full Width' :
-                 item.w === 8 ? 'Large (8 cols)' :
-                 item.w === 6 ? 'Medium (6 cols)' :
-                 'Small (4 cols)'}
-              </div>
+            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-zinc-300 dark:border-zinc-600 bg-white/50 dark:bg-zinc-800/50 flex-shrink-0">
+              <IconGripVertical className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 truncate">
+                {widgetTitles[item.i]}
+              </span>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-2">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                {item.w === 12 ? "Full width" :
+                 item.w >= 9  ? "¾ width" :
+                 item.w >= 8  ? "⅔ width" :
+                 item.w >= 6  ? "½ width" :
+                 "⅓ width"}
+              </span>
             </div>
           </div>
         );
       })}
-    </div>
+    </GridLayout>
   );
 }

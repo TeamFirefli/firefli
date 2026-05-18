@@ -622,6 +622,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
   const [sessionToEdit, setSessionToEdit] = useState<any>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
+  const [mySessionsOnly, setMySessionsOnly] = useState(false);
   const router = useRouter();
   const workspaceIdForColors = Array.isArray(router.query.id)
     ? router.query.id[0]
@@ -646,7 +647,14 @@ const Home: pageWithLayout<pageProps> = (props) => {
     .filter(
       (s: any) =>
         new Date(s.date).toDateString() === selectedDate.toDateString() &&
-        (selectedTypes.size === 0 || selectedTypes.has(s.type || "other"))
+        (selectedTypes.size === 0 || selectedTypes.has(s.type || "other")) &&
+        (!mySessionsOnly || (
+          s.ownerId?.toString() === login.userId.toString() ||
+          s.users?.some((u: any) =>
+            u.userid?.toString() === login.userId.toString() ||
+            u.user?.userid?.toString() === login.userId.toString()
+          )
+        ))
     )
     .sort(
       (a: any, b: any) =>
@@ -970,6 +978,24 @@ const Home: pageWithLayout<pageProps> = (props) => {
                 title={showHistory ? "Showing all sessions" : "Showing recent and upcoming sessions"}
               >
                 {showHistory ? "Hide History" : "Show History"}
+              </button>
+              <button
+                onClick={() => setMySessionsOnly(!mySessionsOnly)}
+                className={`inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  mySessionsOnly
+                    ? "bg-primary text-white"
+                    : "bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+                }`}
+                title="Show only sessions you are hosting or participating in"
+              >
+                <span
+                  className={`inline-block w-3 h-3 rounded-full border-2 transition-colors ${
+                    mySessionsOnly
+                      ? "bg-white border-white"
+                      : "border-zinc-400 dark:border-zinc-500"
+                  }`}
+                />
+                My Sessions
               </button>
               <div className="flex items-center gap-1 flex-wrap">
                 {(["shift", "training", "event", "other"] as const).map((type) => {

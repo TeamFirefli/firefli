@@ -76,6 +76,9 @@ import {
   IconCopy,
   IconBeach,
   IconMinus,
+  IconClock,
+  IconMessage,
+  IconUser,
 } from "@tabler/icons-react";
 import { UserGroupIcon, UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -254,6 +257,7 @@ const Views: pageWithLayout<pageProps> = ({
       value: string;
     }[]
   >([]);
+  const [filterOperator, setFilterOperator] = useState<'AND' | 'OR'>('AND');
   const [savedViews, setSavedViews] = useState<any[]>([]);
   const [localViews, setLocalViews] = useState<any[]>([]);
   const [isSaveOpen, setIsSaveOpen] = useState(false);
@@ -362,7 +366,7 @@ const Views: pageWithLayout<pageProps> = ({
       ),
     },
     columnHelper.accessor("info", {
-      header: "User",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconUser className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />User</span>,
       cell: (row) => {
         return (
           <div
@@ -467,7 +471,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("rankName", {
-      header: "Rank",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconStar className="w-3.5 h-3.5 text-amber-400" />Rank</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue() || "Guest"}</p>;
       },
@@ -478,7 +482,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("departments", {
-      header: "Department",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconBriefcase className="w-3.5 h-3.5 text-indigo-400" />Department</span>,
       cell: (row) => {
         const userDepts = row.getValue();
         if (!userDepts || userDepts.length === 0) {
@@ -514,7 +518,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("hostedSessions", {
-      header: "Hosted sessions",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconCalendarWeekFilled className="w-3.5 h-3.5 text-emerald-400" />Hosted sessions</span>,
       cell: (row) => {
         const hosted = row.getValue() as any;
         const len =
@@ -523,33 +527,33 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("sessionsAttended", {
-      header: "Sessions Attended",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconSchool className="w-3.5 h-3.5 text-sky-400" />Sessions Attended</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("lastPeriodSessionsHosted", {
-      header: "Last Period Hosted",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconCalendarWeekFilled className="w-3.5 h-3.5 text-slate-400" />Last Period Hosted</span>,
       cell: (row) => {
         const val = row.getValue();
         return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("lastPeriodSessionsAttended", {
-      header: "Last Period Attended",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconSchool className="w-3.5 h-3.5 text-slate-400" />Last Period Attended</span>,
       cell: (row) => {
         const val = row.getValue();
         return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("allianceVisits", {
-      header: "Alliance Visits",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconTarget className="w-3.5 h-3.5 text-rose-400" />Alliance Visits</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("book", {
-      header: "Warnings",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconAlertTriangle className="w-3.5 h-3.5 text-amber-400" />Warnings</span>,
       cell: (row) => {
         const book = row.getValue() as any[];
         const warnings = Array.isArray(book)
@@ -559,44 +563,44 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("inactivityNotices", {
-      header: "Inactivity notices",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconBeach className="w-3.5 h-3.5 text-orange-400" />Inactivity notices</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue().length}</p>;
       },
     }),
     columnHelper.accessor("minutes", {
-      header: "Minutes",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconClock className="w-3.5 h-3.5 text-sky-400" />Minutes</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("lastPeriodMinutes", {
-      header: "Last Period Activity",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconClock className="w-3.5 h-3.5 text-slate-400" />Last Period Activity</span>,
       cell: (row) => {
         const val = row.getValue();
         return <p className="dark:text-white">{val !== null ? val : "-"}</p>;
       },
     }),
     columnHelper.accessor("idleMinutes", {
-      header: "Idle minutes",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconCoffee className="w-3.5 h-3.5 text-yellow-500" />Idle minutes</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("messages", {
-      header: "Messages",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconMessage className="w-3.5 h-3.5 text-violet-400" />Messages</span>,
       cell: (row) => {
         return <p className="dark:text-white">{row.getValue()}</p>;
       },
     }),
     columnHelper.accessor("registered", {
-      header: "Registered",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconId className="w-3.5 h-3.5 text-green-400" />Registered</span>,
       cell: (row) => {
         return <p>{row.getValue() ? "✅" : "❌"}</p>;
       },
     }),
     columnHelper.accessor("quota", {
-      header: "Quota Complete",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconSparkles className="w-3.5 h-3.5 text-emerald-400" />Quota Complete</span>,
       cell: (row) => {
         const user = row.row.original;
         if (user.quotaTotal === 0) return <p>-</p>;
@@ -608,7 +612,7 @@ const Views: pageWithLayout<pageProps> = ({
       },
     }),
     columnHelper.accessor("quotaFailed", {
-      header: "Quota Failed",
+      header: () => <span className="inline-flex items-center gap-1.5"><IconAlertCircle className="w-3.5 h-3.5 text-red-400" />Quota Failed</span>,
       cell: (row) => {
         const user = row.row.original;
         if (user.quotaTotal === 0) return <p>-</p>;
@@ -762,11 +766,9 @@ const Views: pageWithLayout<pageProps> = ({
       setPagination((prev) => ({ ...prev, pageIndex: page }));
     }
   }, [router.query.page]);
-
-  // Reset to page 0 when filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [colFilters]);
+  }, [colFilters, filterOperator]);
 
   useEffect(() => {
     const fetchStaffData = async () => {
@@ -786,6 +788,7 @@ const Views: pageWithLayout<pageProps> = ({
               pageSize: pagination.pageSize,
               filters: JSON.stringify(colFilters),
               columns: JSON.stringify(visibleColumnKeys),
+              filterOperator,
             },
           },
         );
@@ -810,6 +813,7 @@ const Views: pageWithLayout<pageProps> = ({
     pagination.pageSize,
     colFilters,
     columnVisibility,
+    filterOperator,
   ]);
 
   const applySavedView = (view: any) => {
@@ -817,8 +821,10 @@ const Views: pageWithLayout<pageProps> = ({
     const filtersField = view.filters;
     if (Array.isArray(filtersField)) {
       setColFilters(filtersField || []);
+      setFilterOperator('AND');
     } else if (filtersField && typeof filtersField === "object") {
       setColFilters(filtersField.filters || []);
+      setFilterOperator(filtersField.filterOperator === 'OR' ? 'OR' : 'AND');
       if (filtersField.sorting && Array.isArray(filtersField.sorting)) {
         try {
           setSorting(filtersField.sorting);
@@ -830,6 +836,7 @@ const Views: pageWithLayout<pageProps> = ({
       }
     } else {
       setColFilters([]);
+      setFilterOperator('AND');
     }
 
     setColumnVisibility(view.columnVisibility || {});
@@ -865,6 +872,7 @@ const Views: pageWithLayout<pageProps> = ({
       quotaFailed: false,
     });
     setSorting([]);
+    setFilterOperator('AND');
     setIsEditMode(false);
     setOriginalViewConfig(null);
   };
@@ -881,6 +889,7 @@ const Views: pageWithLayout<pageProps> = ({
     try {
       const filtersPayload: any = {
         filters: colFilters,
+        filterOperator,
       };
 
       if (sorting && Array.isArray(sorting) && sorting.length > 0) {
@@ -970,15 +979,25 @@ const Views: pageWithLayout<pageProps> = ({
 
   const hasUnsavedChanges = () => {
     if (!isEditMode || !originalViewConfig) return false;
-
-    const currentFilters = {
+    const currentFilters: any = {
       filters: colFilters,
-      sorting: sorting,
+      filterOperator,
     };
+    if (sorting && sorting.length > 0) {
+      currentFilters.sorting = sorting;
+    }
+
+    const storedFilters = originalViewConfig.filters;
+    const normalisedStored: any = {
+      filters: storedFilters?.filters || [],
+      filterOperator: storedFilters?.filterOperator || 'AND',
+    };
+    if (storedFilters?.sorting && storedFilters.sorting.length > 0) {
+      normalisedStored.sorting = storedFilters.sorting;
+    }
 
     const filtersChanged =
-      JSON.stringify(currentFilters) !==
-      JSON.stringify(originalViewConfig.filters);
+      JSON.stringify(currentFilters) !== JSON.stringify(normalisedStored);
     const columnsChanged =
       JSON.stringify(columnVisibility) !==
       JSON.stringify(originalViewConfig.columnVisibility);
@@ -993,6 +1012,7 @@ const Views: pageWithLayout<pageProps> = ({
       try {
         const filtersPayload: any = {
           filters: colFilters,
+          filterOperator,
         };
 
         if (sorting && Array.isArray(sorting) && sorting.length > 0) {
@@ -1505,21 +1525,32 @@ const Views: pageWithLayout<pageProps> = ({
                                 Add Filter
                               </button>
 
-                              {colFilters.map((filter) => (
-                                <div
-                                  key={filter.id}
-                                  className="p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50"
-                                >
-                                  <Filter
-                                    ranks={ranks}
-                                    departments={departments}
-                                    updateFilter={(col, op, value) =>
-                                      updateFilter(filter.id, col, op, value)
-                                    }
-                                    deleteFilter={() => removeFilter(filter.id)}
-                                    data={filter}
-                                  />
-                                </div>
+                              {colFilters.map((filter, index) => (
+                                <Fragment key={filter.id}>
+                                  <div
+                                    className="p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50"
+                                  >
+                                    <Filter
+                                      ranks={ranks}
+                                      departments={departments}
+                                      updateFilter={(col, op, value) =>
+                                        updateFilter(filter.id, col, op, value)
+                                      }
+                                      deleteFilter={() => removeFilter(filter.id)}
+                                      data={filter}
+                                    />
+                                  </div>
+                                  {index < colFilters.length - 1 && (
+                                    <div className="flex justify-center">
+                                      <button
+                                        onClick={() => setFilterOperator(op => op === 'AND' ? 'OR' : 'AND')}
+                                        className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors"
+                                      >
+                                        {filterOperator}
+                                      </button>
+                                    </div>
+                                  )}
+                                </Fragment>
                               ))}
                               {colFilters.length === 0 && (
                                 <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-2">

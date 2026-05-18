@@ -48,7 +48,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       where.OR = [{ isPermanent: true }, { expiresAt: { gt: new Date() } }];
     }
 
-    const cases = await prisma.moderationCase.findMany({
+    const cases: any[] = await (prisma.moderationCase.findMany as any)({
       where,
       select: {
         id: true,
@@ -67,6 +67,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         resolvedAt: true,
         revokedAt: true,
         revokeReason: true,
+        placeIds: true,
         createdByUser: {
           select: {
             userid: true,
@@ -136,6 +137,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       expiresAt: c.expiresAt,
       createdAt: c.createdAt,
       resolvedAt: c.resolvedAt,
+      placeIds: ((c as any).placeIds ?? []).map(String),
       revoked: c.revokedAt
         ? {
             at: c.revokedAt,

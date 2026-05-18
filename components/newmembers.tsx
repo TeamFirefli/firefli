@@ -223,20 +223,20 @@ export default function NewToTeam() {
 
   if (!members.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <IconUserPlus className="w-8 h-8 text-primary" />
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <div className="w-[clamp(2rem,15cqh,4rem)] h-[clamp(2rem,15cqh,4rem)] rounded-full bg-primary/10 flex items-center justify-center mb-[clamp(0.5rem,4cqh,1rem)]">
+          <IconUserPlus className="w-[clamp(1rem,8cqh,2rem)] h-[clamp(1rem,8cqh,2rem)] text-primary" />
         </div>
-        <p className="text-lg font-medium text-zinc-900 dark:text-white mb-1">No new members</p>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No new members in the last 7 days</p>
+        <p className="text-[clamp(0.875rem,5cqh,1.125rem)] font-medium text-zinc-900 dark:text-white mb-1">No new members</p>
+        <p className="text-[clamp(0.75rem,3.5cqh,0.875rem)] text-zinc-500 dark:text-zinc-400">No new members in the last 7 days</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="overflow-hidden">
-        <div className="flex gap-6 overflow-x-auto overflow-y-visible pb-4 px-1 -mx-1 sm:mx-0 sm:overflow-hidden touch-pan-x">
+      <div className="overflow-y-auto sm:overflow-visible">
+        <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:gap-6 sm:overflow-x-auto sm:overflow-y-visible pb-2 sm:pb-6 px-1 sm:px-3 sm:-mx-3 touch-pan-x">
           {members.map((m) => {
             const isCurrentUser = currentUserId && m.userid === currentUserId;
             const isPlaying = playingId === m.userid;
@@ -244,7 +244,7 @@ export default function NewToTeam() {
             return (
               <div
                 key={m.userid}
-                className={`relative flex flex-col items-center shrink-0 group ${isCurrentUser ? "cursor-pointer" : ""}`}
+                className={`relative flex flex-col items-center sm:shrink-0 group ${isCurrentUser ? "cursor-pointer" : ""}`}
                 onClick={() => isCurrentUser && handleCardClick(m)}
               >
                 <div className="relative p-1">
@@ -360,9 +360,7 @@ export default function NewToTeam() {
                   ✕
                 </button>
               </div>
-              <div className="p-6">
-                <MemberIntroEditor />
-              </div>
+              <MemberIntroEditor />
             </div>
           </div>,
           document.body,

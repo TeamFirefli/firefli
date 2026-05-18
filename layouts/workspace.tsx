@@ -680,7 +680,7 @@ const workspace: LayoutProps = ({ children }) => {
 							/>
 						</div>
 					) : (
-						<div className="hidden md:flex w-4 h-full bg-zinc-50 dark:bg-zinc-900 rounded-tl-2xl flex-shrink-0" />
+						<div className="hidden md:flex w-4 h-full bg-zinc-50 dark:bg-zinc-900 rounded-tl-2xl flex-shrink-0 backdrop-blur-sm" />
 					)}
 					<main
 						id="main-content-scroll"

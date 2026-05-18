@@ -137,6 +137,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     content = sanitizeHtml(content.toString().trim(), {
       allowedTags: [],
       allowedAttributes: {},
+      nonTextTags: ["style", "script", "textarea", "option", "xmp"],
     });
 
     // Truncate overly long content

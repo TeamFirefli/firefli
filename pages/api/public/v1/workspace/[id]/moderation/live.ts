@@ -19,7 +19,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .status(400)
       .json({ success: false, error: "Missing workspace ID" });
 
-  const { since } = req.query;
+  const { since, placeId } = req.query;
   if (!since || typeof since !== "string") {
     return res
       .status(400)
@@ -48,7 +48,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const now = new Date();
 
-    const cases = await prisma.moderationCase.findMany({
+    const filterPlaceId =
+      placeId && typeof placeId === "string" ? BigInt(placeId) : null;
+
+    const cases: any[] = await (prisma.moderationCase.findMany as any)({
       where: {
         workspaceGroupId: BigInt(workspaceId),
         status: "resolved",
@@ -66,6 +69,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         isPermanent: true,
         expiresAt: true,
         resolvedAt: true,
+        placeIds: true,
       },
       orderBy: { resolvedAt: "asc" },
     });
@@ -108,14 +112,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     return res.status(200).json({
       success: true,
-      data: filteredCases.map((c) => ({
-        id: c.id,
-        userId: Number(c.targetUserId),
-        action: c.action,
-        reason: c.reason,
-        isPermanent: c.isPermanent,
-        expiresAt: c.expiresAt,
-      })),
+      data: (filteredCases as any[])
+        .filter((c) => {
+          if (!filterPlaceId) return true;
+          const ids: bigint[] = c.placeIds ?? [];
+          return ids.length === 0 || ids.some((pid) => pid === filterPlaceId);
+        })
+        .map((c) => ({
+          id: c.id,
+          userId: Number(c.targetUserId),
+          action: c.action,
+          reason: c.reason,
+          isPermanent: c.isPermanent,
+          expiresAt: c.expiresAt,
+          placeIds: (c.placeIds ?? []).map(String),
+        })),
     });
   } catch (error) {
     console.error("Error fetching live moderation punishments:", error);

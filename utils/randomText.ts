@@ -86,7 +86,7 @@ const randomText = (name: string) => {
 		`Thanks for shining today, ${name} 💙`,
 		`Night shift or night chill? You decide, ${name}.`,
 		`May your dreams be bug-free, ${name} 💤`,
-		`Another day complete. Well played, ${name} 🎮`,
+		`Another day complete. Well done, ${name} 🎮`,
 		`Mission complete for today, ${name}.`,
 		`Sending good energy for tomorrow, ${name} 🔮`,
 		`Firefli: lighting up your night, ${name}`,

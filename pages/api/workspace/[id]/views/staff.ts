@@ -23,6 +23,7 @@ export default withPermissionCheck(
         console.error("Failed to parse filters:", e);
       }
     }
+    const filterOperator: 'AND' | 'OR' = (req.query.filterOperator as string) === 'OR' ? 'OR' : 'AND';
 
     let visibleColumns: string[] = [];
     if (req.query.columns && typeof req.query.columns === "string") {
@@ -72,8 +73,10 @@ export default withPermissionCheck(
       const activityConfig = await getConfig("activity", workspaceGroupId);
       const idleTimeEnabled = activityConfig?.idleTimeEnabled ?? true;
       const usernameFilters = filters.filter((f) => f.column === "username");
+      const nonUsernameFilters = filters.filter((f) => f.column !== "username");
       const hasUsernameFilter = usernameFilters.length > 0;
-      const whereClause: any = hasUsernameFilter ? {} : {
+      const mixedOrMode = filterOperator === 'OR' && hasUsernameFilter && nonUsernameFilters.length > 0;
+      const whereClause: any = {
         roles: {
           some: {
             workspaceGroupId,
@@ -81,7 +84,7 @@ export default withPermissionCheck(
         },
       };
 
-      if (hasUsernameFilter) {
+      if (hasUsernameFilter && !mixedOrMode) {
         const usernameConditions = usernameFilters.map((filter) => {
           if (filter.filter === "equal") {
             return { username: filter.value };
@@ -92,15 +95,18 @@ export default withPermissionCheck(
           }
           return {};
         });
-        
+
         if (usernameConditions.length > 0) {
-          whereClause.AND = usernameConditions;
+          if (filterOperator === 'OR') {
+            whereClause.OR = usernameConditions;
+          } else {
+            whereClause.AND = usernameConditions;
+          }
         }
       }
-
-      const computedFilters = filters.filter(
-        (f) => !["username"].includes(f.column)
-      );
+      const computedFilters = mixedOrMode
+        ? filters
+        : filters.filter((f) => f.column !== "username");
       const needsFullComputation = computedFilters.length > 0;
 
       // Determine what data to fetch based on visible columns and filters
@@ -607,81 +613,49 @@ export default withPermissionCheck(
       let filteredUsers = computedUsers;
       
       if (needsFullComputation) {
-        for (const filter of computedFilters) {
-          filteredUsers = filteredUsers.filter((user) => {
+        if (computedFilters.length > 0) {
+          const matchesFilter = (user: any, filter: any): boolean => {
             let value: any;
-            
             switch (filter.column) {
-              case "minutes":
-                value = user.minutes;
-                break;
-              case "idle":
-                value = user.idleMinutes;
-                break;
-              case "rank":
-                value = user.rankID;
-                break;
-              case "sessions":
-                value = user.sessions.length;
-                break;
-              case "hosted":
-                value = user.hostedSessions.length;
-                break;
+              case "username": value = user.username ?? ""; break;
+              case "minutes": value = user.minutes; break;
+              case "idle": value = user.idleMinutes; break;
+              case "rank": value = user.rankID; break;
+              case "sessions": value = user.sessions.length; break;
+              case "hosted": value = user.hostedSessions.length; break;
               case "warnings":
                 value = Array.isArray(user.book)
                   ? user.book.filter((b: any) => b.type === "warning" && !b.redacted).length
                   : 0;
                 break;
-              case "messages":
-                value = user.messages;
-                break;
-              case "notices":
-                value = user.inactivityNotices.length;
-                break;
-              case "registered":
-                value = user.registered;
-                break;
-              case "quota":
-                value = user.quota;
-                break;
-              case "quotaFailed":
-                value = user.quotaFailed;
-                break;
-              case "department":
-                value = user.departments || [];
-                break;
-              default:
-                return true;
+              case "messages": value = user.messages; break;
+              case "notices": value = user.inactivityNotices.length; break;
+              case "registered": value = user.registered; break;
+              case "quota": value = user.quota; break;
+              case "quotaFailed": value = user.quotaFailed; break;
+              case "department": value = user.departments || []; break;
+              default: return true;
             }
-
-            // Apply filter operation
             switch (filter.filter) {
               case "equal":
-                if (filter.column === "department") {
-                  return Array.isArray(value) && value.includes(filter.value);
-                }
-                if (typeof value === "boolean") {
-                  return value === (filter.value === "true");
-                }
+                if (filter.column === "department") return Array.isArray(value) && value.includes(filter.value);
+                if (typeof value === "boolean") return value === (filter.value === "true");
                 return value == filter.value;
               case "notEqual":
-                if (filter.column === "department") {
-                  return Array.isArray(value) && !value.includes(filter.value);
-                }
-                if (typeof value === "boolean") {
-                  return value !== (filter.value === "true");
-                }
+                if (filter.column === "department") return Array.isArray(value) && !value.includes(filter.value);
+                if (typeof value === "boolean") return value !== (filter.value === "true");
                 return value != filter.value;
-              case "greaterThan":
-                return value > parseFloat(filter.value);
-              case "lessThan":
-                return value < parseFloat(filter.value);
-              case "contains":
-                return String(value).toLowerCase().includes(filter.value.toLowerCase());
-              default:
-                return true;
+              case "greaterThan": return value > parseFloat(filter.value);
+              case "lessThan": return value < parseFloat(filter.value);
+              case "contains": return String(value).toLowerCase().includes(filter.value.toLowerCase());
+              default: return true;
             }
-          });
+          };
+          if (filterOperator === 'OR') {
+            filteredUsers = filteredUsers.filter(user => computedFilters.some(f => matchesFilter(user, f)));
+          } else {
+            filteredUsers = filteredUsers.filter(user => computedFilters.every(f => matchesFilter(user, f)));
+          }
         }
 
         // Apply pagination after filtering

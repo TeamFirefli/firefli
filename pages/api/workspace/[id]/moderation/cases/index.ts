@@ -129,6 +129,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         banDuration,
         isPermanent = false,
         expiresAt,
+        placeIds,
       } = req.body;
 
       if (!targetUserId || !reason) {
@@ -157,6 +158,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const finalIsPermanent = action === "perm_ban";
       const finalExpiresAt =
         action === "temp_ban" && expiresAt ? new Date(expiresAt) : null;
+
+      const parsedPlaceIds: bigint[] = Array.isArray(placeIds)
+        ? placeIds
+            .map((id: any) => {
+              try { return BigInt(id); } catch { return null; }
+            })
+            .filter((id): id is bigint => id !== null)
+        : [];
       await prisma.user.upsert({
         where: { userid: BigInt(targetUserId) },
         update: targetUsername ? { username: String(targetUsername) } : {},
@@ -181,6 +190,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           banDuration,
           isPermanent: finalIsPermanent,
           expiresAt: finalExpiresAt,
+          placeIds: parsedPlaceIds,
         },
         include: {
           targetUser: {
