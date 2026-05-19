@@ -205,6 +205,48 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         ],
       });
 
+      await tx.sessionRoleTemplate.createMany({
+        data: [
+          {
+            name: 'Host',
+            hostRole: 'primary',
+            weight: 0,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupId,
+          },
+          {
+            name: 'Co-Host',
+            hostRole: 'secondary',
+            weight: 1,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupId,
+          },
+          {
+            name: 'Trainer A',
+            weight: 2,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupId,
+          },
+          {
+            name: 'Trainer B',
+            weight: 3,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupId,
+          },
+          {
+            name: 'Trainer C',
+            weight: 4,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupId,
+          },
+        ],
+      });
+
       if (robloxApiKey && typeof robloxApiKey === "string") {
         await tx.workspaceExternalServices.create({
           data: { workspaceGroupId: groupId, robloxApiKey },

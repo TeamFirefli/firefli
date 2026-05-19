@@ -230,11 +230,52 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         });
 
         console.log("Created workspace member with admin status");
+
+        await tx.sessionRoleTemplate.createMany({
+          data: [
+            {
+              name: 'Host',
+              hostRole: 'primary',
+              weight: 0,
+              slots: 1,
+              groupRoles: [],
+              workspaceGroupId: groupIdNumber,
+            },
+            {
+              name: 'Co-Host',
+              hostRole: 'secondary',
+              weight: 1,
+              slots: 1,
+              groupRoles: [],
+              workspaceGroupId: groupIdNumber,
+            },
+          {
+            name: 'Trainer A',
+            weight: 2,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupIdNumber,
+          },
+          {
+            name: 'Trainer B',
+            weight: 3,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupIdNumber,
+          },
+          {
+            name: 'Trainer C',
+            weight: 4,
+            slots: 1,
+            groupRoles: [],
+            workspaceGroupId: groupIdNumber,
+          },
+        ],
+        });
+
+        console.log("Created default session role templates");
       })
       .catch((e) => {
-        if (e instanceof Error && e.message === "WORKSPACE_EXISTS") {
-          throw e;
-        }
         console.error("Transaction failed:", e);
         throw new Error("Failed to set up workspace");
       });

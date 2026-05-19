@@ -493,7 +493,7 @@ const SessionRoles = () => {
             </div>
 
             {categories.length === 0 && !isAddingCat && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">No categories yet. Categories help group roles.</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">No categories yet. Categories help group roles together.</p>
             )}
 
             <div className="flex flex-wrap gap-2">
