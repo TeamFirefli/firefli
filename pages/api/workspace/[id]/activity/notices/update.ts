@@ -99,6 +99,44 @@ export async function handler(
       });
       try { await logAudit(after.workspaceGroupId, (req as any).session?.userid || null, status === 'approve' ? 'notice.approve' : 'notice.deny', `notice:${id}`, { before, after, reviewer: (req as any).session?.userid || null }); } catch (e) {}
 
+      if (status === 'approve') {
+        try {
+          const noticeEndTime = after.endTime
+            ? new Date(after.endTime.getTime() + 86399999)
+            : undefined;
+
+          const sessionWhere = {
+            startedAt: null,
+            date: {
+              gte: after.startTime,
+              ...(noticeEndTime ? { lte: noticeEndTime } : {}),
+            },
+            sessionType: {
+              workspaceGroupId: after.workspaceGroupId,
+            },
+          };
+
+          await prisma.session.updateMany({
+            where: {
+              ownerId: after.userId,
+              ...sessionWhere,
+            },
+            data: {
+              ownerId: null,
+            },
+          });
+
+          await prisma.sessionUser.deleteMany({
+            where: {
+              userid: after.userId,
+              session: sessionWhere,
+            },
+          });
+        } catch (e) {
+          console.error('[Notice] Failed to unclaim sessions during notice period:', e);
+        }
+      }
+
       sendNoticeNotification(
         after.workspaceGroupId,
         Number(after.userId),
