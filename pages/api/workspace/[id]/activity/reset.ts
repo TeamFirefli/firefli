@@ -242,6 +242,22 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         },
       });
 
+      const recommendationSubmissions = await prisma.recommendation.count({
+        where: {
+          workspaceGroupId,
+          createdById: userId,
+          createdAt: { gte: periodStart, lte: periodEnd },
+        },
+      });
+
+      const recommendationVotes = await prisma.recommendationVote.count({
+        where: {
+          userId,
+          recommendation: { workspaceGroupId },
+          createdAt: { gte: periodStart, lte: periodEnd },
+        },
+      });
+
       const wallPosts = await prisma.wallPost.findMany({
         where: {
           authorId: userId,
@@ -395,6 +411,22 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
           case "alliance_visits":
             currentValue = allianceVisits;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
+            break;
+
+          case "recommendation_submissions":
+            currentValue = recommendationSubmissions;
+            percentage =
+              quota.value && quota.value > 0
+                ? (currentValue / quota.value) * 100
+                : 0;
+            break;
+
+          case "recommendation_votes":
+            currentValue = recommendationVotes;
             percentage =
               quota.value && quota.value > 0
                 ? (currentValue / quota.value) * 100

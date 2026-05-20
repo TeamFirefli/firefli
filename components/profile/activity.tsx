@@ -43,6 +43,8 @@ type Props = {
   sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
+  recommendationSubmissions?: number;
+  recommendationVotes?: number;
   avatar: string;
   sessions: (ActivitySession & {
     user: {
@@ -97,6 +99,8 @@ const Activity: FC<Props> = ({
   sessionsHosted,
   sessionsSecondaryHosted,
   allianceVisits,
+  recommendationSubmissions = 0,
+  recommendationVotes = 0,
   avatar,
   sessions,
   notices,
@@ -367,6 +371,8 @@ const Activity: FC<Props> = ({
                   sessionsSecondaryHosted={sessionsSecondaryHosted}
                   sessionsAttended={sessionsAttended}
                   allianceVisits={allianceVisits}
+                  recommendationSubmissions={recommendationSubmissions}
+                  recommendationVotes={recommendationVotes}
                   canSignoffQuotas={canSignoffQuotas}
                   targetUserId={targetUserId}
                   isViewingOwnProfile={isViewingOwnProfile}

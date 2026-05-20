@@ -24,6 +24,8 @@ type Props = {
   sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
+  recommendationSubmissions?: number;
+  recommendationVotes?: number;
   canSignoffQuotas?: boolean;
   targetUserId?: string;
   isViewingOwnProfile?: boolean;
@@ -39,6 +41,8 @@ export function QuotasProgress({
   sessionsSecondaryHosted,
   sessionsAttended,
   allianceVisits,
+  recommendationSubmissions = 0,
+  recommendationVotes = 0,
   canSignoffQuotas = false,
   targetUserId,
   isViewingOwnProfile = false,
@@ -87,6 +91,12 @@ export function QuotasProgress({
       case "alliance_visits": {
         return (allianceVisits / quota.value) * 100;
       }
+      case "recommendation_submissions": {
+        return (recommendationSubmissions / quota.value) * 100;
+      }
+      case "recommendation_votes": {
+        return (recommendationVotes / quota.value) * 100;
+      }
       default: {
         return 0;
       }
@@ -126,6 +136,12 @@ export function QuotasProgress({
       }
       case "alliance_visits": {
         return `${allianceVisits} / ${quota.value} alliance visits`;
+      }
+      case "recommendation_submissions": {
+        return `${recommendationSubmissions} / ${quota.value} recommendation submissions`;
+      }
+      case "recommendation_votes": {
+        return `${recommendationVotes} / ${quota.value} recommendation votes`;
       }
       default: {
         return `${quota.currentValue || 0} / ${quota.value || 0}`;

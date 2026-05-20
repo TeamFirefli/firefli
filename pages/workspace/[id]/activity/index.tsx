@@ -335,6 +335,10 @@ const Activity: pageWithLayout = () => {
         return "sessions logged";
       case "alliance_visits":
         return "alliance visits";
+      case "recommendation_submissions":
+        return "recommendation submissions";
+      case "recommendation_votes":
+        return "recommendation votes";
       default:
         return type;
     }

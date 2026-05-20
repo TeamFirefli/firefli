@@ -364,6 +364,22 @@ async function performReset(workspaceGroupId: bigint | number) {
       },
     });
 
+    const recommendationSubmissionsCount = await prisma.recommendation.count({
+      where: {
+        workspaceGroupId,
+        createdById: userId,
+        createdAt: { gte: periodStart, lte: periodEnd },
+      },
+    });
+
+    const recommendationVotesCount = await prisma.recommendationVote.count({
+      where: {
+        userId,
+        recommendation: { workspaceGroupId },
+        createdAt: { gte: periodStart, lte: periodEnd },
+      },
+    });
+
     const wallPosts = await prisma.wallPost.findMany({
       where: {
         authorId: userId,
@@ -512,6 +528,16 @@ async function performReset(workspaceGroupId: bigint | number) {
             break;
           case "alliance_visits":
             currentValue = allianceVisitsCount;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          case "recommendation_submissions":
+            currentValue = recommendationSubmissionsCount;
+            percentage =
+              requirement > 0 ? (currentValue / requirement) * 100 : 0;
+            break;
+          case "recommendation_votes":
+            currentValue = recommendationVotesCount;
             percentage =
               requirement > 0 ? (currentValue / requirement) * 100 : 0;
             break;

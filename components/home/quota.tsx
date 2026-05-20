@@ -23,6 +23,8 @@ function formatType(type: string, value: number | null): string {
     case "sessions_attended": return `${value ?? "?"} sessions attended`;
     case "sessions_logged": return `${value ?? "?"} sessions logged`;
     case "alliance_visits": return `${value ?? "?"} alliance visits`;
+    case "recommendation_submissions": return `${value ?? "?"} recommendation submissions`;
+    case "recommendation_votes": return `${value ?? "?"} recommendation votes`;
     case "custom": return "Custom requirement";
     default: return type;
   }

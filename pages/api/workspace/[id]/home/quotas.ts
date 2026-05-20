@@ -144,6 +144,22 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
       },
     });
 
+    const recommendationSubmissions = await prisma.recommendation.count({
+      where: {
+        workspaceGroupId: workspaceId,
+        createdById: BigInt(userId),
+        createdAt: { gte: startDate },
+      },
+    });
+
+    const recommendationVotes = await prisma.recommendationVote.count({
+      where: {
+        userId: BigInt(userId),
+        recommendation: { workspaceGroupId: workspaceId },
+        createdAt: { gte: startDate },
+      },
+    });
+
     const userRoleIds = (profileData?.roles || []).map((r: any) => r.id);
     const userDeptIds = (profileData?.workspaceMemberships?.[0]?.departmentMembers || [])
       .map((dm: any) => dm.department.id);
@@ -192,6 +208,8 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
           currentValue = quota.sessionType && quota.sessionType !== 'all'
             ? loggedByType[quota.sessionType] || 0 : totalSessionsLogged; break;
         case 'alliance_visits': currentValue = allianceVisits; break;
+        case 'recommendation_submissions': currentValue = recommendationSubmissions; break;
+        case 'recommendation_votes': currentValue = recommendationVotes; break;
       }
       const percentage = quota.value ? Math.min(100, (currentValue / quota.value) * 100) : 0;
       return {

@@ -87,6 +87,7 @@ export const getServerSideProps = withPermissionCheckSsr(
           roles: [],
           departments: [],
           canManageQuotas: false,
+          recommendationsEnabled: false,
         },
       };
     }
@@ -304,6 +305,22 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
+    const recommendationSubmissions = await prisma.recommendation.count({
+      where: {
+        workspaceGroupId: workspaceId,
+        createdById: BigInt(userId),
+        createdAt: { gte: startDate },
+      },
+    });
+
+    const recommendationVotes = await prisma.recommendationVote.count({
+      where: {
+        userId: BigInt(userId),
+        recommendation: { workspaceGroupId: workspaceId },
+        createdAt: { gte: startDate },
+      },
+    });
+
     const userRoleIds = (profileData?.roles || []).map((r: any) => r.id);
     const userDepartmentIds = (profileData?.workspaceMemberships?.[0]?.departmentMembers || []).map((dm: any) => dm.department.id);
     
@@ -414,6 +431,14 @@ export const getServerSideProps = withPermissionCheckSsr(
           currentValue = allianceVisits;
           percentage = (allianceVisits / quota.value) * 100;
           break;
+        case "recommendation_submissions":
+          currentValue = recommendationSubmissions;
+          percentage = (recommendationSubmissions / quota.value) * 100;
+          break;
+        case "recommendation_votes":
+          currentValue = recommendationVotes;
+          percentage = (recommendationVotes / quota.value) * 100;
+          break;
       }
 
       return {
@@ -476,6 +501,18 @@ export const getServerSideProps = withPermissionCheckSsr(
       });
     }
 
+    let recommendationsEnabled: boolean = false;
+    const recCfg = await prisma.config.findFirst({
+      where: { workspaceGroupId: workspaceId, key: 'recommendations' },
+    });
+    if (recCfg?.value) {
+      let recVal: any = recCfg.value;
+      if (typeof recVal === 'string') { try { recVal = JSON.parse(recVal); } catch { /* ignore */ } }
+      if (typeof recVal === 'object' && recVal !== null && 'enabled' in recVal) {
+        recommendationsEnabled = !!recVal.enabled;
+      }
+    }
+
     return {
       props: {
         myQuotas: JSON.parse(
@@ -501,6 +538,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         canManageQuotas: hasManagePermission,
         canDeleteQuotas: hasDeletePermission,
         canSignoffQuotas: hasSignoffPermission,
+        recommendationsEnabled,
       },
     };
   }
@@ -516,6 +554,7 @@ const Quotas: pageWithLayout<pageProps> = ({
   canManageQuotas: canManageQuotasProp,
   canDeleteQuotas,
   canSignoffQuotas,
+  recommendationsEnabled,
 }) => {
   const router = useRouter();
   const { id } = router.query;
@@ -529,6 +568,7 @@ const Quotas: pageWithLayout<pageProps> = ({
 
   const text = useMemo(() => randomText(login.displayname), []);
   const canManageQuotas: boolean = !!canManageQuotasProp;
+  const isRecommendationsEnabled: boolean = !!recommendationsEnabled;
   const roles: any = initialRoles;
   const departments: any = initialDepartments;
 
@@ -553,6 +593,8 @@ const Quotas: pageWithLayout<pageProps> = ({
     sessions_attended: "Sessions attended",
     sessions_logged: "Sessions logged",
     alliance_visits: "Alliance visits",
+    recommendation_submissions: "Recommendation submissions",
+    recommendation_votes: "Recommendation votes",
     custom: "Custom quota",
   };
 
@@ -565,6 +607,8 @@ const Quotas: pageWithLayout<pageProps> = ({
     sessions_logged:
       "Total unique sessions participated in any role (host, co-host, or participant)",
     alliance_visits: "Number of alliance visits where the user was host or participant",
+    recommendation_submissions: "Number of recommendations the user has submitted during the activity period",
+    recommendation_votes: "Number of votes the user has cast on recommendations during the activity period",
     custom: "Custom quota, doesn't track automatically",
   };
 
@@ -1179,6 +1223,16 @@ const Quotas: pageWithLayout<pageProps> = ({
                               <option value="alliance_visits">
                                 Alliance Visits
                               </option>
+                              {isRecommendationsEnabled && (
+                                <option value="recommendation_submissions">
+                                  Recommendation Submissions
+                                </option>
+                              )}
+                              {isRecommendationsEnabled && (
+                                <option value="recommendation_votes">
+                                  Recommendation Votes
+                                </option>
+                              )}
                               <option value="custom">
                                 Custom
                               </option>
@@ -1243,6 +1297,8 @@ const Quotas: pageWithLayout<pageProps> = ({
                                 ? "Minutes"
                                 : watchedType === "alliance_visits"
                                 ? "Visits"
+                                : watchedType === "recommendation_submissions" || watchedType === "recommendation_votes"
+                                ? "Recommendations"
                                 : "Sessions"
                             }
                             classoverride="dark:text-white"
