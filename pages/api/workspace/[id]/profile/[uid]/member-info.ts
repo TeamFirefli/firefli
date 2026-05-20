@@ -13,7 +13,7 @@ async function editHandler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "PATCH") {
     try {
-      const { departmentIds, lineManagerId, timezone, birthdayDay, birthdayMonth, discordId } = req.body;
+      const { departmentIds, lineManagerId, timezone, birthdayDay, birthdayMonth, discordId, email } = req.body;
       const existingMember = await prisma.workspaceMember.findUnique({
         where: {
           workspaceGroupId_userId: {
@@ -42,6 +42,7 @@ async function editHandler(req: NextApiRequest, res: NextApiResponse) {
             lineManagerId: lineManagerId ? BigInt(lineManagerId) : null,
             timezone,
             discordId,
+            email: email !== undefined ? (email || null) : undefined,
           },
         });
 
@@ -71,6 +72,7 @@ async function editHandler(req: NextApiRequest, res: NextApiResponse) {
             lineManagerId: lineManagerId ? BigInt(lineManagerId) : null,
             timezone,
             discordId,
+            email: email || null,
           },
         });
 

@@ -589,6 +589,7 @@ model workspaceMember {
   isAdmin              Boolean?           @default(false)
   lineManagerId        BigInt?
   timezone             String?
+  email                String?
   introMessage         String?
   trackId              String?
   trackName            String?

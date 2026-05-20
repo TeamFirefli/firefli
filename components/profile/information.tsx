@@ -4,6 +4,9 @@ import {
   IconId,
   IconBriefcase,
   IconUserCheck,
+  IconUsers,
+  IconMail,
+  IconShield,
   IconClock,
   IconSun,
   IconMoon,
@@ -78,12 +81,18 @@ type InformationTabProps = {
     lineManagerId?: string | null;
     timezone?: string | null;
     discordId?: string | null;
+    email?: string | null;
   };
   lineManager?: {
     userid: string;
     username: string;
     picture: string;
   } | null;
+  manages?: Array<{
+    userid: string;
+    username: string;
+    picture: string;
+  }>;
   allMembers?: Array<{
     userid: string;
     username: string;
@@ -121,6 +130,7 @@ export function InformationTab({
   user,
   workspaceMember,
   lineManager: initialLineManager,
+  manages = [],
   allMembers = [],
   availableDepartments = [],
   isUser,
@@ -147,6 +157,7 @@ export function InformationTab({
   const [birthdayDay, setBirthdayDay] = useState(user.birthdayDay || "");
   const [birthdayMonth, setBirthdayMonth] = useState(user.birthdayMonth || "");
   const [discordId, setDiscordId] = useState(workspaceMember?.discordId || "");
+  const [email, setEmail] = useState(workspaceMember?.email || "");
   const [loading, setLoading] = useState(false);
   const [pullingDiscord, setPullingDiscord] = useState(false);
   const [localTime, setLocalTime] = useState("");
@@ -207,6 +218,7 @@ export function InformationTab({
           birthdayDay: birthdayDay ? parseInt(birthdayDay as string) : null,
           birthdayMonth: birthdayMonth ? parseInt(birthdayMonth as string) : null,
           discordId: discordId || null,
+          email: email || null,
         }
       );
       
@@ -229,6 +241,7 @@ export function InformationTab({
     setBirthdayDay(user.birthdayDay || "");
     setBirthdayMonth(user.birthdayMonth || "");
     setDiscordId(workspaceMember?.discordId || "");
+    setEmail(workspaceMember?.email || "");
     setEditing(false);
   };
 
@@ -389,6 +402,46 @@ export function InformationTab({
                         className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
                         onClick={() => {
                           navigator.clipboard.writeText(workspaceMember.discordId!);
+                          toast.success("Copied to clipboard");
+                        }}
+                      >
+                        <IconCopy className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-sky-500/10 rounded-lg">
+                <IconMail className="w-5 h-5 text-sky-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                  Email
+                </p>
+                {editing ? (
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    className="w-full px-2 py-1 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                      {workspaceMember?.email || "Not set"}
+                    </p>
+                    {workspaceMember?.email && (
+                      <button
+                        type="button"
+                        title="Copy email"
+                        className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors flex-shrink-0"
+                        onClick={() => {
+                          navigator.clipboard.writeText(workspaceMember.email!);
                           toast.success("Copied to clipboard");
                         }}
                       >
@@ -605,9 +658,27 @@ export function InformationTab({
               </div>
             </div>
           </div>
+          {user.joinDate && (
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-emerald-500/10 rounded-lg">
+                  <IconCalendar className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    Join Date
+                  </p>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    {new Date(user.joinDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-cyan-500/10 rounded-lg">
+              <div className="p-2 bg-cyan-500/10 rounded-lg flex-shrink-0">
                 <IconUserCheck className="w-5 h-5 text-cyan-500" />
               </div>
               <div className="flex-1 min-w-0 relative z-10">
@@ -679,46 +750,96 @@ export function InformationTab({
                       </Transition>
                     </div>
                   </Combobox>
-                ) : selectedManager || initialLineManager ? (
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`rounded-full w-6 h-6 flex items-center justify-center ${getRandomBg(
-                        (selectedManager || initialLineManager)?.userid || "")}`}>
-                      <img
-                        src={(selectedManager || initialLineManager)?.picture}
-                        className="rounded-full w-6 h-6 object-cover border border-white dark:border-zinc-800"
-                        alt={(selectedManager || initialLineManager)?.username}
-                      />
-                    </div>
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                      {(selectedManager || initialLineManager)?.username}
-                    </p>
-                  </div>
                 ) : (
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    Not assigned
-                  </p>
+                  <div>
+                    {!(selectedManager || initialLineManager) && manages.length === 0 ? (
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                        Not assigned
+                      </p>
+                    ) : (
+                      <div className="space-y-0">
+                        {(selectedManager || initialLineManager) && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                router.push(
+                                  `/workspace/${router.query.id}/profile/${(selectedManager || initialLineManager)!.userid}`
+                                )
+                              }
+                              className="flex items-center gap-2 group w-full text-left"
+                            >
+                              <div
+                                className={`rounded-full w-7 h-7 flex-shrink-0 flex items-center justify-center ${getRandomBg(
+                                  (selectedManager || initialLineManager)?.userid || ""
+                                )}`}
+                              >
+                                <img
+                                  src={(selectedManager || initialLineManager)?.picture}
+                                  className="rounded-full w-7 h-7 object-cover border border-white dark:border-zinc-800"
+                                  alt={(selectedManager || initialLineManager)?.username}
+                                />
+                              </div>
+                              <p className="text-sm font-semibold text-zinc-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                                {(selectedManager || initialLineManager)?.username}
+                              </p>
+                            </button>
+                            <div className="ml-3 border-l-2 border-zinc-300 dark:border-zinc-600 h-3" />
+                          </>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`rounded-full w-7 h-7 flex-shrink-0 flex items-center justify-center ${getRandomBg(user.userid)}`}
+                          >
+                            <img
+                              src={`/api/workspace/${router.query.id}/avatar/${user.userid}`}
+                              className="rounded-full w-7 h-7 object-cover border-2 border-primary"
+                              alt={user.username}
+                            />
+                          </div>
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+                            {user.username}
+                          </p>
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+                            (this profile)
+                          </span>
+                        </div>
+
+                        {manages.length > 0 && (
+                          <div className="ml-3 border-l-2 border-zinc-300 dark:border-zinc-600 pl-3 mt-1 space-y-2">
+                            {manages.map((member) => (
+                              <div key={member.userid} className="flex items-center gap-2 relative">
+                                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-2.5 border-t-2 border-zinc-300 dark:border-zinc-600" />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    router.push(
+                                      `/workspace/${router.query.id}/profile/${member.userid}`
+                                    )
+                                  }
+                                  className="flex items-center gap-2 group text-left"
+                                >
+                                  <img
+                                    src={member.picture}
+                                    className="w-6 h-6 rounded-full object-cover border border-white dark:border-zinc-700 flex-shrink-0"
+                                    alt={member.username}
+                                  />
+                                  <p className="text-sm font-semibold text-zinc-900 dark:text-white group-hover:text-primary transition-colors truncate">
+                                    {member.username}
+                                  </p>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
           </div>
-          {user.joinDate && (
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <IconCalendar className="w-5 h-5 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                    Join Date
-                  </p>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    {new Date(user.joinDate).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

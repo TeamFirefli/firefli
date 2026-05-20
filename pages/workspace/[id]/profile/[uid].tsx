@@ -1,7 +1,7 @@
 import Activity from "@/components/profile/activity";
 import Book from "@/components/profile/book";
 import Notices from "@/components/profile/notices";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { InformationTab } from "@/components/profile/information";
 import workspace from "@/layouts/workspace";
 import { pageWithLayout } from "@/layoutTypes";
@@ -36,7 +36,7 @@ import {
   IconBeach,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { getGroupRoles } from "@/utils/roblox";
 import { areaBasedToIANATimezone } from "@/utils/timezoneUtils";
@@ -601,6 +601,22 @@ export const getServerSideProps = withPermissionCheckSsr(
       },
     });
 
+    const recommendationSubmissions = await (prisma as any).recommendation.count({
+      where: {
+        workspaceGroupId: parseInt(query.id as string),
+        createdById: BigInt(query.uid as string),
+        createdAt: { gte: startDate, lte: currentDate },
+      },
+    });
+
+    const recommendationVotes = await (prisma as any).recommendationVote.count({
+      where: {
+        userId: BigInt(query.uid as string),
+        recommendation: { workspaceGroupId: parseInt(query.id as string) },
+        createdAt: { gte: startDate, lte: currentDate },
+      },
+    });
+
     const user = await prisma.user.findUnique({
       where: { userid: BigInt(query.uid as string) },
       select: {
@@ -630,6 +646,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         lineManagerId: true,
         timezone: true,
         discordId: true,
+        email: true,
         departmentMembers: {
           select: {
             department: {
@@ -721,14 +738,52 @@ export const getServerSideProps = withPermissionCheckSsr(
         lineManager = {
           userid: manager.userid.toString(),
           username: manager.username,
-          picture: manager.picture || "",
+          picture: getThumbnail(manager.userid),
         };
       }
     }
 
+    const manageesRaw = await prisma.workspaceMember.findMany({
+      where: {
+        workspaceGroupId: parseInt(query.id as string),
+        lineManagerId: BigInt(query.uid as string),
+      },
+      select: {
+        user: {
+          select: {
+            userid: true,
+            username: true,
+            picture: true,
+          },
+        },
+      },
+      orderBy: {
+        user: { username: "asc" },
+      },
+    });
+
+    const manages = manageesRaw.map((m) => ({
+      userid: m.user.userid.toString(),
+      username: m.user.username,
+      picture: getThumbnail(m.user.userid),
+    }));
+
+    const allianceMemberships = await prisma.ally.findMany({
+      where: {
+        workspaceGroupId: parseInt(query.id as string),
+        reps: { some: { userid: BigInt(query.uid as string) } },
+      },
+      select: {
+        id: true,
+        name: true,
+        icon: true,
+        groupId: true,
+      },
+    });
+
     const allMembersRaw = await prisma.user.findMany({
       where: {
-        roles: {
+        workspaceMemberships: {
           some: {
             workspaceGroupId: parseInt(query.id as string),
           },
@@ -747,7 +802,7 @@ export const getServerSideProps = withPermissionCheckSsr(
     const allMembers = allMembersRaw.map((member) => ({
       userid: member.userid.toString(),
       username: member.username,
-      picture: member.picture || "",
+      picture: getThumbnail(member.userid),
     }));
 
     if (!user) {
@@ -786,6 +841,8 @@ export const getServerSideProps = withPermissionCheckSsr(
         sessionsSecondaryHosted: sessionsSecondaryHosted,
         sessionsAttended: sessionsAttended,
         allianceVisits: allianceVisits,
+        recommendationSubmissions: recommendationSubmissions,
+        recommendationVotes: recommendationVotes,
         quotas: JSON.parse(
           JSON.stringify(quotas, (_k, v) =>
             typeof v === "bigint" ? v.toString() : v,
@@ -819,10 +876,13 @@ export const getServerSideProps = withPermissionCheckSsr(
                 targetUserMembership.lineManagerId?.toString() || null,
               timezone: targetUserMembership.timezone,
               discordId: targetUserMembership.discordId,
+              email: targetUserMembership.email,
             }
           : null,
         availableDepartments,
         lineManager,
+        manages,
+        allianceMemberships,
         allMembers,
         canManageMembers: hasManageMembersPermission,
         canManageNotices: hasManageNoticesPermission,
@@ -861,6 +921,8 @@ type pageProps = {
   sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
+  recommendationSubmissions: number;
+  recommendationVotes: number;
   isUser: boolean;
   isAdmin: boolean;
   user: {
@@ -881,6 +943,7 @@ type pageProps = {
     lineManagerId: string | null;
     timezone: string | null;
     discordId: string | null;
+    email: string | null;
   } | null;
   availableDepartments: Array<{
     id: string;
@@ -892,6 +955,17 @@ type pageProps = {
     username: string;
     picture: string;
   } | null;
+  manages: Array<{
+    userid: string;
+    username: string;
+    picture: string;
+  }>;
+  allianceMemberships: Array<{
+    id: string;
+    name: string;
+    icon: string;
+    groupId: string;
+  }>;
   allMembers: Array<{
     userid: string;
     username: string;
@@ -932,12 +1006,16 @@ const Profile: pageWithLayout<pageProps> = ({
   sessionsSecondaryHosted,
   sessionsAttended,
   allianceVisits,
+  recommendationSubmissions,
+  recommendationVotes,
   quotas,
   user,
   isAdmin,
   workspaceMember,
   availableDepartments,
   lineManager,
+  manages,
+  allianceMemberships,
   allMembers,
   canManageMembers,
   canManageNotices,
@@ -964,6 +1042,8 @@ const Profile: pageWithLayout<pageProps> = ({
     sessionsSecondaryHosted,
     sessionsAttended,
     allianceVisits,
+    recommendationSubmissions,
+    recommendationVotes,
     sessions,
     adjustments,
     messages: sessions.reduce(
@@ -1110,6 +1190,8 @@ const Profile: pageWithLayout<pageProps> = ({
             sessionsSecondaryHosted: historicalData.activity.sessionsSecondaryHosted || 0,
             sessionsAttended: historicalData.activity.sessionsAttended,
             allianceVisits: historicalData.activity.allianceVisits || 0,
+            recommendationSubmissions: 0,
+            recommendationVotes: 0,
             sessions: historicalData.sessions || [],
             adjustments: historicalData.adjustments || [],
             messages: historicalData.activity.messages || 0,
@@ -1343,6 +1425,7 @@ const Profile: pageWithLayout<pageProps> = ({
               <Tab.Panels className="p-3 sm:p-4 bg-white dark:bg-zinc-800 rounded-b-xl">
                 <Tab.Panel>
                   <InformationTab
+                    key={user.userid}
                     user={{
                       userid: String(user.userid),
                       username: user.username,
@@ -1355,6 +1438,7 @@ const Profile: pageWithLayout<pageProps> = ({
                     workspaceMember={workspaceMember || undefined}
                     availableDepartments={availableDepartments}
                     lineManager={lineManager}
+                    manages={manages}
                     allMembers={allMembers}
                     isUser={isUser}
                     isAdmin={isAdmin}
@@ -1371,6 +1455,8 @@ const Profile: pageWithLayout<pageProps> = ({
                     sessionsSecondaryHosted={displayData.sessionsSecondaryHosted}
                     sessionsAttended={displayData.sessionsAttended}
                     allianceVisits={displayData.allianceVisits}
+                    recommendationSubmissions={displayData.recommendationSubmissions}
+                    recommendationVotes={displayData.recommendationVotes}
                     avatar={info.avatar}
                     sessions={displayData.sessions}
                     adjustments={displayData.adjustments}
