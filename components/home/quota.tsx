@@ -73,7 +73,7 @@ const Quota: React.FC = () => {
           <IconTarget className="w-[clamp(1rem,8cqh,2rem)] h-[clamp(1rem,8cqh,2rem)] text-primary" />
         </div>
         <p className="text-[clamp(0.875rem,5cqh,1.125rem)] font-medium text-zinc-900 dark:text-white mb-1">No quotas assigned</p>
-        <p className="text-[clamp(0.75rem,3.5cqh,0.875rem)] text-zinc-500 dark:text-zinc-400">You have no quotas for this period</p>
+        <p className="text-[clamp(0.75rem,3.5cqh,0.875rem)] text-zinc-500 dark:text-zinc-400 mb-4">You have no quotas for this period</p>
       </div>
     );
   }
