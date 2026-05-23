@@ -34,6 +34,7 @@ const BottomBar: NextPage = () => {
   const [alliesEnabled, setAlliesEnabled] = useState(false)
   const [policiesEnabled, setPoliciesEnabled] = useState(false)
   const [recommendationsEnabled, setRecommendationsEnabled] = useState(false)
+  const [moderationEnabled, setModerationEnabled] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -46,6 +47,7 @@ const BottomBar: NextPage = () => {
         setAlliesEnabled(data.value?.allies?.enabled ?? false)
         setPoliciesEnabled(data.value?.policies?.enabled ?? false)
         setRecommendationsEnabled(data.value?.recommendations?.enabled ?? false)
+        setModerationEnabled(data.value?.moderation?.enabled ?? false)
       } catch (e) {
         // dont break
       }
@@ -69,7 +71,7 @@ const BottomBar: NextPage = () => {
     { name: "Docs", href: `/workspace/${workspace.groupId}/docs`, icon: File02Icon, accessible: true },
     ...(policiesEnabled ? [{ name: "Policies", href: `/workspace/${workspace.groupId}/policies`, icon: UserShield01Icon, accessible: true }] : []),
     ...(recommendationsEnabled && (workspace.yourPermission?.includes("view_recommendations") || workspace.isAdmin) ? [{ name: "Recommendations", href: `/workspace/${workspace.groupId}/recommendations`, icon: SparklesIcon, accessible: true }] : []),
-    { name: "Moderation", href: `/workspace/${workspace.groupId}/moderation`, icon: UserShield01Icon, accessible: workspace.yourPermission?.includes("view_moderation") || workspace.isAdmin },
+    ...(moderationEnabled ? [{ name: "Moderation", href: `/workspace/${workspace.groupId}/moderation`, icon: UserShield01Icon, accessible: workspace.yourPermission?.includes("view_moderation") || workspace.isAdmin }] : []),
     { name: "Settings", href: `/workspace/${workspace.groupId}/settings`, icon: Settings01Icon, accessible: ["admin", "workspace_customisation", "reset_activity", "manage_features", "manage_apikeys", "view_audit_logs"].some(perm => workspace.yourPermission.includes(perm)) },
   ].filter(page => page.accessible !== false)
 

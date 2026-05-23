@@ -75,12 +75,27 @@ export default withSessionRoute(async function handler(req: NextApiRequest, res:
       gamesData = isAnyErrorResponse(gamesResult) ? [] : (gamesResult.data ?? []);
     }
 
+    let placeDetailsMap: Record<number, string> = {};
+    if (placeIds.length > 0) {
+      const r = await axios.get(
+        `https://games.roblox.com/v1/games/multiget-place-details?placeIds=${placeIds.join(',')}`,
+        noThrow,
+      );
+      if (Array.isArray(r.data)) {
+        for (const detail of r.data) {
+          if (detail?.placeId && detail?.name) {
+            placeDetailsMap[Number(detail.placeId)] = detail.name;
+          }
+        }
+      }
+    }
+
     const games = placeIds.map((pid, i) => {
       const uid = resolved[i].universeId;
       const info = uid ? gamesData.find((g: any) => g.id === uid) : undefined;
       return {
         placeId: pid,
-        name: info?.name ?? 'Unknown Game',
+        name: placeDetailsMap[pid] ?? info?.name ?? 'Unknown Game',
         playing: info?.playing ?? 0,
         visits: info?.visits ?? 0,
         thumbnail: resolved[i].imageUrl,
