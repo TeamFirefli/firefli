@@ -4,6 +4,7 @@ import axios from "axios";
 import { IconWorld, IconUsers, IconPlayerPlay } from "@tabler/icons-react";
 
 interface GameInfo {
+  universeId: number;
   placeId: number;
   name: string;
   playing: number;
@@ -77,7 +78,7 @@ const GamesWidget: React.FC = () => {
     <div className="flex gap-2 @[400px]:grid @[400px]:grid-cols-3 @[650px]:grid-cols-4 @[900px]:grid-cols-6">
       {games.map((game) => (
         <div
-          key={game.placeId}
+          key={game.universeId}
           className="relative flex-none w-32 @[400px]:w-auto rounded-lg overflow-hidden aspect-[3/2] @[650px]:aspect-[16/9] @[900px]:aspect-[16/7] bg-zinc-800 shadow-sm group"
         >
           {game.thumbnail ? (
