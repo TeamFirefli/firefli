@@ -629,7 +629,8 @@ const Home: pageWithLayout = () => {
               </div>
             </div>
             {!isEditing &&
-              !loading && (
+              !loading &&
+              (workspace.isAdmin || workspace.yourPermission?.includes("workspace_customisation")) && (
                 <button
                   onClick={enterEditMode}
                   className={clsx(
