@@ -349,6 +349,11 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
                 notice.endTime &&
                 new Date(notice.startTime) <= now &&
                 new Date(notice.endTime) >= now;
+              const isUpcoming =
+                notice.approved &&
+                !notice.revoked &&
+                notice.startTime &&
+                new Date(notice.startTime) > now;
               return (
                 <div
                   key={notice.id}
@@ -396,7 +401,7 @@ const Notices: FC<Props> = ({ notices, canManageNotices = false, canApproveNotic
                       </div>
                     </div>
                   </div>
-                  {isActive && canManageNotices && (
+                  {(isActive || isUpcoming) && canManageNotices && (
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={async () => {
