@@ -43,6 +43,8 @@ type Props = {
   sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
+  recommendationSubmissions?: number;
+  recommendationVotes?: number;
   avatar: string;
   sessions: (ActivitySession & {
     user: {
