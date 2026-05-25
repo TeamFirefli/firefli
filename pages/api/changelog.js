@@ -17,20 +17,43 @@ const isVersionLessThanOrEqual = (v1, v2) => {
 	return true;
 };
 
+const HEX_COLOR_RE = /^#[0-9a-f]{3,8}$/i;
+const sanitizeColor = (color) => (HEX_COLOR_RE.test(color ?? "") ? color : "#6b7280");
+
 export default async function handler(req, res) {
 	const FEED_URL = "https://cl1.firefli.net/changelog/cmkvbgjd2001888v9k9z2bs8f/rss.xml";
 	try {
-		const parser = new Parser();
+		const parser = new Parser({
+			customFields: {
+				item: [["changerawr:tag", "changerawr:tag", { keepArray: true }]],
+			},
+		});
 		const feed = await parser.parseURL(FEED_URL);
 		const currentVersion = packageJson.version;
 		
 		const items = (feed.items || [])
-			.map((item) => ({
-				title: item.title || "",
-				pubDate: item.pubDate || item.isoDate || "",
-				content: item["content:encoded"] || item.content || "",
-				version: extractVersion(item.title || "") || null,
-			}))
+			.map((item) => {
+				const rawTags = item["changerawr:tag"] || [];
+				const categories = rawTags
+					.map((tag) => ({
+						name: String(tag?.$ ?.name || "").trim(),
+						color: sanitizeColor(tag?.$ ?.color),
+					}))
+					.filter((t) => t.name);
+				if (!categories.length && Array.isArray(item.categories)) {
+					item.categories.forEach((c) => {
+						if (c) categories.push({ name: String(c).trim(), color: "#6b7280" });
+					});
+				}
+
+				return {
+					title: item.title || "",
+					pubDate: item.pubDate || item.isoDate || "",
+					content: item["content:encoded"] || item.content || "",
+					version: extractVersion(item.title || "") || null,
+					categories,
+				};
+			})
 			.filter((item) => {
 				const itemVersion = extractVersion(item.title);
 				if (!itemVersion) return true;

@@ -23,10 +23,16 @@ import { loginState } from "@/state";
 
 const EZ_BUGS_ENABLED = process.env.NEXT_PUBLIC_EZ_BUGS_ENABLED === "true";
 
+interface ChangelogCategory {
+  name: string;
+  color: string;
+}
+
 interface ChangelogItem {
   title: string;
   pubDate: string;
   content: string;
+  categories: ChangelogCategory[];
 }
 
 const HelpWidget = () => {
@@ -487,6 +493,19 @@ const HelpWidget = () => {
                             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                               {new Date(item.pubDate).toLocaleDateString()}
                             </p>
+                            {item.categories && item.categories.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {item.categories.map((cat) => (
+                                  <span
+                                    key={cat.name}
+                                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                                    style={{ backgroundColor: cat.color }}
+                                  >
+                                    {cat.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-300 prose prose-sm dark:prose-invert max-w-none">
                               <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                                 {item.content}

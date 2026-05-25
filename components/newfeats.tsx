@@ -5,11 +5,17 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 
+interface ChangelogCategory {
+  name: string;
+  color: string;
+}
+
 interface ChangelogEntry {
   title: string;
   pubDate: string;
   content: string;
   version: string | null;
+  categories: ChangelogCategory[];
 }
 
 const PREFIX = "_";
@@ -120,6 +126,19 @@ const newFeatures = ({ onReady }: NewFeaturesProps = {}) => {
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                     {new Date(latestEntry.pubDate).toLocaleDateString()}
                   </p>
+                  {latestEntry.categories && latestEntry.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {latestEntry.categories.map((cat) => (
+                        <span
+                          key={cat.name}
+                          className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          style={{ backgroundColor: cat.color }}
+                        >
+                          {cat.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="max-h-64 overflow-y-auto">
