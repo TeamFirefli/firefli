@@ -153,6 +153,12 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       "Upload evidence": "upload_evidence",
       "Delete evidence": "delete_evidence",
     },
+    Applications: {
+      "View applications": "applications.view",
+      "Manage applications": "applications.manage",
+      "Review applications": "applications.review",
+      "Delete applications": "applications.delete",
+    },
     Settings: {
       "Admin (Manage workspace)": "admin",
       "Reset activity": "reset_activity",
@@ -160,6 +166,7 @@ const RolesManager: FC<Props> = ({ roles, setRoles, grouproles }) => {
       "Create API keys": "manage_apikeys",
       "Manage features": "manage_features",
       "Workspace customisation": "workspace_customisation",
+      "Export views": "export_views",
     },
   };
 

@@ -24,6 +24,7 @@ type Data = {
 			policiesEnabled: boolean
 			recommendationsEnabled: boolean
 			moderationEnabled: boolean
+			applicationsEnabled: boolean
 			widgets: string[]
 			layout: any[]
 			bannerImage: string | null
@@ -72,7 +73,8 @@ export async function handler(
 		policiesConfig,
 		homeConfig,
 		recommendationsConfig,
-		moderationConfig
+		moderationConfig,
+		applicationsConfig
 	] = await Promise.all([
 		getConfig('customization', workspace.groupId),
 		prisma.role.findMany({
@@ -107,7 +109,8 @@ export async function handler(
 		getConfig('policies', workspace.groupId),
 		getConfig('home', workspace.groupId),
 		getConfig('recommendations', workspace.groupId),
-		getConfig('moderation', workspace.groupId)
+		getConfig('moderation', workspace.groupId),
+		getConfig('applications', workspace.groupId)
 	]);
 	
 	console.log(`All data fetched after ${new Date().getTime() - time.getTime()}ms`)
@@ -207,8 +210,7 @@ export async function handler(
 			alliesEnabled: alliesConfig?.enabled || false,
 			policiesEnabled: policiesConfig?.enabled || false,
 			recommendationsEnabled: recommendationsConfig?.enabled || false,
-			moderationEnabled: moderationConfig?.enabled || false,
-			widgets: homeConfig?.widgets || [],
+			moderationEnabled: moderationConfig?.enabled || false,				applicationsEnabled: applicationsConfig?.enabled || false,			widgets: homeConfig?.widgets || [],
 			layout: homeConfig?.layout || [],
 			bannerImage: null as string | null,
 		}

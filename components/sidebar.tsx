@@ -178,6 +178,7 @@ const Sidebar: NextPage = () => {
   const [policiesEnabled, setPoliciesEnabled] = useState(false);
   const [recommendationsEnabled, setRecommendationsEnabled] = useState(false);
   const [moderationEnabled, setModerationEnabled] = useState(false);
+  const [applicationsEnabled, setApplicationsEnabled] = useState(false);
   const [pendingPolicyCount, setPendingPolicyCount] = useState(0);
   const [pendingNoticesCount, setPendingNoticesCount] = useState(0);
   const router = useRouter()
@@ -304,6 +305,12 @@ const Sidebar: NextPage = () => {
       icon: UserShield01Icon,
       accessible: workspace.yourPermission?.includes("view_moderation") || workspace.isAdmin,
     }] : []),
+    ...(applicationsEnabled ? [{
+      name: "Applications",
+      href: `/workspace/${workspace.groupId}/applications`,
+      icon: Task01Icon,
+      accessible: workspace.yourPermission?.includes("applications.view") || workspace.isAdmin,
+    }] : []),
     ...(alliesEnabled ? [{
       name: "Alliances",
       href: `/workspace/${workspace.groupId}/alliances`,
@@ -410,6 +417,7 @@ const Sidebar: NextPage = () => {
 		setRecommendationsEnabled(data.value.recommendations?.enabled ?? false);
 		setPoliciesEnabled(data.value.policies?.enabled ?? false);
 		setModerationEnabled(data.value.moderation?.enabled ?? false);
+		setApplicationsEnabled(data.value.applications?.enabled ?? false);
       })
   }, [workspace.groupId]);
 

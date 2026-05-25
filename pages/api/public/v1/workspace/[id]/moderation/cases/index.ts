@@ -14,20 +14,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const apiKey = req.headers.authorization?.replace("Bearer ", "")
   if (!apiKey) return res.status(401).json({ success: false, error: "Missing API key" })
-
   const workspaceId = Number.parseInt(req.query.id as string)
   if (!workspaceId) return res.status(400).json({ success: false, error: "Missing workspace ID" })
-
   try {
     const key = await validateApiKey(apiKey, workspaceId)
     if (!key) return res.status(401).json({ success: false, error: "Invalid or expired API key" })
-
     if (req.method === "GET") {
       const { page = "1", search, status, action, targetUserId } = req.query
-
       const pageNum = Math.max(1, parseInt(page as string) || 1)
       const skip = (pageNum - 1) * PAGE_SIZE
-
       const where: any = { workspaceGroupId: BigInt(workspaceId) }
 
       if (status) {
@@ -100,8 +95,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       })
     }
 
-    // POST — create a case
-
     const {
       targetUserId,
       targetUsername,
@@ -160,8 +153,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           .map((id: any) => { try { return BigInt(id); } catch { return null; } })
           .filter((id: bigint | null): id is bigint => id !== null)
       : []
-
-    // Ensure target and author users exist (they may be Roblox users not yet in the system)
     await Promise.all([
       prisma.user.upsert({
         where: { userid: BigInt(targetId) },

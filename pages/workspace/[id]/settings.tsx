@@ -131,7 +131,7 @@ const SECTIONS = {
     icon: IconFlag,
     description: "Enable or disable workspace features",
     components: Object.entries(All)
-      .filter(([key]) => key === "Alliances" || key === "Recommendations" || key === "Policies" || key === "Moderation")
+      .filter(([key]) => key === "Alliances" || key === "Recommendations" || key === "Policies" || key === "Moderation" || key === "Applications")
       .map(([key, Component]) => ({
         key,
         component: Component,
@@ -233,6 +233,18 @@ const Settings: pageWithLayout<Props> = ({ roles, departments, grouproles, isAdm
       return (
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-4 sm:p-6">
           <All.AuditLogs />
+        </div>
+      )
+    }
+
+    if (activeSection === "features") {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {SECTIONS.features.components.map(({ component: Component, title, key }, index) => (
+            <div key={index} className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-3">
+              <Component triggerToast={toast} isSidebarExpanded={isSidebarExpanded} />
+            </div>
+          ))}
         </div>
       )
     }

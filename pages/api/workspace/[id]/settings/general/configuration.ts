@@ -29,9 +29,10 @@ async function handler(
 		getConfig("recommendations", parseInt(req.query.id as string)),
 		getConfig("policies", parseInt(req.query.id as string)),
 		getConfig("moderation", parseInt(req.query.id as string)),
+		getConfig("applications", parseInt(req.query.id as string)),
 	])
 
-	const keys = ["allies", "recommendations", "policies", "moderation"];
+	const keys = ["allies", "recommendations", "policies", "moderation", "applications"];
 	return res.status(200).json({ 
 		success: true, 
 		value: configuration.reduce((acc, curr, index) => {

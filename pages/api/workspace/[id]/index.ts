@@ -25,6 +25,7 @@ type Data = {
 			policiesEnabled: boolean
 			recommendationsEnabled: boolean
 			moderationEnabled: boolean
+			applicationsEnabled: boolean
 			widgets: string[]
 			layout?: Array<{
 				i: string
@@ -109,6 +110,7 @@ export async function handler(
 		"Create views": "create_views",
 		"Edit views": "edit_views",
 		"Delete views": "delete_views",
+		"Export views": "export_views",
 		"Use mass actions": "use_mass_actions",
 		"Create docs": "create_docs",
 		"Edit docs": "edit_docs",
@@ -180,6 +182,7 @@ export async function handler(
 			policiesEnabled: (await getConfig('policies', workspace.groupId))?.enabled || false,
 			recommendationsEnabled: (await getConfig('recommendations', workspace.groupId))?.enabled || false,
 			moderationEnabled: (await getConfig('moderation', workspace.groupId))?.enabled || false,
+			applicationsEnabled: (await getConfig('applications', workspace.groupId))?.enabled || false,
 			widgets: (await getConfig('home', workspace.groupId))?.widgets || [],
 			layout: (await getConfig('home', workspace.groupId))?.layout || undefined
 		}
