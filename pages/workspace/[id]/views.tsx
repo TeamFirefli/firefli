@@ -79,6 +79,7 @@ import {
   IconClock,
   IconMessage,
   IconUser,
+  IconDownload,
 } from "@tabler/icons-react";
 import { UserGroupIcon, UserMultiple02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -148,6 +149,10 @@ export const getServerSideProps = withPermissionCheckSsr(
       isAdmin ||
       userRole?.permissions?.includes("view_member_profiles") ||
       false;
+    const hasExportPerm =
+      isAdmin ||
+      userRole?.permissions?.includes("export_views") ||
+      false;
 
     const departments = await prisma.department.findMany({
       where: { workspaceGroupId },
@@ -170,6 +175,7 @@ export const getServerSideProps = withPermissionCheckSsr(
         hasUseSavedViewsPerm: hasUseSavedViewsPerm,
         hasMassActionsPerm: hasMassActionsPerm,
         hasViewMemberProfiles: hasViewMemberProfiles,
+        hasExportPerm: hasExportPerm,
         departments: JSON.parse(JSON.stringify(departments)),
       },
     };
@@ -213,6 +219,7 @@ type pageProps = {
   hasUseSavedViewsPerm: boolean;
   hasMassActionsPerm: boolean;
   hasViewMemberProfiles: boolean;
+  hasExportPerm: boolean;
   departments: Array<{ id: string; name: string; color: string | null }>;
 };
 const Views: pageWithLayout<pageProps> = ({
@@ -223,6 +230,7 @@ const Views: pageWithLayout<pageProps> = ({
   hasUseSavedViewsPerm,
   hasMassActionsPerm,
   hasViewMemberProfiles,
+  hasExportPerm,
   departments,
 }) => {
   const [login, setLogin] = useRecoilState(loginState);
@@ -628,7 +636,7 @@ const Views: pageWithLayout<pageProps> = ({
 
   const [columnVisibility, setColumnVisibility] = useState({
     info: true,
-    rankID: true,
+    rankName: true,
     departments: false,
     book: true,
     minutes: true,
@@ -853,7 +861,7 @@ const Views: pageWithLayout<pageProps> = ({
     setColFilters([]);
     setColumnVisibility({
       info: true,
-      rankID: true,
+      rankName: true,
       departments: false,
       book: true,
       minutes: true,
@@ -950,7 +958,7 @@ const Views: pageWithLayout<pageProps> = ({
         setColFilters([]);
         setColumnVisibility({
           info: true,
-          rankID: true,
+          rankName: true,
           departments: false,
           book: true,
           minutes: true,
@@ -1219,6 +1227,81 @@ const Views: pageWithLayout<pageProps> = ({
     setSearchOpen(false);
     setExternalSearchResults([]);
     router.push(`/workspace/${router.query.id}/profile/${userId}`);
+  };
+
+  const exportData = (format: "csv" | "xls") => {
+    const visibleCols = Object.entries(columnVisibility)
+      .filter(([key, visible]) => visible && key !== "select")
+      .map(([key]) => key);
+
+    const headers = visibleCols.map((col) => {
+      if (col === "info") return "Username";
+      return getSelectionName(col) || col;
+    });
+
+    const rows = users.map((user) =>
+      visibleCols.map((col) => {
+        switch (col) {
+          case "info": return user.info.username || "";
+          case "rankName":
+          case "rankID": return user.rankName || "Guest";
+          case "departments": return (user.departments || []).join(", ");
+          case "book": {
+            const w = Array.isArray(user.book)
+              ? user.book.filter((b: any) => b.type === "warning" && !b.redacted).length
+              : 0;
+            return w;
+          }
+          case "minutes": return user.minutes;
+          case "lastPeriodMinutes": return user.lastPeriodMinutes ?? "";
+          case "idleMinutes": return user.idleMinutes;
+          case "hostedSessions": {
+            const h = user.hostedSessions as any;
+            return h && typeof h.length === "number" ? h.length : 0;
+          }
+          case "sessionsAttended": return user.sessionsAttended;
+          case "lastPeriodSessionsHosted": return user.lastPeriodSessionsHosted ?? "";
+          case "lastPeriodSessionsAttended": return user.lastPeriodSessionsAttended ?? "";
+          case "allianceVisits": return user.allianceVisits;
+          case "inactivityNotices": return user.inactivityNotices.length;
+          case "messages": return user.messages;
+          case "registered": return user.registered ? "Yes" : "No";
+          case "quota": return user.quotaTotal === 0 ? "-" : `${user.quotaCompleted}/${user.quotaTotal}`;
+          case "quotaFailed": return user.quotaTotal === 0 ? "-" : `${user.quotaTotal - user.quotaCompleted}/${user.quotaTotal}`;
+          default: return "";
+        }
+      })
+    );
+
+    const dateStr = new Date().toISOString().split("T")[0];
+
+    if (format === "csv") {
+      const escape = (val: any) => {
+        const s = String(val ?? "");
+        if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      };
+      const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `staff-export-${dateStr}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const tableHtml = `<table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+      const xls = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Staff Export</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><meta charset='utf-8'/></head><body>${tableHtml}</body></html>`;
+      const blob = new Blob([xls], { type: "application/vnd.ms-excel;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `staff-export-${dateStr}.xls`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const getSelectionName = (columnId: string) => {
@@ -1643,6 +1726,52 @@ const Views: pageWithLayout<pageProps> = ({
                       </button>
                     </Tooltip>
                   </div>
+
+                  {hasExportPerm && (
+                  <Popover className="relative z-20">
+                    {({ open, close }) => (
+                      <>
+                        <Popover.Button
+                          className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
+                            open
+                              ? "bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-primary/50"
+                              : "bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
+                          }`}
+                        >
+                          <IconDownload className="w-4 h-4" />
+                          <span>Export</span>
+                        </Popover.Button>
+                        <Transition
+                          as={Fragment}
+                          enter="transition ease-out duration-200"
+                          enterFrom="opacity-0 translate-y-1"
+                          enterTo="opacity-100 translate-y-0"
+                          leave="transition ease-in duration-150"
+                          leaveFrom="opacity-100 translate-y-0"
+                          leaveTo="opacity-0 translate-y-1"
+                        >
+                          <Popover.Panel className="absolute left-0 z-50 mt-2 w-44 origin-top-left rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-2xl py-1 top-full">
+                            <p className="px-3 py-1.5 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Export Table</p>
+                            <button
+                              onClick={() => { exportData("csv"); close(); }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                              <IconDownload className="w-4 h-4 text-zinc-400" />
+                              Export as CSV
+                            </button>
+                            <button
+                              onClick={() => { exportData("xls"); close(); }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                              <IconDownload className="w-4 h-4 text-zinc-400" />
+                              Export as XLS
+                            </button>
+                          </Popover.Panel>
+                        </Transition>
+                      </>
+                    )}
+                  </Popover>
+                  )}
                 </div>
 
                 <div className="relative flex-1 md:flex-none md:w-56">
@@ -2119,7 +2248,7 @@ const Views: pageWithLayout<pageProps> = ({
                                 {Array.isArray(user.departments) &&
                                 user.departments.length > 0
                                   ? user.departments.join(", ")
-                                  : "—"}
+                                  : "-"}
                               </p>
                             </div>
                           )}
