@@ -29,6 +29,7 @@ export default async function handler(req, res) {
 				title: item.title || "",
 				pubDate: item.pubDate || item.isoDate || "",
 				content: item["content:encoded"] || item.content || "",
+				version: extractVersion(item.title || "") || null,
 			}))
 			.filter((item) => {
 				const itemVersion = extractVersion(item.title);

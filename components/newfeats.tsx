@@ -9,6 +9,7 @@ interface ChangelogEntry {
   title: string;
   pubDate: string;
   content: string;
+  version: string | null;
 }
 
 const PREFIX = "_";
@@ -27,9 +28,16 @@ const newFeatures = ({ onReady }: NewFeaturesProps = {}) => {
       try {
         const res = await fetch("/api/changelog");
         const data: ChangelogEntry[] = await res.json();
-        
+        const currentVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+
         if (data && data.length > 0) {
-          const latest = data[0];
+          const latest = currentVersion
+            ? (data.find((entry) => entry.version === currentVersion) ?? null)
+            : data[0];
+          if (!latest) {
+            onReady?.();
+            return;
+          }
           const entryKey = `${PREFIX}${latest.title}`;
           const hasSeen = localStorage.getItem(entryKey);
           
