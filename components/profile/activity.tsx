@@ -43,8 +43,6 @@ type Props = {
   sessionsSecondaryHosted: number;
   sessionsAttended: number;
   allianceVisits: number;
-  recommendationSubmissions?: number;
-  recommendationVotes?: number;
   avatar: string;
   sessions: (ActivitySession & {
     user: {
@@ -99,8 +97,6 @@ const Activity: FC<Props> = ({
   sessionsHosted,
   sessionsSecondaryHosted,
   allianceVisits,
-  recommendationSubmissions = 0,
-  recommendationVotes = 0,
   avatar,
   sessions,
   notices,
@@ -341,7 +337,7 @@ const Activity: FC<Props> = ({
                   displayMinutes={displayMinutes}
                   messages={messages}
                   idleTime={idleMins}
-                  sessionsHosted={sessionsHosted}
+                  sessionsHosted={sessionsHosted + sessionsSecondaryHosted}
                   sessionsAttended={sessionsAttended}
                   idleTimeEnabled={idleTimeEnabled}
                   notices={notices}
@@ -357,7 +353,7 @@ const Activity: FC<Props> = ({
                   adjustments={adjustments}
                   avatar={avatar}
                   idleTimeEnabled={idleTimeEnabled}
-                  sessionsHosted={sessionsHosted}
+                  sessionsHosted={sessionsHosted + sessionsSecondaryHosted}
                   sessionsAttended={sessionsAttended}
                   isHistorical={isHistorical}
                   historicalPeriod={historicalPeriod}
@@ -371,8 +367,6 @@ const Activity: FC<Props> = ({
                   sessionsSecondaryHosted={sessionsSecondaryHosted}
                   sessionsAttended={sessionsAttended}
                   allianceVisits={allianceVisits}
-                  recommendationSubmissions={recommendationSubmissions}
-                  recommendationVotes={recommendationVotes}
                   canSignoffQuotas={canSignoffQuotas}
                   targetUserId={targetUserId}
                   isViewingOwnProfile={isViewingOwnProfile}
