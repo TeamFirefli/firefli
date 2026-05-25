@@ -49,6 +49,9 @@ model workspace {
   notifications        Notification[]
   moderationCases     ModerationCase[]
   moderationLogs      ModerationLog[]
+  applicationForms    ApplicationForm[]
+  applicationSubmissions ApplicationSubmission[]
+  documentContainers  DocumentContainer[]
 }
 
 model config {
@@ -127,6 +130,7 @@ model user {
   targetModerationCases       ModerationCase[]       @relation("TargetModerationCases")
   moderationEvidence          ModerationEvidence[]
   moderationLogs              ModerationLog[]
+  documentContainers          DocumentContainer[]
 
   @@index([birthdayMonth, birthdayDay])
 }
@@ -159,8 +163,9 @@ model role {
   roleMembers      RoleMember[]
   workspace        workspace     @relation(fields: [workspaceGroupId], references: [groupId])
   SessionType      SessionType[] @relation("SessionTypeTorole")
-  documents        document[]    @relation("documentTorole")
-  members          user[]        @relation("roleTouser")
+  documents        document[]          @relation("documentTorole")
+  members          user[]              @relation("roleTouser")
+  containers       DocumentContainer[] @relation("ContainerToRole")
 }
 
 model RoleMember {
@@ -186,6 +191,7 @@ model department {
   workspace         workspace          @relation(fields: [workspaceGroupId], references: [groupId])
   SessionType       SessionType[]      @relation("SessionTypeTodepartment")
   documents         document[]         @relation("documentTodepartment")
+  containers        DocumentContainer[] @relation("ContainerToDepartment")
 }
 
 model DepartmentMember {
@@ -478,8 +484,26 @@ model document {
   workspace              workspace              @relation(fields: [workspaceGroupId], references: [groupId])
   departments            department[]           @relation("documentTodepartment")
   roles                  role[]                 @relation("documentTorole")
+  containers             DocumentContainer[]    @relation("DocumentToContainer")
 
   @@index([workspaceGroupId, isTrainingDocument])
+}
+
+model DocumentContainer {
+  id               String       @id @unique @default(uuid()) @db.Uuid
+  name             String
+  description      String?
+  workspaceGroupId BigInt
+  ownerId          BigInt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  workspace        workspace    @relation(fields: [workspaceGroupId], references: [groupId])
+  owner            user         @relation(fields: [ownerId], references: [userid])
+  documents        document[]   @relation("DocumentToContainer")
+  departments      department[] @relation("ContainerToDepartment")
+  roles            role[]       @relation("ContainerToRole")
+
+  @@index([workspaceGroupId])
 }
 
 model userBook {
@@ -1061,4 +1085,72 @@ model ModerationLog {
   @@index([workspaceGroupId, createdAt])
   @@index([actionBy])
   @@index([targetUser])
+}
+
+model ApplicationForm {
+  id                   String                  @id @default(uuid()) @db.Uuid
+  workspaceGroupId     BigInt
+  name                 String
+  description          String?
+  enabled              Boolean                 @default(false)
+  passingScore         Int?
+  maxAttempts          Int?
+  cooldownMinutes      Int?
+  requireManualReview  Boolean                 @default(false)
+  allowRetake          Boolean                 @default(true)
+  rankActionEnabled    Boolean                 @default(false)
+  passRankId           BigInt?
+  requiredRankId       BigInt?
+  createdById          BigInt
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  workspace            workspace               @relation(fields: [workspaceGroupId], references: [groupId])
+  questions            ApplicationQuestion[]
+  submissions          ApplicationSubmission[]
+
+  @@index([workspaceGroupId])
+  @@index([workspaceGroupId, enabled])
+}
+
+model ApplicationQuestion {
+  id          String          @id @default(uuid()) @db.Uuid
+  formId      String          @db.Uuid
+  order       Int
+  title       String
+  description String?
+  type        String
+  required    Boolean         @default(true)
+  points      Int             @default(0)
+  config      Json            @default("{}")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  form        ApplicationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId, order])
+}
+
+model ApplicationSubmission {
+  id                  String          @id @default(uuid()) @db.Uuid
+  formId              String          @db.Uuid
+  workspaceGroupId    BigInt
+  userId              BigInt
+  username            String?
+  answers             Json
+  score               Int             @default(0)
+  maxScore            Int             @default(0)
+  percentage          Float           @default(0)
+  passed              Boolean         @default(false)
+  status              String          @default("pending_review")
+  markingBreakdown    Json
+  rankActionResult    Json?
+  submittedAt         DateTime        @default(now())
+  reviewedAt          DateTime?
+  reviewedById        BigInt?
+  form                ApplicationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  workspace           workspace       @relation(fields: [workspaceGroupId], references: [groupId])
+
+  @@index([formId, userId])
+  @@index([workspaceGroupId, userId])
+  @@index([submittedAt])
+  @@index([formId, status])
 }
