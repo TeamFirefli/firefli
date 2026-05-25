@@ -148,7 +148,7 @@ const SessionRoles = () => {
       );
       if (res.data.success) {
         if (res.data.created === 0) {
-          toast.success("No new roles to import — all slot names already exist as templates.");
+          toast.success("No new roles to import - all slot names already exist as templates.");
         } else {
           setTemplates((prev) => [...prev, ...(res.data.templates || [])]);
           toast.success(`Imported ${res.data.created} role template${res.data.created !== 1 ? "s" : ""} from legacy slot definitions.`);
@@ -171,7 +171,7 @@ const SessionRoles = () => {
       );
       if (res.data.success) {
         if (res.data.patched === 0) {
-          toast.success("No slots needed patching — all active session roles already have host role set.");
+          toast.success("No slots needed patching - all active session roles already have host role set.");
         } else {
           toast.success(`Updated host role on ${res.data.patched} slot${res.data.patched !== 1 ? "s" : ""} in active sessions.`);
         }
@@ -193,7 +193,7 @@ const SessionRoles = () => {
       );
       if (res.data.success) {
         if (res.data.recorded === 0) {
-          toast.success("No missing host records — all session owners already have a host participant record.");
+          toast.success("No missing host records - all session owners already have a host participant record.");
         } else {
           toast.success(`Created ${res.data.recorded} missing host record${res.data.recorded !== 1 ? "s" : ""} for session owners.`);
         }
@@ -514,7 +514,7 @@ const SessionRoles = () => {
                       value={editCatWeight}
                       onChange={(e) => setEditCatWeight(Math.max(0, Math.min(9999, parseInt(e.target.value) || 0)))}
                       min={0} max={9999}
-                      title="Weight — heavier (higher) sinks to the bottom"
+                      title="Weight - heavier (higher) sinks to the bottom"
                       placeholder="Weight"
                       className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-16"
                     />
@@ -555,7 +555,7 @@ const SessionRoles = () => {
                     value={newCatWeight}
                     onChange={(e) => setNewCatWeight(Math.max(0, Math.min(9999, parseInt(e.target.value) || 0)))}
                     min={0} max={9999}
-                    title="Weight — heavier (higher) sinks to the bottom"
+                    title="Weight - heavier (higher) sinks to the bottom"
                     placeholder="Weight"
                     className="px-2 py-1 text-xs border border-primary rounded dark:bg-zinc-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary w-16"
                   />

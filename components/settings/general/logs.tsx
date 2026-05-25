@@ -2,7 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState, Fragment } from 'react';
 import { workspacestate } from '@/state';
 import { useRecoilState } from 'recoil';
-import { IconSearch, IconRefresh, IconFilter } from '@tabler/icons-react';
+import { IconSearch, IconRefresh, IconFilter, IconChevronDown, IconChevronLeft, IconChevronRight, IconUser, IconClock, IconPlus, IconPencil, IconTrash, IconSettings, IconActivity } from '@tabler/icons-react';
 import { Popover, Transition } from '@headlessui/react';
 import { FC } from '@/types/settingsComponent';
 
@@ -21,10 +21,67 @@ const ACTION_LABELS: Record<string, string> = {
   'document.update': 'Document Update',
   'document.delete': 'Document Delete',
   'session.create': 'Session Create',
+  'session.create.scheduled': 'Session Create (Scheduled)',
+  'session.create.unscheduled': 'Session Create (Unscheduled)',
   'session.delete': 'Session Delete',
-  'wall.post.delete': 'Wall Delete',
+  'session.delete.range': 'Session Delete (Range)',
+  'session.tag.assign': 'Session Tag Assign',
+  'session.tag.remove': 'Session Tag Remove',
+  'SESSION_TAG_CREATED': 'Session Tag Create',
+  'SESSION_TAG_UPDATED': 'Session Tag Update',
+  'SESSION_TAG_DELETED': 'Session Tag Delete',
   'wall.post.create': 'Wall Create',
+  'wall.post.delete': 'Wall Delete',
   'wall.post.react': 'Wall React',
+  'container.create': 'Container Create',
+  'container.update': 'Container Update',
+  'container.delete': 'Container Delete',
+  'userbook.create': 'Logbook Entry Create',
+  'userbook.delete': 'Logbook Entry Delete',
+  'userbook.redact': 'Logbook Entry Redact',
+  'userbook.unredact': 'Logbook Entry Unredact',
+  'policy.create': 'Policy Create',
+  'policy.update': 'Policy Update',
+  'policy.delete': 'Policy Delete',
+  'policy.acknowledge': 'Policy Acknowledge',
+  'policy.link_generated': 'Policy Link Generated',
+  'policy.link_created': 'Policy Link Created',
+  'policy.link_updated': 'Policy Link Updated',
+  'policy.link_deleted': 'Policy Link Deleted',
+  'notice.approve': 'Notice Approve',
+  'notice.deny': 'Notice Deny',
+  'notice.cancel': 'Notice Cancel',
+  'activity.adjustment': 'Activity Adjustment',
+  'activity.quota.create': 'Quota Create',
+  'activity.quota.delete': 'Quota Delete',
+  'activity.quota.signoff': 'Quota Signoff',
+  'activity.quota.complete': 'Quota Complete',
+  'activity.quota.uncomplete': 'Quota Uncomplete',
+  'recommendation.create': 'Recommendation Create',
+  'recommendation.edit': 'Recommendation Edit',
+  'recommendation.status': 'Recommendation Status Change',
+  'recommendation.delete': 'Recommendation Delete',
+  'discord.integration.configure': 'Discord Integration Configure',
+  'discord.integration.remove': 'Discord Integration Remove',
+  'workspace.ownership.transfer': 'Workspace Ownership Transfer',
+  'update_announcement': 'Announcement Update',
+  'settings.update': 'Settings Update',
+  'settings.general.home.update': 'Settings - Home',
+  'settings.general.color.update': 'Settings - Theme Colour',
+  'settings.general.sessionColors.update': 'Settings - Session Colours',
+  'settings.general.leaderboard.update': 'Settings - Leaderboard',
+  'settings.general.allies.update': 'Settings - Allies',
+  'settings.general.sessions.update': 'Settings - Sessions',
+  'settings.general.policies.update': 'Settings - Policies',
+  'settings.activity.role.update': 'Settings - Activity Role',
+  'settings.activity.idleTime.update': 'Settings - Idle Time',
+  'settings.activity.lRole.update': 'Settings - Leaderboard Role',
+  'settings.roles.create': 'Role Create',
+  'settings.roles.update': 'Role Update',
+  'settings.roles.delete': 'Role Delete',
+  'settings.users.add': 'User Add',
+  'settings.users.update': 'User Update',
+  'settings.users.resync': 'User Resync',
 };
 
 const PERMISSION_LABELS: Record<string, string> = {
@@ -70,6 +127,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   'create_views': 'Create views',
   'edit_views': 'Edit views',
   'delete_views': 'Delete views',
+  'export_views': 'Export views',
   'use_mass_actions': 'Use mass actions',
   'create_docs': 'Create docs',
   'edit_docs': 'Edit docs',
@@ -180,7 +238,7 @@ const itemKey = (x: any) => {
 };
 
 const renderDetails = (details: any, action?: string) => {
-  if (!details) return <span className="text-xs text-zinc-500 dark:text-zinc-400">—</span>;
+  if (!details) return <span className="text-xs text-zinc-500 dark:text-zinc-400">-</span>;
   if (typeof details === 'string' || typeof details === 'number') {
     return <div className="text-sm">{formatValue(details, 200)}</div>;
   }
@@ -420,29 +478,78 @@ const renderDetails = (details: any, action?: string) => {
 
   return <span className="text-sm text-zinc-600 dark:text-zinc-400">{String(details)}</span>;
 };
+const getActionCategory = (action: string): 'create' | 'update' | 'delete' | 'other' => {
+  if (!action) return 'other';
+  if (/\.(create|add|post|approve|claim|assign|signoff|execute|upload|invite)(\.|$)/.test(action)) return 'create';
+  if (/\.(update|edit|change|set|toggle|move|rename|react|comment|vote|note|warning|promotion|demotion|termination|resignation|redact)(\.|$)/.test(action)) return 'update';
+  if (/\.(delete|remove|revoke|reset)(\.|$)/.test(action)) return 'delete';
+  return 'other';
+};
+
+const CATEGORY_STYLES = {
+  create: { badge: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800', icon: IconPlus },
+  update: { badge: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800', icon: IconPencil },
+  delete: { badge: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800', icon: IconTrash },
+  other:  { badge: 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-600', icon: IconSettings },
+};
+
+const formatRelativeTime = (date: Date): string => {
+  const diffMs = Date.now() - date.getTime();
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  const week = Math.floor(day / 7);
+  if (week < 5) return `${week}w ago`;
+  const month = Math.floor(day / 30);
+  if (month < 12) return `${month}mo ago`;
+  return `${Math.floor(day / 365)}y ago`;
+};
+
+const PAGE_SIZE = 25;
+
 const AuditLogs: FC<{ triggerToast?: any }> = () => {
   const [workspace] = useRecoilState(workspacestate);
   const [rows, setRows] = useState<AuditEntry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [knownActions, setKnownActions] = useState<Set<string>>(() => new Set(Object.keys(ACTION_LABELS)));
+  const [actionSearch, setActionSearch] = useState('');
 
-  const fetch = async () => {
+  const fetchLogs = async (opts?: { page?: number; search?: string; actionFilter?: string }) => {
+    const p = opts?.page ?? page;
+    const s = opts?.search ?? search;
+    const a = opts?.actionFilter ?? actionFilter;
     setLoading(true);
     try {
-      const params: any = { limit: 100 };
-      if (actionFilter === 'session.create') {
-        params.search = (search ? search + ' ' : '') + 'session.create';
-      } else if (actionFilter) {
-        params.action = actionFilter;
-        if (search) params.search = search;
-      } else if (search) {
-        params.search = search;
+      const params: any = { limit: PAGE_SIZE, page: p };
+      if (a === 'session.create') {
+        params.search = (s ? s + ' ' : '') + 'session.create';
+      } else if (a) {
+        params.action = a;
+        if (s) params.search = s;
+      } else if (s) {
+        params.search = s;
       }
 
       const res = await axios.get(`/api/workspace/${workspace.groupId}/audit`, { params });
       if (res.data?.success) {
-        setRows(res.data.rows || []);
+        const newRows: AuditEntry[] = res.data.rows || [];
+        setRows(newRows);
+        setTotal(res.data.total || 0);
+        setKnownActions((prev) => {
+          const next = new Set(prev);
+          newRows.forEach((r) => { if (r.action) next.add(r.action); });
+          return next;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -452,89 +559,199 @@ const AuditLogs: FC<{ triggerToast?: any }> = () => {
   };
 
   useEffect(() => {
-    fetch();
-    // finish later
+    fetchLogs({ page: 0 });
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(0);
+      fetchLogs({ page: 0, search });
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const goToPage = (p: number) => {
+    const clamped = Math.max(0, Math.min(totalPages - 1, p));
+    setPage(clamped);
+    setExpandedId(null);
+    fetchLogs({ page: clamped });
+  };
+
+  const startIdx = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const endIdx = Math.min(total, (page + 1) * PAGE_SIZE);
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 flex items-center gap-2">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IconSearch className="w-4 h-4 text-zinc-400 dark:text-white" />
-            </div>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search details"
-              className="flex-1 md:w-50 p-2 pl-10 border rounded-md bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white"
-            />
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <IconSearch className="w-4 h-4 text-zinc-400" />
           </div>
-          <div className="flex gap-2">
-            <button onClick={fetch} title="Refresh" className="p-2 rounded-md bg-zinc-50 dark:bg-zinc-700 text-zinc-700 dark:text-white">
-              <IconRefresh />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search audit logs..."
+            className="block w-full pl-10 pr-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900/50 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all text-sm"
+          />
+        </div>
+
+        <Popover className="relative">
+          {({ open, close }) => (
+            <>
+              <Popover.Button className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${open ? 'bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-primary/50' : 'bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white'}`}>
+                <IconFilter className="w-4 h-4" />
+                <span>{actionFilter ? (ACTION_LABELS[actionFilter] || getActionLabel(actionFilter)) : 'All actions'}</span>
+              </Popover.Button>
+              <Transition as={Fragment} enter="transition ease-out duration-200" enterFrom="opacity-0 translate-y-1" enterTo="opacity-100 translate-y-0" leave="transition ease-in duration-150" leaveFrom="opacity-100 translate-y-0" leaveTo="opacity-0 translate-y-1">
+                <Popover.Panel className="absolute z-50 mt-2 w-72 max-w-[90vw] origin-top-right right-0 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-2xl top-full flex flex-col max-h-[60vh]">
+                  <div className="p-2 border-b border-zinc-200 dark:border-zinc-700">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                        <IconSearch className="w-4 h-4 text-zinc-400" />
+                      </div>
+                      <input
+                        autoFocus
+                        value={actionSearch}
+                        onChange={(e) => setActionSearch(e.target.value)}
+                        placeholder="Search actions..."
+                        className="block w-full pl-8 pr-2 py-1.5 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-900/50 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="overflow-auto p-1.5">
+                    <button onClick={() => { setActionFilter(''); setActionSearch(''); setPage(0); fetchLogs({ page: 0, actionFilter: '' }); close(); }} className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 ${!actionFilter ? 'bg-primary/10 text-primary font-medium' : 'text-zinc-700 dark:text-zinc-200'}`}>All actions</button>
+                    <div className="my-1 border-t border-zinc-200 dark:border-zinc-700" />
+                    {(() => {
+                      const q = actionSearch.trim().toLowerCase();
+                      const items = Array.from(knownActions)
+                        .map((k) => ({ key: k, label: getActionLabel(k) }))
+                        .filter(({ key, label }) => !q || key.toLowerCase().includes(q) || label.toLowerCase().includes(q))
+                        .sort((a, b) => a.label.localeCompare(b.label));
+                      if (items.length === 0) {
+                        return <div className="px-3 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">No matching actions</div>;
+                      }
+                      return items.map(({ key, label }) => (
+                        <button key={key} onClick={() => { setActionFilter(key); setActionSearch(''); setPage(0); fetchLogs({ page: 0, actionFilter: key }); close(); }} className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 ${actionFilter === key ? 'bg-primary/10 text-primary font-medium' : 'text-zinc-700 dark:text-zinc-200'}`}>{label}</button>
+                      ));
+                    })()}
+                  </div>
+                </Popover.Panel>
+              </Transition>
+            </>
+          )}
+        </Popover>
+
+        <button
+          onClick={() => fetchLogs()}
+          title="Refresh"
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white transition-all disabled:opacity-50"
+        >
+          <IconRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+        {loading && rows.length === 0 ? (
+          <div className="p-12 text-center">
+            <IconRefresh className="w-6 h-6 animate-spin mx-auto text-zinc-400 mb-2" />
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading audit logs...</p>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="p-12 text-center">
+            <IconActivity className="w-8 h-8 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" />
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">No audit entries found</p>
+            {(search || actionFilter) && (
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Try adjusting your filters</p>
+            )}
+          </div>
+        ) : (
+          <ul className="divide-y divide-zinc-100 dark:divide-zinc-700/60">
+            {rows.map((r) => {
+              const category = getActionCategory(r.action);
+              const style = CATEGORY_STYLES[category];
+              const Icon = style.icon;
+              const isExpanded = expandedId === r.id;
+              const createdAt = new Date(r.createdAt);
+              const hasDetails = r.details && (typeof r.details === 'object' ? Object.keys(r.details).length > 0 : true);
+
+              return (
+                <li key={r.id} className="group">
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : r.id)}
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors"
+                  >
+                    <div className={`flex-shrink-0 w-9 h-9 rounded-lg border flex items-center justify-center ${style.badge}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-zinc-900 dark:text-white">{getActionLabel(r.action)}</span>
+                        {r.entity && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400">{r.entity}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        <span className="inline-flex items-center gap-1">
+                          <IconUser className="w-3 h-3" />
+                          {r.userName || r.userId || 'System'}
+                        </span>
+                        <span className="inline-flex items-center gap-1" title={createdAt.toLocaleString()}>
+                          <IconClock className="w-3 h-3" />
+                          {formatRelativeTime(createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    {hasDetails && (
+                      <IconChevronDown className={`flex-shrink-0 w-4 h-4 text-zinc-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    )}
+                  </button>
+                  {isExpanded && hasDetails && (
+                    <div className="px-4 pb-4 pl-16 bg-zinc-50/50 dark:bg-zinc-900/30 border-t border-zinc-100 dark:border-zinc-700/60">
+                      <div className="pt-3">
+                        {renderDetails(r.details, r.action)}
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {total > 0 && (
+        <div className="flex items-center justify-between mt-4 text-sm">
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Showing <span className="font-medium text-zinc-900 dark:text-white">{startIdx}</span>-<span className="font-medium text-zinc-900 dark:text-white">{endIdx}</span> of <span className="font-medium text-zinc-900 dark:text-white">{total}</span>
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page === 0 || loading}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              <IconChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
+            <span className="px-3 text-sm text-zinc-600 dark:text-zinc-400">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages - 1 || loading}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+              <IconChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div className="flex items-center">
-          <Popover className="relative">
-            {({ open, close }) => (
-              <>
-                <Popover.Button className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all ${open ? 'bg-zinc-100 dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-white ring-2 ring-primary/50' : 'bg-zinc-50 dark:bg-zinc-700/50 border-zinc-200 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white'}`}>
-                  <IconFilter className="w-4 h-4" />
-                  <span className="text-sm">{actionFilter ? (ACTION_LABELS[actionFilter] || getActionLabel(actionFilter)) : 'Filters'}</span>
-                </Popover.Button>
-
-                <Transition as={Fragment} enter="transition ease-out duration-200" enterFrom="opacity-0 translate-y-1" enterTo="opacity-100 translate-y-0" leave="transition ease-in duration-150" leaveFrom="opacity-100 translate-y-0" leaveTo="opacity-0 translate-y-1">
-                  <Popover.Panel className="absolute z-50 mt-2 w-42 max-w-[90vw] origin-top-right right-0 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-2xl p-2 top-full max-h-[60vh] overflow-auto">
-                    <div className="space-y-1">
-                      <button onClick={() => { setActionFilter(''); setSearch(''); fetch(); close(); }} className="w-full text-left px-3 py-2 rounded-md text-sm text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700">All actions</button>
-                      {Object.keys(ACTION_LABELS).map((k) => (
-                        <button key={k} onClick={() => { setActionFilter(k); fetch(); close(); }} className="w-full text-left px-3 py-2 rounded-md text-sm text-zinc-700 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700">{ACTION_LABELS[k]}</button>
-                      ))}
-                    </div>
-                  </Popover.Panel>
-                </Transition>
-              </>
-            )}
-          </Popover>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto bg-white dark:bg-zinc-800 rounded-lg p-2">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-zinc-500 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-700">
-              <th className="p-2">Time</th>
-              <th className="p-2">User</th>
-              <th className="p-2">Action</th>
-              <th className="p-2">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan={4} className="p-2 dark:text-white">Loading…</td></tr>
-            )}
-            {!loading && rows.length === 0 && (
-              <tr><td colSpan={4} className="p-2 dark:text-white">No audit entries</td></tr>
-            )}
-            {rows.map((r) => {
-              const details = r.details || {};
-              return (
-                <tr key={r.id} className="border-t bg-white dark:bg-zinc-800 dark:text-white">
-                  <td className="p-2 text-xs" title={new Date(r.createdAt).toUTCString()}>{new Date(r.createdAt).toLocaleString()}</td>
-                  <td className="p-2">{r.userName || r.userId || 'System'}</td>
-                  <td className="p-2">{getActionLabel(r.action)}</td>
-                  <td className="p-2">
-                    {renderDetails(details, r.action)}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      )}
     </div>
   );
 };

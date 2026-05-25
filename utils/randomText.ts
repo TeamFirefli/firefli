@@ -82,7 +82,7 @@ const randomText = (name: string) => {
 		`The night is calm, ${name}. Time to relax 🌙`,
 		`Logging off soon, ${name}? You’ve earned it!`,
 		`Recharge mode: Firefli and ${name}.`,
-		`Even fireflies need rest — so do you, ${name}.`,
+		`Even fireflies need rest - so do you, ${name}.`,
 		`Thanks for shining today, ${name} 💙`,
 		`Night shift or night chill? You decide, ${name}.`,
 		`May your dreams be bug-free, ${name} 💤`,

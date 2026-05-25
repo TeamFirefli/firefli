@@ -98,7 +98,7 @@ export default async function handler(
             );
             if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_CONNECTION_FAILURES) {
               console.error(
-                `[cron-update-roles] [Batch ${activeBatchId}] Circuit breaker triggered — Roblox API appears to be blocking this IP. Aborting remaining ${ws.length - i - 1} workspace(s) to allow IP cooldown.`,
+                `[cron-update-roles] [Batch ${activeBatchId}] Circuit breaker triggered - Roblox API appears to be blocking this IP. Aborting remaining ${ws.length - i - 1} workspace(s) to allow IP cooldown.`,
               );
               break;
             }
@@ -148,7 +148,7 @@ export default async function handler(
             );
             if (consecutiveConnectionFailures >= MAX_CONSECUTIVE_CONNECTION_FAILURES) {
               console.error(
-                `[cron-update-roles] Circuit breaker triggered — Roblox API appears to be blocking this IP. Aborting remaining ${ws.length - i - 1} workspace(s) to allow IP cooldown.`,
+                `[cron-update-roles] Circuit breaker triggered - Roblox API appears to be blocking this IP. Aborting remaining ${ws.length - i - 1} workspace(s) to allow IP cooldown.`,
               );
               break;
             }

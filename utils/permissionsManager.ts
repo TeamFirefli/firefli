@@ -364,7 +364,7 @@ export async function checkGroupRoles(groupID: bigint | number) {
     console.log(`[Refresh] Starting sync for group ${groupID}`);
     const openCloudApiKey = await getWorkspaceRobloxApiKey(Number(groupID));
     if (!openCloudApiKey) {
-      console.warn(`[Refresh] No Open Cloud API key configured for group ${groupID} — skipping workspace sync`);
+      console.warn(`[Refresh] No Open Cloud API key configured for group ${groupID} - skipping workspace sync`);
       return;
     }
     
@@ -634,7 +634,7 @@ export async function checkGroupRoles(groupID: bigint | number) {
         console.log(`[Refresh] Cached ${userRoleMap.size} unique users across tracked ranks (via Open Cloud)`);
       } catch (error) {
         console.error(`[Refresh] Open Cloud API failed for group ${groupID}:`, error);
-        console.warn(`[Refresh] Cannot sync workspace ${groupID} without Open Cloud — skipping`);
+        console.warn(`[Refresh] Cannot sync workspace ${groupID} without Open Cloud - skipping`);
         return;
       }
     }

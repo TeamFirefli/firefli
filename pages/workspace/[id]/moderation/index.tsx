@@ -569,7 +569,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
                             : c.action.charAt(0).toUpperCase() + c.action.slice(1)}
                         </span>
                       ) : (
-                        <span className="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

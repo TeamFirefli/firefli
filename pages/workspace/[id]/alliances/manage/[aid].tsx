@@ -1618,7 +1618,7 @@ const ManageAlly: pageWithLayout<pageProps> = (props) => {
                           : "bg-zinc-50 dark:bg-zinc-700"
                       }`}
                     >
-                      {/* Header row — type title/pills on left, action buttons on right */}
+                      {/* Header row - type title/pills on left, action buttons on right */}
                       <div className="flex items-center justify-between mb-2">
                         {editNotes.includes(index) ? (
                           <div className="flex gap-2">

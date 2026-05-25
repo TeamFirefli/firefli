@@ -232,7 +232,7 @@ const ExternalServices: React.FC<ExternalServicesProps> & { title: string } = ({
                 Roblox Open Cloud ranking uses the API key configured below. Make sure your API key has:
               </p>
               <ul className="text-sm text-blue-700 dark:text-blue-400 list-disc list-inside space-y-1">
-                <li><strong>Groups</strong> — <strong>group:read</strong> & <strong>group:write</strong> permissions for promotions, demotions, and rank changes.</li>
+                <li><strong>Groups</strong> - <strong>group:read</strong> & <strong>group:write</strong> permissions for promotions, demotions, and rank changes.</li>
               </ul>
             </div>
           )}

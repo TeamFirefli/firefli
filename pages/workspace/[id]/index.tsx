@@ -321,7 +321,7 @@ const Home: pageWithLayout = () => {
         setDashboardEditing(false);
       }
     } catch (_) {
-      // silent — user can retry
+      // silent - user can retry
     } finally {
       setIsSaving(false);
     }

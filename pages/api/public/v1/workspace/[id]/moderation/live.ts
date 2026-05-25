@@ -35,7 +35,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .status(400)
       .json({
         success: false,
-        error: "Invalid since date — must be an ISO 8601 timestamp",
+        error: "Invalid since date - must be an ISO 8601 timestamp",
       });
   }
 

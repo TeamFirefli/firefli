@@ -615,7 +615,7 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
           <IconAlertTriangle className="w-4 h-4 shrink-0" />
           <span>{integration.errorCount} error(s)</span>
           {integration.lastError && (
-            <span className="text-xs font-mono text-amber-500 truncate ml-1">— {integration.lastError}</span>
+            <span className="text-xs font-mono text-amber-500 truncate ml-1">- {integration.lastError}</span>
           )}
         </div>
       )}

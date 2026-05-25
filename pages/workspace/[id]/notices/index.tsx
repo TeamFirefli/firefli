@@ -368,7 +368,7 @@ const Notices: pageWithLayout<NoticesPageProps> = ({
       await submitNotice();
     } catch {
       setIsCreating(false);
-      // Check failed — proceed without the confirmation step
+      // Check failed - proceed without the confirmation step
       await submitNotice();
     }
   };

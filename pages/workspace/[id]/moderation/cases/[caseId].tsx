@@ -1630,7 +1630,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
-                    No games found for this workspace — place restriction is unavailable.
+                    No games found for this workspace - place restriction is unavailable.
                   </p>
                 )}
               </div>

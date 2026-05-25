@@ -350,7 +350,7 @@ const BloxlinkSettings: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
             <div className="flex items-center gap-2 min-w-0">
               <IconAlertTriangle className="w-4 h-4 shrink-0" />
               <span>{integration.errorCount} error(s)</span>
-              <span className="text-xs font-mono text-amber-500 truncate ml-1">— {integration.lastError}</span>
+              <span className="text-xs font-mono text-amber-500 truncate ml-1">- {integration.lastError}</span>
             </div>
             <button
               onClick={async () => {

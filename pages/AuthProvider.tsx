@@ -25,7 +25,6 @@ export default function AuthProvider({
 	useEffect(() => {
 		const isLoginPage = Router.pathname === '/login';
 
-		// Don't check auth if already on the login page — avoids stripping query params
 		if (isLoginPage) {
 			setLoading(false);
 			return;
