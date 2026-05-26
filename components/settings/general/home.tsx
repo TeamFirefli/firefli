@@ -133,6 +133,9 @@ const home: FC<props> = ({ triggerToast }) => {
           Displayed as a background behind the greeting on your home page. PNG,
           JPEG, WebP or GIF, under 10 MB.
         </p>
+        <p className="text-xs text-zinc-500 font-bold dark:text-zinc-400 mb-3">
+          Please ensure your image is 1920 x 1080 maximum.
+        </p>
 
         {bannerPreview && (
           <div className={`relative overflow-hidden mb-3 h-32 bg-zinc-100 dark:bg-zinc-800 group${bannerPreview?.startsWith('data:') ? ' rounded-xl' : ''}`}>
