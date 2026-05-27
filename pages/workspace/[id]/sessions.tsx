@@ -542,7 +542,7 @@ const WeeklyCalendar: React.FC<{
                                 e.stopPropagation();
                                 onEditSession(session.id);
                               }}
-                              className="absolute -top-2 -right-2 p-1.5 bg-zinc-900/60 text-zinc-200 hover:text-white transition-colors opacity-0 group-hover:opacity-100 rounded-full shadow-sm border border-zinc-800 z-20"
+                              className="absolute top-1 right-1 p-1.5 bg-white dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100 rounded-full shadow-sm border border-zinc-200 dark:border-zinc-600 z-20"
                               title="Edit session"
                             >
                               <IconEdit className="w-3.5 h-3.5" />
@@ -1195,7 +1195,7 @@ const Home: pageWithLayout<pageProps> = (props) => {
                                   e.stopPropagation();
                                   handleEditSession(session.id);
                                 }}
-                                className="absolute -top-2 -right-2 p-1.5 bg-zinc-900/60 text-zinc-200 hover:text-white transition-colors opacity-0 group-hover:opacity-100 rounded-full shadow-sm border border-zinc-800 z-20"
+                                className="absolute top-1 right-1 p-1.5 bg-white dark:bg-zinc-700 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100 rounded-full shadow-sm border border-zinc-200 dark:border-zinc-600 z-20"
                                 title="Edit session"
                               >
                                 <IconEdit className="w-3.5 h-3.5" />
