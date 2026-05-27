@@ -101,6 +101,7 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const router = useRouter();
+  const containerId = router.query.containerId as string | undefined;
   const form = useForm();
 
   const [mode, setMode] = useState<"internal" | "external">("internal");
@@ -168,9 +169,20 @@ const Home: pageWithLayout<InferGetServerSidePropsType<GetServerSideProps>> = ({
       });
     if (!session) return;
     form.clearErrors();
+    if (containerId && session.data.document?.id) {
+      try {
+        await axios.put(
+          `/api/workspace/${workspace.groupId}/guides/containers/${containerId}`,
+          { toggleDocument: { id: session.data.document.id, action: "add" } }
+        );
+      } catch {
+        // no container
+      }
+    }
+
     if (mode === "external") {
       toast.success("Document created!");
-      router.push(`/workspace/${workspace.groupId}/docs`);
+      router.push(`/workspace/${workspace.groupId}/docs${containerId ? `?folder=${containerId}` : ``}`);
     } else {
       toast.success("Document created!");
       router.push(

@@ -529,7 +529,7 @@ const Home: pageWithLayout<pageProps> = ({
             )}
             {canCreate && (
               <button
-                onClick={() => router.push(`/workspace/${router.query.id}/docs/new`)}
+                onClick={() => router.push(`/workspace/${router.query.id}/docs/new${selectedContainerId ? `?containerId=${selectedContainerId}` : ``}`)}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0"
               >
                 <IconPlus className="w-4 h-4" />
