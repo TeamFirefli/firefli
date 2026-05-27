@@ -840,7 +840,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl border border-white/10">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
-              Create New Case
+              Create new case
             </h2>
             <CreateCaseForm
               onSubmit={handleCreateCase}
@@ -856,7 +856,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl border border-white/10">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
-              Revoke Action
+              Revoke action
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
               This will revoke the {caseToRevoke.action?.replace(/_/g, " ")}{" "}

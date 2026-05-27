@@ -80,6 +80,8 @@ const ApplicationBuilder: pageWithLayout = () => {
   const [adding, setAdding] = useState(false);
   const [deleteConfirmQId, setDeleteConfirmQId] = useState<string | null>(null);
   const [deletingQ, setDeletingQ] = useState(false);
+  const [atBottom, setAtBottom] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const canManage = workspace.yourPermission?.includes("admin")
     || workspace.yourPermission?.includes("applications.manage");
@@ -99,6 +101,17 @@ const ApplicationBuilder: pageWithLayout = () => {
   useEffect(() => {
     if (router.query.id && router.query.formId) load();
   }, [router.query.id, router.query.formId]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setAtBottom(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [form]);
 
   async function patchForm(patch: Partial<Form>) {
     if (!form) return;
@@ -193,26 +206,32 @@ const ApplicationBuilder: pageWithLayout = () => {
   }
 
   return (
-    <div className="pagePadding">
+    <div className="pagePadding pb-36 sm:pb-0">
       <Toaster position="bottom-center" />
-      <div className="flex items-center gap-3 mb-4">
-        <Link href={`/workspace/${router.query.id}/applications`} className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
-          <IconArrowLeft size={20} />
-        </Link>
-        <input
-          className="bg-transparent text-2xl font-semibold text-zinc-900 dark:text-zinc-100 flex-1 outline-none rounded-lg pl-2 pr-1 focus:ring-2 focus:ring-primary"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          onBlur={(e) => e.target.value !== "" && patchForm({ name: e.target.value })}
-        />
-        <span className={`text-xs px-2 py-1 rounded-full ${form.enabled ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"}`}>
-          {form.enabled ? "Published" : "Draft"}
-        </span>
-        {canManage && (
-          <Button workspace compact onPress={() => patchForm({ enabled: !form.enabled })} loading={saving}>
-            {form.enabled ? "Unpublish" : "Publish"}
-          </Button>
-        )}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href={`/workspace/${router.query.id}/applications`} className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 shrink-0">
+            <IconArrowLeft size={20} />
+          </Link>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <input
+              className="bg-transparent text-2xl font-semibold text-zinc-900 dark:text-zinc-100 flex-1 min-w-0 outline-none rounded-lg pl-2 pr-1 focus:ring-2 focus:ring-primary"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onBlur={(e) => e.target.value !== "" && patchForm({ name: e.target.value })}
+            />
+            <span className={`shrink-0 text-xs px-2 py-1 rounded-full ${form.enabled ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"}`}>
+              {form.enabled ? "Published" : "Draft"}
+            </span>
+          </div>
+          {canManage && (
+            <div className="hidden sm:block shrink-0">
+              <Button workspace classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90" onPress={() => patchForm({ enabled: !form.enabled })} loading={saving}>
+                {form.enabled ? "Unpublish" : "Publish"}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
@@ -251,7 +270,7 @@ const ApplicationBuilder: pageWithLayout = () => {
             )}
           </div>
           {canManage && (
-            <div className="border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-4">
+            <div className="border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 sm:mb-8">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-3">Add question</p>
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(TYPE_LABELS) as QType[]).map((t) => (
@@ -275,6 +294,20 @@ const ApplicationBuilder: pageWithLayout = () => {
       )}
 
       {tab === "preview" && <PreviewPanel form={form} />}
+
+      <div ref={sentinelRef} className="sm:hidden" />
+
+      {canManage && atBottom && (
+        <div className="sm:hidden fixed bottom-16 left-0 right-0 z-[60] px-4 py-3 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700">
+          <button
+            onClick={() => patchForm({ enabled: !form.enabled })}
+            disabled={saving}
+            className="w-full py-2.5 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 disabled:opacity-60 transition-colors"
+          >
+            {saving ? "Saving…" : form.enabled ? "Unpublish" : "Publish"}
+          </button>
+        </div>
+      )}
 
       {deleteConfirmQId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -935,7 +968,7 @@ function SettingsPanel({ form, onSave, canManage, saving }: { form: Form; onSave
       </div>
 
       {canManage && (
-        <Button workspace onPress={() => onSave({
+        <Button workspace classoverride="bg-primary text-white hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/90" onPress={() => onSave({
           description: local.description, passingScore: local.passingScore,
           maxAttempts: local.maxAttempts, cooldownMinutes: local.cooldownMinutes,
           requireManualReview: local.requireManualReview, allowRetake: local.allowRetake,

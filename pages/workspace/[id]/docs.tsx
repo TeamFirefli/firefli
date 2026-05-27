@@ -274,6 +274,7 @@ const Home: pageWithLayout<pageProps> = ({
   const [movingDoc, setMovingDoc] = useState<string | null>(null);
   const [draggingDocId, setDraggingDocId] = useState<string | null>(null);
   const [dragOverContainerId, setDragOverContainerId] = useState<string | null>(null);
+  const [showCreateDropdown, setShowCreateDropdown] = useState(false);
   const handleExternalLink = (url: string) => {
     setPendingUrl(url);
     setShowExternalLinkModal(true);
@@ -398,9 +399,9 @@ const Home: pageWithLayout<pageProps> = ({
         prev.map((c) => (c.id === editingContainer.id ? data.container : c))
       );
       setEditingContainer(null);
-      toast.success("Container updated");
+      toast.success("Container updated!");
     } catch (e: any) {
-      toast.error(e.message || "Failed to update container");
+      toast.error(e.message || "Failed to update container.");
     } finally {
       setSavingEdit(false);
     }
@@ -471,8 +472,8 @@ const Home: pageWithLayout<pageProps> = ({
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <Toaster position="bottom-center" />
-      <div className="pagePadding">
-        <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="2xl:pr-12 lg:pr-10 md:pr-8 sm:pr-6 pr-4 md:pl-6 pl-4 py-2">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">Documents</h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-300">
@@ -480,10 +481,11 @@ const Home: pageWithLayout<pageProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Desktop buttons */}
             {canManageContainers && !selectedContainerId && (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
               >
                 <IconFolder className="w-4 h-4" />
                 <span className="text-sm font-medium">New Container</span>
@@ -492,17 +494,54 @@ const Home: pageWithLayout<pageProps> = ({
             {canCreate && (
               <button
                 onClick={() => router.push(`/workspace/${router.query.id}/docs/new${selectedContainerId ? `?containerId=${selectedContainerId}` : ``}`)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0"
               >
                 <IconPlus className="w-4 h-4" />
                 <span className="text-sm font-medium">New Document</span>
               </button>
             )}
+            {(canCreate || (canManageContainers && !selectedContainerId)) && (
+              <div className="relative sm:hidden">
+                <button
+                  onClick={() => setShowCreateDropdown((v) => !v)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0"
+                >
+                  <IconPlus className="w-4 h-4" />
+                  <span className="text-sm font-medium">Create</span>
+                  <IconChevronDown className="w-3.5 h-3.5" />
+                </button>
+                {showCreateDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowCreateDropdown(false)} />
+                    <div className="absolute right-0 mt-1 w-48 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-lg z-20 overflow-hidden">
+                      {canCreate && (
+                        <button
+                          onClick={() => { setShowCreateDropdown(false); router.push(`/workspace/${router.query.id}/docs/new${selectedContainerId ? `?containerId=${selectedContainerId}` : ``}`); }}
+                          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                          <IconFileText className="w-4 h-4 text-zinc-500" />
+                          New Document
+                        </button>
+                      )}
+                      {canManageContainers && !selectedContainerId && (
+                        <button
+                          onClick={() => { setShowCreateDropdown(false); setShowCreateModal(true); }}
+                          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                          <IconFolder className="w-4 h-4 text-zinc-500" />
+                          New Container
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {selectedContainerId ? (
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-2">
             <button
               onClick={() => selectContainer(null)}
               onDragOver={(e) => { if (!draggingDocId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverContainerId("__back__"); }}
@@ -562,12 +601,12 @@ const Home: pageWithLayout<pageProps> = ({
         )}
 
         {!selectedContainerId && pinnedDocs.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <div className="mb-3">
+            <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
               <IconStarFilled className="w-3.5 h-3.5 text-amber-400" />
               Starred Documents
             </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-1">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5 md:gap-0">
               {pinnedDocs.map((doc) => (
                 <div
                   key={`pinned-${doc.id}`}
@@ -575,22 +614,22 @@ const Home: pageWithLayout<pageProps> = ({
                   onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDraggingDocId(doc.id); }}
                   onDragEnd={() => setDraggingDocId(null)}
                   onClick={() => goToGuide(doc)}
-                  className={`group relative flex flex-col items-center gap-1.5 px-2 pt-5 pb-3 rounded-xl cursor-pointer select-none transition-all hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50 ${draggingDocId === doc.id ? "opacity-40 scale-95" : ""}`}
+                  className={`group relative flex flex-col items-center gap-1 px-2 pt-2 pb-1.5 rounded-xl cursor-pointer select-none transition-all hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50 ${draggingDocId === doc.id ? "opacity-40 scale-95" : ""}`}
                 >
                   {canManageDocs && (
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleStar(doc.id); }}
-                      className="absolute top-2 left-2 z-10 p-0.5 rounded text-amber-400"
+                      className="absolute top-1 left-1 z-10 p-0.5 rounded text-amber-400"
                       title="Unpin"
                     >
                       <IconStarFilled className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                  <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-xl md:rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     {(doc.content as any)?.external ? (
-                      <IconLink className="w-6 h-6 text-primary" />
+                      <IconLink className="w-5 h-5 md:w-7 md:h-7 text-primary" />
                     ) : (
-                      <IconFileText className="w-6 h-6 text-primary" />
+                      <IconFileText className="w-5 h-5 md:w-7 md:h-7 text-primary" />
                     )}
                   </div>
                   <span className="text-[11px] font-medium text-center text-zinc-800 dark:text-zinc-200 leading-tight line-clamp-2 w-full break-words">{doc.name}</span>
@@ -601,9 +640,9 @@ const Home: pageWithLayout<pageProps> = ({
         )}
 
         {!selectedContainerId && containers.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Containers</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-1">
+          <div className="mb-3">
+            <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Containers</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5 md:gap-0">
               {containers.map((container) => (
                 <div
                   key={container.id}
@@ -618,7 +657,7 @@ const Home: pageWithLayout<pageProps> = ({
                     setDraggingDocId(null);
                     setDragOverContainerId(null);
                   }}
-                  className={`group relative flex flex-col items-center gap-1.5 px-2 pt-5 pb-3 rounded-xl cursor-pointer select-none transition-all ${
+                  className={`group relative flex flex-col items-center gap-1 px-2 pt-2 pb-1.5 rounded-xl cursor-pointer select-none transition-all ${
                     dragOverContainerId === container.id
                       ? "bg-amber-50/80 dark:bg-amber-900/20 ring-2 ring-amber-400 dark:ring-amber-500"
                       : "hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50"
@@ -645,7 +684,7 @@ const Home: pageWithLayout<pageProps> = ({
                     </div>
                   )}
                   <div className="relative">
-                    <IconFolderFilled className="w-14 h-14 text-amber-400 drop-shadow-sm" />
+                    <IconFolderFilled className="w-11 h-11 md:w-16 md:h-16 text-amber-400 drop-shadow-sm" />
                     {container.documents.length > 0 && (
                       <span className="absolute -bottom-0.5 -right-1 bg-zinc-600 dark:bg-zinc-400 text-white dark:text-zinc-900 text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
                         {container.documents.length}
@@ -662,9 +701,9 @@ const Home: pageWithLayout<pageProps> = ({
         {currentDocs.length > 0 ? (
           <div>
             {!selectedContainerId && (
-              <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Documents</h2>
+              <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">Documents</h2>
             )}
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-1">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5 md:gap-0">
               {currentDocs.map((doc) => (
                 <div
                   key={doc.id}
@@ -672,10 +711,10 @@ const Home: pageWithLayout<pageProps> = ({
                   onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDraggingDocId(doc.id); }}
                   onDragEnd={() => setDraggingDocId(null)}
                   onClick={() => goToGuide(doc)}
-                  className={`group relative flex flex-col items-center gap-1.5 px-2 pt-5 pb-3 rounded-xl cursor-pointer select-none transition-all hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50 ${draggingDocId === doc.id ? "opacity-40 scale-95" : ""}`}
+                  className={`group relative flex flex-col items-center gap-1 px-2 pt-2 pb-1.5 rounded-xl cursor-pointer select-none transition-all hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50 ${draggingDocId === doc.id ? "opacity-40 scale-95" : ""}`}
                 >
                   {canManageDocs && (
-                    <div className={`absolute top-2 left-2 z-10 ${starredIds.has(doc.id) ? "" : "opacity-0 group-hover:opacity-100"}`}>
+                    <div className={`absolute top-1 left-1 z-10 ${starredIds.has(doc.id) ? "" : "opacity-0 group-hover:opacity-100"}`}>
                       <Tooltip orientation="bottom" tooltipText={starredIds.has(doc.id) ? "Unpin" : "Pin"}>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleStar(doc.id); }}
@@ -694,7 +733,7 @@ const Home: pageWithLayout<pageProps> = ({
                       </Tooltip>
                     </div>
                   )}
-                  <div className={`absolute top-2 right-2 gap-0.5 z-10 ${moveDocPopover === doc.id ? "flex" : "hidden group-hover:flex"}`}>
+                  <div className={`absolute top-1 right-1 gap-0.5 z-10 ${moveDocPopover === doc.id ? "flex" : "hidden group-hover:flex"}`}>
                     {canEdit && containers.length > 0 && (
                       <div className="relative">
                         <Tooltip orientation="bottom" tooltipText="Move to folder">
@@ -738,11 +777,11 @@ const Home: pageWithLayout<pageProps> = ({
                       </Tooltip>
                     )}
                   </div>
-                  <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                  <div className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-xl md:rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     {(doc.content as any)?.external ? (
-                      <IconLink className="w-6 h-6 text-primary" />
+                      <IconLink className="w-5 h-5 md:w-7 md:h-7 text-primary" />
                     ) : (
-                      <IconFileText className="w-6 h-6 text-primary" />
+                      <IconFileText className="w-5 h-5 md:w-7 md:h-7 text-primary" />
                     )}
                   </div>
                   <span className="text-[11px] font-medium text-center text-zinc-800 dark:text-zinc-200 leading-tight line-clamp-2 w-full break-words">{doc.name}</span>
@@ -885,47 +924,49 @@ const Home: pageWithLayout<pageProps> = ({
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
-              {allRoles.length > 0 && (
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Visible to roles</label>
                   <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-2">At least one role or department must be selected.</p>
-                  <div className="flex flex-wrap gap-2">
-                    {allRoles.map((r) => (
-                      <button
-                        key={r.id}
-                        onClick={() => toggleMulti(r.id, newContainerRoles, setNewContainerRoles)}
-                        className={clsx(
-                          "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                          newContainerRoles.includes(r.id)
-                            ? "bg-primary text-white border-primary"
-                            : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
-                        )}
-                      >
-                        {r.name}
-                      </button>
-                    ))}
-                  </div>
+                  {allRoles.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {allRoles.map((r) => (
+                        <button
+                          key={r.id}
+                          onClick={() => toggleMulti(r.id, newContainerRoles, setNewContainerRoles)}
+                          className={clsx(
+                            "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                            newContainerRoles.includes(r.id)
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                          )}
+                        >
+                          {r.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">No roles configured in this workspace.</p>
+                  )}
                 </div>
-              )}
               {allDepartments.length > 0 && (
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Visible to departments</label>
                   <div className="flex flex-wrap gap-2">
-                    {allDepartments.map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => toggleMulti(d.id, newContainerDepts, setNewContainerDepts)}
-                        className={clsx(
-                          "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                          newContainerDepts.includes(d.id)
-                            ? "bg-primary text-white border-primary"
-                            : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
-                        )}
-                      >
-                        {d.name}
-                      </button>
-                    ))}
-                  </div>
+                      {allDepartments.map((d) => (
+                        <button
+                          key={d.id}
+                          onClick={() => toggleMulti(d.id, newContainerDepts, setNewContainerDepts)}
+                          className={clsx(
+                            "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                            newContainerDepts.includes(d.id)
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                          )}
+                        >
+                          {d.name}
+                        </button>
+                      ))}
+                    </div>
                 </div>
               )}
             </div>
@@ -981,47 +1022,49 @@ const Home: pageWithLayout<pageProps> = ({
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
-              {allRoles.length > 0 && (
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Visible to roles</label>
                   <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-2">At least one role or department must be selected.</p>
-                  <div className="flex flex-wrap gap-2">
-                    {allRoles.map((r) => (
-                      <button
-                        key={r.id}
-                        onClick={() => toggleMulti(r.id, editRoles, setEditRoles)}
-                        className={clsx(
-                          "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                          editRoles.includes(r.id)
-                            ? "bg-primary text-white border-primary"
-                            : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
-                        )}
-                      >
-                        {r.name}
-                      </button>
-                    ))}
-                  </div>
+                  {allRoles.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {allRoles.map((r) => (
+                        <button
+                          key={r.id}
+                          onClick={() => toggleMulti(r.id, editRoles, setEditRoles)}
+                          className={clsx(
+                            "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                            editRoles.includes(r.id)
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                          )}
+                        >
+                          {r.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">No roles configured in this workspace.</p>
+                  )}
                 </div>
-              )}
               {allDepartments.length > 0 && (
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Visible to departments</label>
                   <div className="flex flex-wrap gap-2">
-                    {allDepartments.map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => toggleMulti(d.id, editDepts, setEditDepts)}
-                        className={clsx(
-                          "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                          editDepts.includes(d.id)
-                            ? "bg-primary text-white border-primary"
-                            : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
-                        )}
-                      >
-                        {d.name}
-                      </button>
-                    ))}
-                  </div>
+                      {allDepartments.map((d) => (
+                        <button
+                          key={d.id}
+                          onClick={() => toggleMulti(d.id, editDepts, setEditDepts)}
+                          className={clsx(
+                            "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                            editDepts.includes(d.id)
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                          )}
+                        >
+                          {d.name}
+                        </button>
+                      ))}
+                    </div>
                 </div>
               )}
             </div>

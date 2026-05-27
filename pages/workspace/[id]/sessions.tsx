@@ -944,30 +944,30 @@ const Home: pageWithLayout<pageProps> = (props) => {
         </div>
 
         <div className="mb-8">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <div className="font-semibold text-zinc-900 dark:text-white text-left leading-tight text-lg sm:text-3xl">
-                {isTodaySelected ? (
-                  "Today"
-                ) : (
-                  <>
-                    <span className="sm:hidden">
-                      {selectedDate.toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                    <span className="hidden sm:inline">
-                      {selectedDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </>
-                )}
-              </div>
+          <div className="mb-4 flex flex-col gap-2">
+            <div className="font-semibold text-zinc-900 dark:text-white text-left leading-tight text-lg sm:text-3xl">
+              {isTodaySelected ? (
+                "Today"
+              ) : (
+                <>
+                  <span className="sm:hidden">
+                    {selectedDate.toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {selectedDate.toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowHistory(!showHistory)}
                 className={`inline-flex items-center justify-center whitespace-nowrap shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
@@ -997,51 +997,48 @@ const Home: pageWithLayout<pageProps> = (props) => {
                 />
                 My Sessions
               </button>
-              <div className="flex items-center gap-1 flex-wrap">
-                {(["shift", "training", "event", "other"] as const).map((type) => {
-                  const tagColor = getSessionTypeColor(type);
-                  const tagTextColor = getTextColorForBackground(tagColor);
-                  const isActive = selectedTypes.has(type);
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        setSelectedTypes((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(type)) {
-                            next.delete(type);
-                          } else {
-                            next.add(type);
-                          }
-                          return next;
-                        });
-                      }}
-                      className={`inline-flex items-center justify-center whitespace-nowrap shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        isActive
-                          ? `${tagColor} ${tagTextColor}`
-                          : "bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 opacity-60"
-                      }`}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
               {canCreateAnySession(workspace.yourPermission) && (
                 <button
                   onClick={() =>
                     router.push(`/workspace/${router.query.id}/sessions/new`)
                   }
-                  className="inline-flex items-center justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                  className="ml-auto inline-flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 shadow-sm text-xs sm:text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
                 >
                   <IconPlus className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">New Session</span>
                   <span className="sm:hidden">New</span>
                 </button>
               )}
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              {(["shift", "training", "event", "other"] as const).map((type) => {
+                const tagColor = getSessionTypeColor(type);
+                const tagTextColor = getTextColorForBackground(tagColor);
+                const isActive = selectedTypes.has(type);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      setSelectedTypes((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(type)) {
+                          next.delete(type);
+                        } else {
+                          next.add(type);
+                        }
+                        return next;
+                      });
+                    }}
+                    className={`inline-flex items-center justify-center whitespace-nowrap shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      isActive
+                        ? `${tagColor} ${tagTextColor}`
+                        : "bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 opacity-60"
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -596,7 +596,7 @@ const Home: pageWithLayout = () => {
                   </span>
                   <h1
                     className={clsx(
-                      "text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-2 pb-1 break-words",
+                      "text-base sm:text-xl md:text-2xl lg:text-3xl font-semibold mb-2 pb-1 truncate",
                       bannerUrl?.startsWith("data:")
                         ? "text-white drop-shadow-md"
                         : "text-zinc-900 dark:text-white",
@@ -623,7 +623,8 @@ const Home: pageWithLayout = () => {
                         : "text-zinc-500 dark:text-zinc-400",
                     )}
                   >
-                    Here's what's happening in your workspace today
+                    <span className="hidden sm:inline">Here's what's happening in your workspace today</span>
+                    <span className="sm:hidden">Here's what's happening today</span>
                   </p>
                 </div>
               </div>
@@ -634,14 +635,14 @@ const Home: pageWithLayout = () => {
                 <button
                   onClick={enterEditMode}
                   className={clsx(
-                    "relative self-start md:self-auto flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium shadow-sm transition-all",
+                    "absolute top-2 right-2 md:relative md:top-auto md:right-auto md:self-auto z-10 flex items-center gap-2 p-2 md:px-4 md:py-2 rounded-xl border text-sm font-medium shadow-sm transition-all",
                     bannerUrl?.startsWith("data:")
                       ? "bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
                       : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary",
                   )}
                 >
                   <IconEdit className="w-4 h-4" />
-                  Edit Dashboard
+                  <span className="hidden md:inline">Edit Dashboard</span>
                 </button>
               )}
           </div>
