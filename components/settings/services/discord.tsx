@@ -799,7 +799,7 @@ const DiscordIntegration: FC<{ triggerToast?: any }> = ({ triggerToast }) => {
     if (cat === 'general') return ['{action}', '{user}', '{username}'];
     if (cat === 'birthday') return ['{user}', '{username}', '{workspace}'];
     if (cat.startsWith('notice')) return ['{username}', '{userId}', '{workspace}', '{reason}', '{startDate}', '{endDate}', ...(cat !== 'notice-submit' ? ['{reviewedBy}', '{reviewComment}'] : [])];
-    return ['{user}', '{username}', '{workspace}', '{reason}', '{issuedBy}', ...(cat !== 'warning' ? ['{newRank}', '{oldRank}'] : [])];
+    return ['{user}', '{username}', '{workspace}', '{reason}', '{issuedBy}', ...(cat !== 'warning' ? ['{newRole}', '{oldRole}'] : [])];
   };
 
   const renderEmbedCustomizationTab = () => {
