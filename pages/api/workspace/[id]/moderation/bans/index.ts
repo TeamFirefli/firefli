@@ -172,7 +172,7 @@ const finalDuration =
           ban,
           message: isPermanent
             ? "User permanently banned"
-            : `User banned for ${duration} seconds`,
+            : `User banned for ${finalDuration} seconds`,
         },
       });
     } catch (error) {

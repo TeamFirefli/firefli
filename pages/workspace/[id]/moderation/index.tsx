@@ -51,6 +51,7 @@ interface ModerationCaseListItem {
   createdAt: string;
   banDuration?: number;
   isPermanent?: boolean;
+  expiresAt?: string;
   revokedAt?: string;
   placeIds?: string[];
   targetUser?: {
@@ -299,6 +300,7 @@ const ModerationDashboard: pageWithLayout<ModerationDashboardProps> = ({
           username: caseData.targetUsername,
           reason: caseData.reason,
           duration: caseData.banDuration,
+          expiresAt: caseData.expiresAt,
           isPermanent: caseData.isPermanent,
           caseId: caseData.id,
         },

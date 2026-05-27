@@ -38,9 +38,14 @@ export default async function handler(
       );
 
       return res.status(500).json({
-        error: false,
+        error: true,
         message: `${error.response?.status} - ${error.code} - ${error.message}`,
       });
     }
+
+    return res.status(500).json({
+      error: true,
+      message: "An unexpected error occurred while searching for the user.",
+    });
   }
 }

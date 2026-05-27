@@ -1087,15 +1087,20 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                       : "Temporary Ban"}
                   </div>
 
-                  {caseData.expiresAt && (
-                    <div>
-                      Expires:{" "}
-                      {moment(caseData.expiresAt).format(
-                        "MMM D, YYYY [at] h:mm A",
-                      )}{" "}
-                      ({moment(caseData.expiresAt).fromNow()})
-                    </div>
-                  )}
+                  {caseData.action === "temp_ban" && (() => {
+                    const expiryDate = caseData.expiresAt
+                      ? moment(caseData.expiresAt)
+                      : caseData.banDuration && caseData.resolvedAt
+                        ? moment(caseData.resolvedAt).add(caseData.banDuration, "seconds")
+                        : null;
+                    return expiryDate ? (
+                      <div>
+                        Expires:{" "}
+                        {expiryDate.format("MMM D, YYYY [at] h:mm A")}{" "}
+                        ({expiryDate.fromNow()})
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               </div>
             )}
