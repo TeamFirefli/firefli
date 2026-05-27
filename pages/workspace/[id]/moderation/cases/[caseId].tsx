@@ -983,9 +983,7 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Timestamps */}
           <div className="bg-white dark:bg-zinc-800 border border-white/10 rounded-xl shadow-sm p-4">
             <h3 className="font-bold text-zinc-900 dark:text-white mb-3">
               Timestamps
@@ -1004,18 +1002,6 @@ const CaseDetailPage: pageWithLayout<CaseDetailProps> = ({
                   </div>
                   <div className="font-medium text-zinc-900 dark:text-white">
                     {moment(caseData.resolvedAt).format(
-                      "MMM D, YYYY [at] h:mm A",
-                    )}
-                  </div>
-                </div>
-              )}
-              {caseData.expiresAt && (
-                <div>
-                  <div className="text-zinc-500 dark:text-zinc-400">
-                    Expires
-                  </div>
-                  <div className="font-medium text-zinc-900 dark:text-white">
-                    {moment(caseData.expiresAt).format(
                       "MMM D, YYYY [at] h:mm A",
                     )}
                   </div>
