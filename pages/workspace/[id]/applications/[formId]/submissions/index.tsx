@@ -54,7 +54,7 @@ const Submissions: pageWithLayout = () => {
     <div className="pagePadding">
       <Toaster position="bottom-center" />
       <div className="flex items-center gap-3 mb-4">
-        <Link href={`/workspace/${router.query.id}/applications/${router.query.formId}`} className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+        <Link href={`/workspace/${router.query.id}/applications`} className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
           <IconArrowLeft size={20} />
         </Link>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 flex-1">Submissions</h1>
