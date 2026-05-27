@@ -2,6 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getConfig, setConfig } from '@/utils/configEngine';
 import { withPermissionCheck } from '@/utils/permissionsManager';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '15mb',
+    },
+  },
+};
+
 export default withPermissionCheck(handler, 'workspace_customisation');
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {

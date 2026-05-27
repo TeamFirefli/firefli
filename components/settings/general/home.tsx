@@ -114,6 +114,8 @@ const home: FC<props> = ({ triggerToast }) => {
           settings: { ...prev.settings, bannerImage: path },
         }));
         triggerToast.success(data ? "Banner saved!" : "Banner removed!");
+      } else {
+        triggerToast.error(res.data.error || "Failed to save banner.");
       }
     } catch {
       triggerToast.error("Failed to save banner.");
