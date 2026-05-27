@@ -129,7 +129,6 @@ export const getServerSideProps = withPermissionCheckSsr(
     const canManageContainers = isAdmin || (user.roles || []).some(
       (r: any) => (r.permissions || []).includes("manage_containers")
     );
-
     const docWhere = canManage
       ? { workspaceGroupId: parseInt(id as string), requiresAcknowledgment: false }
       : {
@@ -142,7 +141,6 @@ export const getServerSideProps = withPermissionCheckSsr(
               : []),
           ],
         };
-
     const containerWhere = canManage
       ? { workspaceGroupId: parseInt(id as string) }
       : {
@@ -154,7 +152,6 @@ export const getServerSideProps = withPermissionCheckSsr(
               : []),
           ],
         };
-
     const [docs, containers, allRoles, allDepartments] = await Promise.all([
       prisma.document.findMany({
         where: docWhere,
@@ -185,7 +182,6 @@ export const getServerSideProps = withPermissionCheckSsr(
           })
         : Promise.resolve([]),
     ]);
-
     const serial = (v: any) =>
       JSON.parse(JSON.stringify(v, (_, val) => (typeof val === "bigint" ? val.toString() : val)));
 
@@ -240,22 +236,15 @@ const Home: pageWithLayout<pageProps> = ({
   const text = useMemo(() => randomText(login.displayname), [login.displayname]);
   const router = useRouter();
   const canManageDocs = canCreate || canEdit || canDelete;
-
-  // External link warning
   const [showExternalLinkModal, setShowExternalLinkModal] = useState(false);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
-
-  // Container state
   const [containers, setContainers] = useState<Container[]>(initialContainers);
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
-
-  // Sync selected container from URL on mount
   useEffect(() => {
     const folder = router.query.folder as string | undefined;
     if (folder) setSelectedContainerId(folder);
   }, [router.query.folder]);
 
-  // Update both state and URL together
   const selectContainer = useCallback((id: string | null) => {
     setSelectedContainerId(id);
     const { folder: _f, ...rest } = router.query;
@@ -266,19 +255,14 @@ const Home: pageWithLayout<pageProps> = ({
     }
   }, [router]);
 
-  // Create container modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newContainerName, setNewContainerName] = useState("");
   const [newContainerDesc, setNewContainerDesc] = useState("");
   const [newContainerRoles, setNewContainerRoles] = useState<string[]>([]);
   const [newContainerDepts, setNewContainerDepts] = useState<string[]>([]);
   const [creatingContainer, setCreatingContainer] = useState(false);
-
-  // Delete container confirmation modal
   const [deleteConfirmContainer, setDeleteConfirmContainer] = useState<Container | null>(null);
   const [deletingContainer, setDeletingContainer] = useState(false);
-
-  // Edit container modal
   const [editingContainer, setEditingContainer] = useState<Container | null>(null);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
@@ -286,31 +270,23 @@ const Home: pageWithLayout<pageProps> = ({
   const [editDepts, setEditDepts] = useState<string[]>([]);
   const [editDocs, setEditDocs] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
-
-  // Move doc to container
   const [moveDocPopover, setMoveDocPopover] = useState<string | null>(null);
   const [movingDoc, setMovingDoc] = useState<string | null>(null);
-
-  // Drag and drop
   const [draggingDocId, setDraggingDocId] = useState<string | null>(null);
   const [dragOverContainerId, setDragOverContainerId] = useState<string | null>(null);
-
   const handleExternalLink = (url: string) => {
     setPendingUrl(url);
     setShowExternalLinkModal(true);
   };
-
   const proceedWithLink = () => {
     if (pendingUrl) window.open(pendingUrl, "_blank");
     setShowExternalLinkModal(false);
     setPendingUrl(null);
   };
-
   const cancelLink = () => {
     setShowExternalLinkModal(false);
     setPendingUrl(null);
   };
-
   const goToGuide = (doc: any) => {
     if (doc?.content?.external) {
       try {
@@ -320,17 +296,13 @@ const Home: pageWithLayout<pageProps> = ({
     }
     router.push(`/workspace/${router.query.id}/docs/${doc.id}`);
   };
-
-  // Star/pin state (persisted to localStorage per workspace)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
-
   useEffect(() => {
     try {
       const stored = localStorage.getItem(`docs_starred_${router.query.id}`);
       if (stored) setStarredIds(new Set(JSON.parse(stored)));
     } catch {}
   }, [router.query.id]);
-
   const toggleStar = useCallback((docId: string) => {
     setStarredIds((prev) => {
       const next = new Set(prev);
@@ -342,14 +314,11 @@ const Home: pageWithLayout<pageProps> = ({
       return next;
     });
   }, [router.query.id]);
-
-  // IDs of docs that belong to at least one container
   const containerDocIds = useMemo(() => {
     const ids = new Set<string>();
     containers.forEach((c) => c.documents.forEach((d) => ids.add(d.id)));
     return ids;
   }, [containers]);
-
   const currentDocs = useMemo(() => {
     if (selectedContainerId) {
       const container = containers.find((c) => c.id === selectedContainerId);
@@ -359,12 +328,10 @@ const Home: pageWithLayout<pageProps> = ({
     }
     return documents.filter((d) => !containerDocIds.has(d.id));
   }, [selectedContainerId, containers, documents, containerDocIds]);
-
   const pinnedDocs = useMemo(
     () => documents.filter((d) => starredIds.has(d.id)),
     [documents, starredIds]
   );
-
   const handleCreateContainer = async () => {
     if (!newContainerName.trim()) return toast.error("Name is required");
     if (newContainerRoles.length === 0 && newContainerDepts.length === 0)
@@ -396,8 +363,6 @@ const Home: pageWithLayout<pageProps> = ({
       setCreatingContainer(false);
     }
   };
-
-  // Open edit modal
   const openEdit = (container: Container) => {
     setEditingContainer(container);
     setEditName(container.name);
@@ -406,8 +371,6 @@ const Home: pageWithLayout<pageProps> = ({
     setEditDepts(container.departments.map((d) => d.id));
     setEditDocs(container.documents.map((d) => d.id));
   };
-
-  // Save edit
   const handleSaveEdit = async () => {
     if (!editingContainer) return;
     if (!editName.trim()) return toast.error("Name is required");
@@ -509,7 +472,6 @@ const Home: pageWithLayout<pageProps> = ({
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <Toaster position="bottom-center" />
       <div className="pagePadding">
-        {/* Header */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-medium text-zinc-900 dark:text-white">Documents</h1>
@@ -539,7 +501,6 @@ const Home: pageWithLayout<pageProps> = ({
           </div>
         </div>
 
-        {/* Breadcrumb (inside a folder) */}
         {selectedContainerId ? (
           <div className="flex items-center gap-2 mb-5">
             <button
@@ -698,7 +659,6 @@ const Home: pageWithLayout<pageProps> = ({
           </div>
         )}
 
-        {/* Documents grid */}
         {currentDocs.length > 0 ? (
           <div>
             {!selectedContainerId && (
@@ -714,7 +674,6 @@ const Home: pageWithLayout<pageProps> = ({
                   onClick={() => goToGuide(doc)}
                   className={`group relative flex flex-col items-center gap-1.5 px-2 pt-5 pb-3 rounded-xl cursor-pointer select-none transition-all hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50 ${draggingDocId === doc.id ? "opacity-40 scale-95" : ""}`}
                 >
-                  {/* Star button */}
                   {canManageDocs && (
                     <div className={`absolute top-2 left-2 z-10 ${starredIds.has(doc.id) ? "" : "opacity-0 group-hover:opacity-100"}`}>
                       <Tooltip orientation="bottom" tooltipText={starredIds.has(doc.id) ? "Unpin" : "Pin"}>
@@ -735,7 +694,6 @@ const Home: pageWithLayout<pageProps> = ({
                       </Tooltip>
                     </div>
                   )}
-                  {/* Hover actions */}
                   <div className={`absolute top-2 right-2 gap-0.5 z-10 ${moveDocPopover === doc.id ? "flex" : "hidden group-hover:flex"}`}>
                     {canEdit && containers.length > 0 && (
                       <div className="relative">
@@ -780,7 +738,6 @@ const Home: pageWithLayout<pageProps> = ({
                       </Tooltip>
                     )}
                   </div>
-                  {/* File icon */}
                   <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                     {(doc.content as any)?.external ? (
                       <IconLink className="w-6 h-6 text-primary" />
@@ -816,7 +773,6 @@ const Home: pageWithLayout<pageProps> = ({
         )}
       </div>
 
-      {/* Delete Container confirmation modal */}
       {deleteConfirmContainer && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
@@ -850,7 +806,6 @@ const Home: pageWithLayout<pageProps> = ({
         </div>
       )}
 
-      {/* External link warning modal */}
       {showExternalLinkModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
           <motion.div
@@ -892,7 +847,6 @@ const Home: pageWithLayout<pageProps> = ({
         </div>
       )}
 
-      {/* Create Container modal */}
       {showCreateModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
           <motion.div
@@ -991,7 +945,6 @@ const Home: pageWithLayout<pageProps> = ({
         </div>
       )}
 
-      {/* Edit Container modal */}
       {editingContainer && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
           <motion.div
