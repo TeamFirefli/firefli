@@ -35,7 +35,7 @@ interface ChangelogItem {
   categories: ChangelogCategory[];
 }
 
-const HelpWidget = () => {
+const HelpWidget = ({ variant = "floating" }: { variant?: "floating" | "topbar" }) => {
   const [showCopyright, setShowCopyright] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [changelogItems, setChangelogItems] = useState<ChangelogItem[]>([]);
@@ -47,6 +47,7 @@ const HelpWidget = () => {
   const [bugSubmitting, setBugSubmitting] = useState(false);
   const [bugSubmitted, setBugSubmitted] = useState(false);
   const [bugError, setBugError] = useState<string | null>(null);
+  const [showTopbarPanel, setShowTopbarPanel] = useState(false);
   const { token: csrfToken } = useCsrfToken();
   const login = useRecoilValue(loginState);
   const isLoggedIn = !!login.username;
@@ -107,8 +108,107 @@ const HelpWidget = () => {
 	}
   return (
     <>
+      {variant === "topbar" && (
+        <>
+          <button
+            onClick={() => setShowTopbarPanel(true)}
+            className="group flex w-full items-center rounded-md px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700"
+          >
+            <IconInfoCircle className="mr-2 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+            <span className="text-zinc-700 dark:text-zinc-200">Help & Info</span>
+          </button>
+          <Transition appear show={showTopbarPanel} as={Fragment}>
+            <Dialog as="div" className="relative z-[10000]" onClose={() => setShowTopbarPanel(false)}>
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0"
+                enterTo="opacity-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100"
+                leaveTo="opacity-0"
+              >
+                <div className="fixed inset-0 bg-black/25" />
+              </Transition.Child>
+              <div className="fixed inset-0 overflow-y-auto">
+                <div className="flex min-h-full items-end justify-center p-4">
+                  <Transition.Child
+                    as={Fragment}
+                    enter="ease-out duration-300"
+                    enterFrom="opacity-0 translate-y-4"
+                    enterTo="opacity-100 translate-y-0"
+                    leave="ease-in duration-200"
+                    leaveFrom="opacity-100 translate-y-0"
+                    leaveTo="opacity-0 translate-y-4"
+                  >
+                    <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-800 text-left shadow-xl transition-all">
+                      <div className="p-4">
+                        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                          <img src="/logo.png" alt="Firefli" className="h-8 w-auto dark:hidden" />
+                          <img src="/wlogo.png" alt="Firefli" className="h-8 w-auto hidden dark:block" />
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-zinc-900 dark:text-white">Firefli</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-zinc-500 dark:text-zinc-400">v{packageJson.version}</p>
+                              <a
+                                href="https://buymeacoffee.com/teamfirefli"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                title="Buy us a coffee"
+                              >
+                                <IconCoffee className="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" />
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <a href="https://docs.firefli.net" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200">
+                            <IconBook className="w-4 h-4 text-zinc-500" />
+                            <span className="text-sm">Documentation</span>
+                          </a>
+                          <a href="https://github.com/TeamFirefli/firefli" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200">
+                            <IconBrandGithub className="w-4 h-4 text-zinc-500" />
+                            <span className="text-sm">GitHub</span>
+                          </a>
+                          {EZ_BUGS_ENABLED && isLoggedIn ? (
+                            <button onClick={() => { resetBugForm(); setShowBugReport(true); setShowTopbarPanel(false); }} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200 w-full">
+                              <IconBug className="w-4 h-4 text-zinc-500" />
+                              <span className="text-sm">Report a Bug</span>
+                            </button>
+                          ) : (
+                            <a href="https://feedback.firefli.net/bugs" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200">
+                              <IconBug className="w-4 h-4 text-zinc-500" />
+                              <span className="text-sm">Bug Reports</span>
+                            </a>
+                          )}
+                          <a href="https://discord.gg/WtEkchUKqe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200">
+                            <IconBrandDiscord className="w-4 h-4 text-zinc-500" />
+                            <span className="text-sm">Community</span>
+                          </a>
+                          <button onClick={() => { setShowChangelog(true); setShowTopbarPanel(false); }} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-200 w-full">
+                            <IconHistory className="w-4 h-4 text-zinc-500" />
+                            <span className="text-sm">Changelog</span>
+                          </button>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                          <button onClick={() => { setShowCopyright(true); setShowTopbarPanel(false); }} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-500 dark:text-zinc-400 w-full">
+                            <IconCopyright className="w-4 h-4" />
+                            <span className="text-xs">Copyright Notices</span>
+                          </button>
+                        </div>
+                      </div>
+                    </Dialog.Panel>
+                  </Transition.Child>
+                </div>
+              </div>
+            </Dialog>
+          </Transition>
+        </>
+      )}
+      {variant === "floating" && (
       <Popover
-        className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-[9999]">
+        className="hidden md:block fixed bottom-6 right-6 z-[9999]">
         {({ open }) => (
           <>
             <Popover.Button className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:shadow-xl transition-all duration-200 flex items-center justify-center text-zinc-700 dark:text-zinc-200 border border-zinc-100 dark:border-zinc-700">
@@ -224,6 +324,7 @@ const HelpWidget = () => {
         </>
         )}
       </Popover>
+      )}
 
       <Transition appear show={showBugReport} as={Fragment}>
         <Dialog

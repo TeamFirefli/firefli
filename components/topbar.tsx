@@ -10,6 +10,7 @@ import ThemeToggle from "./ThemeToggle";
 import VerifiedBadge from "./partners";
 import { usePartners } from "@/hooks/usePartners";
 import Notification from "./notifications";
+import HelpWidget from "./helpwidget";
 
 const BG_COLORS = [
   "bg-amber-200",
@@ -236,6 +237,10 @@ const Topbar: NextPage = () => {
 									</div>
 
 									<div className="h-px bg-zinc-200 dark:bg-zinc-700 my-2" />
+
+									<div className="sm:hidden">
+										<HelpWidget variant="topbar" />
+									</div>
 
 									<Menu.Item>
 										{({ active }) => (
