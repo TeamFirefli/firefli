@@ -4,8 +4,6 @@ import { workspacestate } from '@/state';
 import { useRecoilState } from 'recoil';
 import { IconCheck, IconX, IconRefresh, IconTrash, IconBrandDiscord, IconSettings, IconPalette, IconBell, IconTrendingUp, IconTrendingDown, IconAlertTriangle, IconBan, IconCake, IconFileText, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import { FC } from '@/types/settingsComponent';
-import { set } from 'zod/v4';
-import { setRandomFallback } from 'bcryptjs';
 
 type DiscordGuild = {
   id: string;

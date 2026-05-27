@@ -121,29 +121,17 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
       }
     };
 
-    const checkBloxlinkStatus = async () => {
+    const checkDmCapability = async () => {
       try {
         const response = await axios.get(
-          `/api/workspace/${id}/settings/bloxlink/status`
+          `/api/workspace/${id}/settings/bloxlink/enabled`
         );
-        if (response.data.success && response.data.integration?.isActive) {
-          setBloxlinkEnabled(true);
+        if (response.data.success) {
+          setBloxlinkEnabled(response.data.bloxlinkActive ?? false);
+          setDiscordEnabled(response.data.discordActive ?? false);
         }
       } catch (error) {
-        // Bloxlink not configured, ignore
-      }
-    };
-
-    const checkDiscordStatus = async () => {
-      try {
-        const response = await axios.get(
-          `/api/workspace/${id}/settings/discord/status`
-        );
-        if (response.data.success && response.data.integration?.isActive) {
-          setDiscordEnabled(true);
-        }
-      } catch (error) {
-        // Discord not configured, ignore
+        // avail
       }
     };
 
@@ -153,8 +141,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
           fetchRanks();
         }
       });
-      checkBloxlinkStatus();
-      checkDiscordStatus();
+      checkDmCapability();
     }
   }, [id]);
 
@@ -435,7 +422,7 @@ const Book: FC<Props> = ({ userBook, onRefetch, logbookPermissions }) => {
                   </div>
                 )}
 
-                {bloxlinkEnabled && discordEnabled && (type === "warning" || type === "promotion" || type === "demotion" || type === "termination") && (
+                {bloxlinkEnabled && discordEnabled && (type === "warning" || type === "promotion" || type === "demotion" || type === "termination" || type === "resignation") && (
                   <label className="flex items-center gap-1.5 text-xs cursor-pointer whitespace-nowrap select-none">
                     <input
                       type="checkbox"
