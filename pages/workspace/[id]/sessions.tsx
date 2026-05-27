@@ -1069,9 +1069,9 @@ const Home: pageWithLayout<pageProps> = (props) => {
                 const secondaryPicture = secondaryHostUser?.user?.picture || null;
 
                 return (
-                  <div className="px-2" key={session.id}>
+                  <div className="px-2 w-full sm:w-auto" key={session.id}>
                     <div
-                      className={`rounded-xl p-4 cursor-pointer transition-all group transform hover:-translate-y-0.5 shadow-sm border w-[260px] h-[110px] flex flex-col overflow-hidden ${
+                      className={`rounded-xl p-4 cursor-pointer transition-all group transform hover:-translate-y-0.5 shadow-sm border w-full sm:w-[260px] h-[110px] flex flex-col overflow-hidden ${
                         isActive
                           ? "border-emerald-200 dark:border-emerald-600/50"
                           : "bg-white border border-zinc-200 dark:bg-zinc-800/50 dark:border-zinc-800/60"
