@@ -664,7 +664,7 @@ const Home: pageWithLayout<pageProps> = ({
                   }`}
                 >
                   {canManageContainers && (
-                    <div className="absolute top-2 right-2 hidden group-hover:flex gap-0.5 z-10">
+                    <div className="absolute top-2 right-2 flex md:hidden md:group-hover:flex gap-0.5 z-10">
                       <Tooltip orientation="bottom" tooltipText="Edit">
                         <button
                           onClick={(e) => { e.stopPropagation(); openEdit(container); }}
@@ -714,7 +714,7 @@ const Home: pageWithLayout<pageProps> = ({
                   className={`group relative flex flex-col items-center gap-1 px-2 pt-2 pb-1.5 rounded-xl cursor-pointer select-none transition-all hover:bg-zinc-200/60 dark:hover:bg-zinc-700/50 ${draggingDocId === doc.id ? "opacity-40 scale-95" : ""}`}
                 >
                   {canManageDocs && (
-                    <div className={`absolute top-1 left-1 z-10 ${starredIds.has(doc.id) ? "" : "opacity-0 group-hover:opacity-100"}`}>
+                    <div className={`absolute top-1 left-1 z-10 ${starredIds.has(doc.id) ? "" : "md:opacity-0 md:group-hover:opacity-100"}`}>
                       <Tooltip orientation="bottom" tooltipText={starredIds.has(doc.id) ? "Unpin" : "Pin"}>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleStar(doc.id); }}
@@ -733,7 +733,7 @@ const Home: pageWithLayout<pageProps> = ({
                       </Tooltip>
                     </div>
                   )}
-                  <div className={`absolute top-1 right-1 gap-0.5 z-10 ${moveDocPopover === doc.id ? "flex" : "hidden group-hover:flex"}`}>
+                  <div className={`absolute top-1 right-1 gap-0.5 z-10 ${moveDocPopover === doc.id ? "flex" : "flex md:hidden md:group-hover:flex"}`}>
                     {canEdit && containers.length > 0 && (
                       <div className="relative">
                         <Tooltip orientation="bottom" tooltipText="Move to folder">
