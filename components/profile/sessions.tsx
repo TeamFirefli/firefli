@@ -232,8 +232,9 @@ export function SessionsHistory({
               const userParticipation = session.users?.find(
                 (u: any) => u.userid.toString() === router.query.uid
               );
+              const sessionSlots: any[] = Array.isArray(session.sessionType.slots) ? session.sessionType.slots : [];
               const userRole = userParticipation
-                ? session.sessionType.slots[userParticipation.slot]
+                ? sessionSlots.find((s: any) => s.id === userParticipation.roleID) ?? null
                 : null;
               
               const sessionColorClass = getSessionTypeColor(session.type);
@@ -305,11 +306,11 @@ export function SessionsHistory({
                       {session.users && session.users.length > 0 ? (
                           <div className="space-y-3">
                             {(() => {
-                              const slots: any[] = Array.isArray(session.sessionType.slots) ? session.sessionType.slots : [];
+                              const sessionTypeSlots: any[] = Array.isArray(session.sessionType.slots) ? session.sessionType.slots : [];
                               const UNCATEGORISED = "__uncategorised__";
                               const map = new Map<string, { catName: string | null; participants: any[] }>();
                               for (const participant of session.users) {
-                                const slot = slots[participant.slot];
+                                const slot = sessionTypeSlots.find((s: any) => s.id === participant.roleID) ?? null;
                                 const key = slot?.categoryId || UNCATEGORISED;
                                 if (!map.has(key)) {
                                   map.set(key, { catName: slot?.categoryName || null, participants: [] });
