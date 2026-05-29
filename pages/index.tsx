@@ -153,7 +153,7 @@ const Home: NextPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
             <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-4 sm:mb-0">
-              Your Workspaces
+              Workspaces
             </h1>
             <div className="flex space-x-3">
               {canCreateWorkspace && (
@@ -218,14 +218,14 @@ const Home: NextPage = () => {
               </h3>
               <p className="text-zinc-500 dark:text-zinc-400 mb-6">
                 {canCreateWorkspace
-                  ? "Create a new workspace to get started"
-                  : "You don't have permission to create workspaces"}
+                  ? "Create a new workspace to get started!"
+                  : "You don't have permission to create workspaces."}
               </p>
               {canCreateWorkspace ? (
                 <p></p>
               ) : (
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Contact an administrator if you need to create a workspace
+                  Contact an administrator if you need to create a workspace.
                 </p>
               )}
             </div>
