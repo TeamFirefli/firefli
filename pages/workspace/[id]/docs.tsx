@@ -602,7 +602,7 @@ const Home: pageWithLayout<pageProps> = ({
         )}
         {moveDocPopover && moveDocPopoverPos && (
           <div
-            style={{ top: moveDocPopoverPos.top, right: moveDocPopoverPos.right }}
+            style={{ top: moveDocPopoverPos.top, right: Math.min(moveDocPopoverPos.right, window.innerWidth - 196) }}
             className="fixed w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] py-1"
           >
             <p className="px-3 py-1.5 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Move to folder</p>
