@@ -119,7 +119,6 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
 
       if (action === "remove") {
-
         const isConnected = await prisma.documentContainer.findFirst({
           where: { id: containerId, documents: { some: { id: docExists.id } } },
           select: { id: true },
@@ -156,12 +155,11 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           owner: { select: { userid: true, username: true, picture: true } },
           roles: { select: { id: true, name: true } },
           departments: { select: { id: true, name: true } },
-          documents: {
-			 where: { requiresAcknowledgment: false }, 
-			select: { id: true } },
+          documents: { select: { id: true } },
         },
       });
     } catch (e: any) {
+      console.error("[container update error]", e?.code, e?.message);
       if (e.code === "P2003" || e.code === "P2025") {
         return res.status(400).json({ success: false, error: "One or more IDs are invalid or no longer exist." });
       }
