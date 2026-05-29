@@ -95,7 +95,27 @@ const home: FC<props> = ({ triggerToast }) => {
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setBannerPreview(reader.result as string);
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_W = 1920;
+        const MAX_H = 1080;
+        let { width, height } = img;
+        if (width > MAX_W || height > MAX_H) {
+          const ratio = Math.min(MAX_W / width, MAX_H / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL("image/webp", 0.85);
+        setBannerPreview(compressed);
+      };
+      img.src = reader.result as string;
+    };
     reader.readAsDataURL(file);
   };
 
