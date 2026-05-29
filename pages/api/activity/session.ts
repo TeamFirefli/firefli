@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/utils/database";
 import { withSessionRoute } from "@/lib/withSession";
-import { getRankInGroup, fetchUniverseInfo } from "@/utils/roblox";
+import { getRankInGroup, getUniverseFromPlaceId } from "@/utils/roblox";
 import { getUsername, getThumbnail } from "@/utils/userinfoEngine";
 import { checkSpecificUser } from "@/utils/permissionsManager";
 import { generateSessionTimeMessage } from "@/utils/sessionMessage";
@@ -89,11 +89,13 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       }
 
       let gameName = null;
+      let resolvedUniverseId: bigint | null = null;
       if (placeid) {
         try {
-          const universeInfo: any = await fetchUniverseInfo(Number(placeid));
-          if (universeInfo && universeInfo[0] && universeInfo[0].name) {
-            gameName = universeInfo[0].name;
+          const universeInfo = await getUniverseFromPlaceId(Number(placeid));
+          if (universeInfo) {
+            gameName = universeInfo.name;
+            resolvedUniverseId = BigInt(universeInfo.universeId);
           }
         } catch (error) {
           console.log(
@@ -114,7 +116,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           userId: BigInt(userid),
           active: true,
           startTime: sessionStartTime,
-          universeId: placeid ? BigInt(placeid) : null,
+          universeId: resolvedUniverseId,
           sessionMessage: sessionMessage,
           workspaceGroupId: groupId,
         },
