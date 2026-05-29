@@ -271,6 +271,7 @@ const Home: pageWithLayout<pageProps> = ({
   const [editDocs, setEditDocs] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
   const [moveDocPopover, setMoveDocPopover] = useState<string | null>(null);
+  const [moveDocPopoverPos, setMoveDocPopoverPos] = useState<{ top: number; right: number } | null>(null);
   const [movingDoc, setMovingDoc] = useState<string | null>(null);
   const [draggingDocId, setDraggingDocId] = useState<string | null>(null);
   const [dragOverContainerId, setDragOverContainerId] = useState<string | null>(null);
@@ -597,7 +598,30 @@ const Home: pageWithLayout<pageProps> = ({
         ) : null}
 
         {moveDocPopover && (
-          <div className="fixed inset-0 z-10" onClick={() => setMoveDocPopover(null)} />
+          <div className="fixed inset-0 z-[9998]" onClick={() => { setMoveDocPopover(null); setMoveDocPopoverPos(null); }} />
+        )}
+        {moveDocPopover && moveDocPopoverPos && (
+          <div
+            style={{ top: moveDocPopoverPos.top, right: moveDocPopoverPos.right }}
+            className="fixed w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-[9999] py-1"
+          >
+            <p className="px-3 py-1.5 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Move to folder</p>
+            {containers.map((container) => {
+              const inContainer = container.documents.some((d) => d.id === moveDocPopover);
+              return (
+                <button
+                  key={container.id}
+                  onClick={(e) => { e.stopPropagation(); handleToggleDocInContainer(moveDocPopover!, container.id); setMoveDocPopover(null); setMoveDocPopoverPos(null); }}
+                  disabled={movingDoc === moveDocPopover}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                >
+                  <IconFolderFilled className={`w-3.5 h-3.5 flex-shrink-0 ${inContainer ? "text-primary" : "text-zinc-400"}`} />
+                  <span className="flex-1 text-left truncate">{container.name}</span>
+                  {inContainer && <span className="text-primary text-[10px] font-medium">✓</span>}
+                </button>
+              );
+            })}
+          </div>
         )}
 
         {!selectedContainerId && pinnedDocs.length > 0 && (
@@ -738,32 +762,13 @@ const Home: pageWithLayout<pageProps> = ({
                       <div className="relative">
                         <Tooltip orientation="bottom" tooltipText="Move to folder">
                           <button
-                            onClick={(e) => { e.stopPropagation(); setMoveDocPopover(moveDocPopover === doc.id ? null : doc.id); }}
+                            onClick={(e) => { e.stopPropagation(); if (moveDocPopover === doc.id) { setMoveDocPopover(null); setMoveDocPopoverPos(null); } else { const rect = e.currentTarget.getBoundingClientRect(); setMoveDocPopoverPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right }); setMoveDocPopover(doc.id); } }}
                             className="p-1 rounded text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
                           >
                             <IconFolder className="w-3 h-3" />
                           </button>
                         </Tooltip>
-                        {moveDocPopover === doc.id && (
-                          <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-20 py-1">
-                            <p className="px-3 py-1.5 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Move to folder</p>
-                            {containers.map((container) => {
-                              const inContainer = container.documents.some((d) => d.id === doc.id);
-                              return (
-                                <button
-                                  key={container.id}
-                                  onClick={(e) => { e.stopPropagation(); handleToggleDocInContainer(doc.id, container.id); }}
-                                  disabled={movingDoc === doc.id}
-                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
-                                >
-                                  <IconFolderFilled className={`w-3.5 h-3.5 flex-shrink-0 ${inContainer ? "text-primary" : "text-zinc-400"}`} />
-                                  <span className="flex-1 text-left truncate">{container.name}</span>
-                                  {inContainer && <span className="text-primary text-[10px] font-medium">✓</span>}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
+
                       </div>
                     )}
                     {(canEdit || canDelete) && (

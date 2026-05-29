@@ -2,7 +2,7 @@
   "name": "firefli",
   "version": "1.1.13",
   "private": true,
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@11.4.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -128,61 +128,21 @@
     "typescript": "^5.5.0"
   },
   "resolutions": {
-    "qs": ">=6.14.2",
+    "qs": ">=6.15.2",
     "markdown-it": ">=14.1.1",
-    "lodash": "4.18.1"
+    "lodash": "4.18.1",
+    "js-cookie": ">=3.0.6",
+    "@hono/node-server": ">=1.19.13",
+    "postcss": ">=8.5.10",
+    "fast-xml-parser": ">=5.7.0"
   },
   "overrides": {
-    "qs": ">=6.14.2",
+    "qs": ">=6.15.2",
     "markdown-it": ">=14.1.1",
-    "lodash": "4.18.1"
-  },
-  "pnpm": {
-    "overrides": {
-      "qs": ">=6.14.2",
-      "markdown-it": ">=14.1.1",
-      "hono@<4.12.14": ">=4.12.14",
-      "flatted": ">=3.4.2",
-      "@hono/node-server@<1.19.13": ">=1.19.13",
-      "immutable@>=5.0.0 <5.1.5": ">=5.1.5",
-      "dompurify@<3.4.0": ">=3.4.0",
-      "lodash": "4.18.1",
-      "lodash@>=4.0.0 <=4.17.23": ">=4.18.0",
-      "diff@<4.0.4": ">=4.0.4",
-      "diff@>=5.0.0 <5.2.2": ">=5.2.2",
-      "undici@>=7.0.0 <7.24.0": ">=7.24.0",
-      "file-type@>=13.0.0 <21.3.1": ">=21.3.1",
-      "fast-xml-parser": ">=5.7.0",
-      "uuid": ">=14.0.0",
-      "effect": ">=3.20.0",
-      "ajv": ">=8.18.0",
-      "webpack": ">=5.104.1",
-      "minimatch@<3.1.4": "3.1.4",
-      "minimatch@>=9.0.0 <=9.0.5": "9.0.7",
-      "serialize-javascript@<7.0.5": ">=7.0.5",
-      "picomatch": ">=4.0.4",
-      "path-to-regexp@>=8.0.0 <8.4.0": ">=8.4.0",
-      "brace-expansion@<1.1.13": "1.1.13",
-      "brace-expansion@>=4.0.0 <5.0.5": "5.0.5",
-      "yaml@<1.10.3": ">=1.10.3",
-      "defu@<=6.1.4": ">=6.1.5",
-      "follow-redirects": ">=1.16.0",
-      "protobufjs": ">=7.5.5",
-      "postcss": ">=8.5.10",
-      "ip-address": ">=10.1.1",
-      "ws@>=8.0.0 <8.20.1": ">=8.20.1",
-      "sanitize-html": "2.17.4"
-    },
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "@prisma/client",
-      "@prisma/engines",
-      "core-js",
-      "esbuild",
-      "prisma",
-      "protobufjs",
-      "sharp",
-      "unrs-resolver"
-    ]
+    "lodash": "4.18.1",
+    "js-cookie": ">=3.0.6",
+    "@hono/node-server": ">=1.19.13",
+    "postcss": ">=8.5.10",
+    "fast-xml-parser": ">=5.7.0"
   }
 }

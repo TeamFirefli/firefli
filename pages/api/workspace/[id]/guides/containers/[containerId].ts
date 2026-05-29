@@ -118,9 +118,33 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
         return res.status(404).json({ success: false, error: "Document not found in this workspace" });
       }
 
-      updateData.documents = action === "add"
-        ? { connect: { id: docId } }
-        : { disconnect: { id: docId } };
+      if (action === "remove") {
+
+        const isConnected = await prisma.documentContainer.findFirst({
+          where: { id: containerId, documents: { some: { id: docExists.id } } },
+          select: { id: true },
+        });
+        if (!isConnected) {
+          const currentContainer = await prisma.documentContainer.findFirst({
+            where: { id: containerId },
+            include: {
+              owner: { select: { userid: true, username: true, picture: true } },
+              roles: { select: { id: true, name: true } },
+              departments: { select: { id: true, name: true } },
+              documents: { select: { id: true } },
+            },
+          });
+          return res.status(200).json({
+            success: true,
+            container: JSON.parse(
+              JSON.stringify(currentContainer, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+            ),
+          });
+        }
+        updateData.documents = { disconnect: { id: docExists.id } };
+      } else {
+        updateData.documents = { connect: { id: docExists.id } };
+      }
     }
 
     let container: any;
@@ -133,9 +157,8 @@ export async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
           roles: { select: { id: true, name: true } },
           departments: { select: { id: true, name: true } },
           documents: {
-            where: { requiresAcknowledgment: false },
-            select: { id: true },
-          },
+			 where: { requiresAcknowledgment: false }, 
+			select: { id: true } },
         },
       });
     } catch (e: any) {

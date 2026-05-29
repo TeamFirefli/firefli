@@ -1,3 +1,21 @@
+overrides:
+  qs: '>=6.15.2'
+  markdown-it: '>=14.1.1'
+  lodash: '4.18.1'
+  js-cookie: '>=3.0.6'
+  '@hono/node-server': '>=1.19.13'
+  postcss: '>=8.5.10'
+  fast-xml-parser: '>=5.7.0'
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  core-js: true
+  esbuild: true
+  prisma: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/client'
@@ -5,5 +23,6 @@ onlyBuiltDependencies:
   - core-js
   - esbuild
   - prisma
+  - protobufjs
   - sharp
   - unrs-resolver
