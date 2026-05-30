@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type toast from "react-hot-toast";
 import { useRecoilState } from "recoil";
 import { workspacestate } from "@/state";
@@ -47,7 +47,19 @@ const Docs: React.FC = () => {
   >([]);
   const [showExternalLinkModal, setShowExternalLinkModal] = useState(false);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [isCompact, setIsCompact] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setIsCompact(entry.contentRect.width < 280 || entry.contentRect.height < 260);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   React.useEffect(() => {
     axios.get(`/api/workspace/${router.query.id}/home/docs`).then((res) => {
       if (res.status === 200) {
@@ -79,7 +91,7 @@ const Docs: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div ref={containerRef} className="flex flex-col gap-4 h-full">
       {docs.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -100,11 +112,11 @@ const Docs: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {docs.slice(0, 3).map((document) => (
+        <div className="flex flex-col gap-2">
+          {docs.slice(0, isCompact ? 5 : 3).map((document) => (
             <div
               key={document.id}
-              className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className={`bg-white dark:bg-zinc-800 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer ${isCompact ? "px-3 py-2" : "p-4"}`}
               onClick={() => {
                 if (
                   document.content &&
@@ -120,26 +132,28 @@ const Docs: React.FC = () => {
                 );
               }}
             >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <IconFileText className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-2">
+                <div className={`rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 ${isCompact ? "w-7 h-7" : "w-10 h-10"}`}>
+                  <IconFileText className={`text-primary ${isCompact ? "w-4 h-4" : "w-5 h-5"}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-zinc-900 dark:text-white truncate">
+                  <p className={`font-medium text-zinc-900 dark:text-white truncate ${isCompact ? "text-sm" : ""}`}>
                     {document.name}
                   </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${getRandomBg(document.owner?.userid?.toString() || '')}`}>
-                      <img
-                        src={document.owner?.picture || '/default-avatar.jpg'}
-                        alt={`${document.owner?.username || 'Unknown'}'s avatar`}
-                        className="h-6 w-6 object-cover rounded-full border-2 border-white dark:border-zinc-800"
-                      />
+                  {!isCompact && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${getRandomBg(document.owner?.userid?.toString() || '')}`}>
+                        <img
+                          src={document.owner?.picture || '/default-avatar.jpg'}
+                          alt={`${document.owner?.username || 'Unknown'}'s avatar`}
+                          className="h-6 w-6 object-cover rounded-full border-2 border-white dark:border-zinc-800"
+                        />
+                      </div>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Created by {document.owner?.username || 'Unknown'}
+                      </p>
                     </div>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Created by {document.owner?.username || 'Unknown'}
-                    </p>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
