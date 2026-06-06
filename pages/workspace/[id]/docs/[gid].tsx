@@ -24,11 +24,15 @@ import { Toaster, toast } from "react-hot-toast";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 
+const SAFE_TEXT_ALIGNMENTS = new Set(["left", "right", "center", "justify"]);
+
 function escapeHtml(str: string): string {
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
 }
 function safeHref(href: string): string {
   try {
@@ -60,7 +64,7 @@ function nodeToHtml(node: any): string {
   if (node.type === "text") return marksToHtml(node.text ?? "", node.marks ?? []);
   const children = (node.content ?? []).map(nodeToHtml).join("");
   const align = node.attrs?.textAlign;
-  const style = align ? ` style="text-align: ${align}"` : "";
+  const style = (align && SAFE_TEXT_ALIGNMENTS.has(String(align))) ? ` style="text-align: ${align}"` : "";
   switch (node.type) {
     case "doc": return children;
     case "paragraph": return `<p${style}>${children || "<br>"}</p>`;
@@ -74,7 +78,10 @@ function nodeToHtml(node: any): string {
       const src = escapeHtml(node.attrs?.src ?? "");
       const alt = escapeHtml(node.attrs?.alt ?? "");
       const title = node.attrs?.title ? ` title="${escapeHtml(node.attrs.title)}"` : "";
-      const width = node.attrs?.width ? ` width="${escapeHtml(String(node.attrs.width))}"` : "";
+      const rawWidth = node.attrs?.width;
+      const width = (rawWidth !== undefined && rawWidth !== null && /^\d+(\.\d+)?(%|px|em|rem)?$/.test(String(rawWidth)))
+        ? ` width="${escapeHtml(String(rawWidth))}"`
+        : "";
       return src ? `<img src="${src}" alt="${alt}"${title}${width} />` : "";
     }
     case "hardBreak": return "<br>";
