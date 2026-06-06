@@ -559,7 +559,8 @@ const Wall: pageWithLayout<pageProps> = (props) => {
                     </div>
                   </div>
                   <Button
-                    classoverride="bg-primary hover:bg-primary/90 text-white dark:text-white px-6 dark:bg-primary dark:hover:bg-primary/80"
+                    classoverride="inline-flex gap-2 items-center bg-primary hover:bg-primary/90 text-white dark:text-white px-6 dark:bg-primary/40 dark:hover:bg-primary/20 py-2 rounded-lg"
+					bypassClass={true}
                     workspace
                     onPress={sendPost}
                     loading={loading}
