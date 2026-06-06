@@ -14,6 +14,7 @@ import {
   getUsername,
   getThumbnail,
 } from "@/utils/userinfoEngine";
+import { getRobloxUser } from "@/utils/roblox";
 import { ActivitySession, Quota, ActivityAdjustment } from "@prisma/client";
 import prisma from "@/utils/database";
 import moment from "moment";
@@ -229,9 +230,11 @@ export const getServerSideProps = withPermissionCheckSsr(
     if (!userTakingAction) {
       try {
         const userId = BigInt(query.uid as string);
-        const username = await getUsername(userId);
+        const robloxUser = await getRobloxUser(userId);
+        if (!robloxUser) return { notFound: true };
+        const username = robloxUser.name;
         const thumbnail = await getThumbnail(userId);
-        const displayName = await getDisplayName(userId);
+        const displayName = robloxUser.displayName;
 
         userTakingAction = await prisma.user.create({
           data: {

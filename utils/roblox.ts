@@ -6,7 +6,7 @@ import {
   getGroupsGroupidRoles,
   getUsersUseridGroupsRoles,
 } from "rozod/endpoints/groupsv1";
-import { getGames } from "rozod/endpoints/gamesv1";
+import { getGames, getGamesMultigetPlaceDetails } from "rozod/endpoints/gamesv1";
 import { getGroupsGroupidGames } from "rozod/endpoints/gamesv2";
 
 export type RobloxRole = {
@@ -37,6 +37,18 @@ export async function getRobloxUsername(id: number | bigint) {
   } catch (error) {
     console.error(`Error getting username for user ${id}:`, error);
     return "Unknown User";
+  }
+}
+
+export async function getRobloxUser(id: number | bigint): Promise<{ name: string; displayName: string } | null> {
+  try {
+    const result = await withTimeout(
+      fetchApi(getUsersUserid, { userId: Number(id) }, { throwOnError: true })
+    );
+    if (!result?.name) return null;
+    return { name: result.name, displayName: result.displayName ?? result.name };
+  } catch {
+    return null;
   }
 }
 
@@ -143,6 +155,19 @@ export async function getRankInGroup(groupId: number, userId: number): Promise<n
     return entry?.role?.rank ?? null;
   } catch (error) {
     console.error(`Error getting rank for user ${userId} in group ${groupId}:`, error);
+    return null;
+  }
+}
+
+export async function getUniverseFromPlaceId(placeId: number): Promise<{ universeId: number; name: string } | null> {
+  try {
+    const result = await fetchApi(getGamesMultigetPlaceDetails, { placeIds: [placeId] });
+    if (isAnyErrorResponse(result)) return null;
+    const place = (result as any)?.[0];
+    if (!place?.universeId) return null;
+    return { universeId: place.universeId, name: place.name };
+  } catch (error) {
+    console.error(`Error getting universe from place ${placeId}:`, error);
     return null;
   }
 }
