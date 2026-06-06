@@ -1,0 +1,289 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Script" referent="RBXMOD_ENGINE_001">
+		<Properties>
+			<BinaryString name="AttributesSerialize"></BinaryString>
+			<bool name="Disabled">false</bool>
+			<Content name="LinkedSource"><null></null></Content>
+			<string name="Name">FirefliModeration</string>
+			<token name="RunContext">0</token>
+			<string name="ScriptGuid">{B1C2D3E4-F5A6-7890-BCDE-F12345678901}</string>
+			<ProtectedString name="Source"><![CDATA[--[[
+   __ _           __ _ _ 
+  / _(_)         / _| (_)
+ | |_ _ _ __ ___| |_| |_ 
+ |  _| | '__/ _ \  _| | |
+ | | | | | |  __/ | | | |
+ |_| |_|_|  \___|_| |_|_|
+
+ Moderation Module
+ Original code by @Cloudysatrn
+ 
+]]
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local MessagingService = game:GetService("MessagingService")
+
+-- Configuration
+local Config = {
+	-- Do not touch
+	baseUrl = "<url>",
+	apiKey = "<apikey>",
+
+	-- Edit to your liking
+	pollLivePunishments = true, -- check for new punishments
+	pollInterval = 15, -- frequency for new punishment checks (in seconds)
+
+	messagingTopic = "FirefliPunishments", -- DO NOT CHANGE
+	kickMessage = "You have been kicked from this experience.", -- kick message
+	banMessage = "You are banned from this experience.", -- banned message
+
+	appealVisible = false, -- toggle appeal
+	appealMessage = "Appeal in .gg/firefli", -- appeal message
+}
+
+local seenCaseIds = {}
+local lastLiveCheck = DateTime.now():ToIsoDate()
+
+local function apiGet(url)
+	local success, response = pcall(function()
+		return HttpService:RequestAsync({
+			Url = url,
+			Method = "GET",
+			Headers = {
+				["authorization"] = Config.apiKey,
+				["Content-Type"] = "application/json",
+			},
+		})
+	end)
+
+	if not success then
+		warn("[Firefli - Bans] HTTP request failed:", response)
+		return nil
+	end
+
+	if not response.Success then
+		warn("[Firefli - Bans] API error:", response.StatusCode, response.Body, response.Body)
+		return nil
+	end
+
+	local decoded
+	local ok, err = pcall(function()
+		decoded = HttpService:JSONDecode(response.Body)
+	end)
+
+	if not ok then
+		warn("[Firefli - Bans] JSON decode failed:", err)
+		return nil
+	end
+
+	return decoded
+end
+
+local function currentPlace(case)
+	local placeIds = case and case.placeIds
+
+	if not placeIds or type(placeIds) ~= "table" or #placeIds == 0 then
+		return true
+	end
+
+	local currentPlaceId = tostring(game.PlaceId)
+
+	for _, placeId in ipairs(placeIds) do
+		if tostring(placeId) == currentPlaceId then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function normaliseAction(action)
+	if not action then return "" end
+	action = string.lower(tostring(action))
+	action = string.gsub(action, "-", "_")
+	action = string.gsub(action, " ", "_")
+	return action
+end
+
+local function isBanAction(action)
+	action = normaliseAction(action)
+
+	return action == "temp_ban"
+		or action == "perm_ban"
+end
+
+local function isLivePunishmentAction(action)
+	action = normaliseAction(action)
+
+	return action == "kick"
+		or isBanAction(action)
+end
+
+local function formatKickMessage(case)
+	local reason = case.reason or "No reason provided"
+
+	if case.isPermanent then
+		if Config.appealVisible == true then
+			return Config.banMessage .. "\n\nReason: " .. reason .. "\n\n" .. Config.appealMessage .. "\n\n"
+		else
+			return Config.banMessage .. "\n\nReason: " .. reason .. "\n\n"
+		end
+	end
+
+	if case.expiresAt then
+		if Config.appealVisible == true then
+			return Config.kickMessage .. "\n\nReason: " .. reason .. "\nExpires: " .. tostring(case.expiresAt) .. "\n\n" .. Config.appealMessage .. "\n\n"
+		else
+			return Config.kickMessage .. "\n\nReason: " .. reason .. "\nExpires: " .. tostring(case.expiresAt) .. "\n\n"
+		end
+	end
+
+	return Config.kickMessage .. "\n\nReason: " .. reason
+end
+
+local function punishPlayer(case, allowKick)
+	local userId = case and (case.userId or case.targetUserId)
+	if not userId then return end
+
+	if not currentPlace(case) then
+		return
+	end
+
+	if allowKick then
+		if not isLivePunishmentAction(case.action) then return end
+	else
+		if not isBanAction(case.action) then return end
+	end
+
+	local player = Players:GetPlayerByUserId(tonumber(userId))
+
+	if player then
+		player:Kick(formatKickMessage(case))
+	end
+end
+
+local function getActiveBanForUser(userId)
+	local path = string.format(
+		"/api/moderation/user?userid=%s",
+		tostring(userId)
+	)
+
+	local url = string.format(
+		"%s%s&current=true",
+		Config.baseUrl,
+		path
+	)
+
+	local decoded = apiGet(url)
+
+	if not decoded or not decoded.success or not decoded.data or not decoded.data.cases then
+		return nil
+	end
+
+	for _, case in ipairs(decoded.data.cases) do
+		local caseUserId = case.userId or case.targetUserId
+
+		if caseUserId and tonumber(caseUserId) == tonumber(userId) then
+			if isBanAction(case.action) and case.status == "resolved" and case.revoked == nil then
+				return {
+					id = case.id,
+					userId = caseUserId,
+					action = case.action,
+					reason = case.reason,
+					isPermanent = case.isPermanent,
+					expiresAt = case.expiresAt,
+					placeIds = case.placeIds,
+				}
+			end
+		end
+	end
+
+	return nil
+end
+
+local function checkPlayerOnJoin(player)
+	local activeBan = getActiveBanForUser(player.UserId)
+
+	if activeBan then
+		punishPlayer(activeBan, false)
+	end
+end
+
+local function publishPunishment(case)
+	if not case or not case.id then return end
+	if seenCaseIds[case.id] then return end
+
+	seenCaseIds[case.id] = true
+
+	local ok, err = pcall(function()
+		MessagingService:PublishAsync(Config.messagingTopic, case)
+	end)
+
+	if not ok then
+		warn("[Firefli - Bans] Failed to publish punishment:", err)
+	end
+end
+
+local function pollLivePunishments()
+	while Config.pollLivePunishments do
+		task.wait(Config.pollInterval)
+
+		local since = lastLiveCheck
+		lastLiveCheck = DateTime.now():ToIsoDate()
+
+		local url = string.format(
+			"%s%s?since=%s",
+			Config.baseUrl,
+			"/api/moderation/live",
+			HttpService:UrlEncode(since)
+		)
+
+		local decoded = apiGet(url)
+
+		if decoded and decoded.success and decoded.data then
+			for _, case in ipairs(decoded.data) do
+				if case.id and not seenCaseIds[case.id] then
+					punishPlayer(case, true)
+					publishPunishment(case)
+				end
+			end
+		end
+	end
+end
+
+pcall(function()
+	MessagingService:SubscribeAsync(Config.messagingTopic, function(message)
+		local case = message.Data
+
+		if case and case.id then
+			if seenCaseIds[case.id] then return end
+			seenCaseIds[case.id] = true
+		end
+
+		punishPlayer(case, true)
+	end)
+end)
+
+for _, player in ipairs(Players:GetPlayers()) do
+	task.spawn(function()
+		checkPlayerOnJoin(player)
+	end)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	task.spawn(function()
+		checkPlayerOnJoin(player)
+	end)
+end)
+
+task.spawn(pollLivePunishments)
+]]></ProtectedString>
+			<int64 name="SourceAssetId">-1</int64>
+			<BinaryString name="Tags"></BinaryString>
+		</Properties>
+	</Item>
+</roblox>
