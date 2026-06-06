@@ -40,6 +40,18 @@ export async function getRobloxUsername(id: number | bigint) {
   }
 }
 
+export async function getRobloxUser(id: number | bigint): Promise<{ name: string; displayName: string } | null> {
+  try {
+    const result = await withTimeout(
+      fetchApi(getUsersUserid, { userId: Number(id) }, { throwOnError: true })
+    );
+    if (!result?.name) return null;
+    return { name: result.name, displayName: result.displayName ?? result.name };
+  } catch {
+    return null;
+  }
+}
+
 export async function getRobloxThumbnail(id: number | bigint) {
   try {
     const result = await withTimeout(
