@@ -13,6 +13,7 @@ type Props = {
   compact?: boolean | false;
   disabled?: boolean | false;
   type?: "button" | "submit" | "reset";
+  bypassClass?: boolean | false;
 };
 
 const Button: FC<Props> = ({
@@ -25,22 +26,27 @@ const Button: FC<Props> = ({
   compact,
   disabled,
   type = "button",
+  bypassClass,
 }) => {
   return (
     <button
       type={type}
       onClick={onPress || onClick}
       disabled={disabled}
-      className={twMerge(
-        `ml-auto bg-firefli dark:bg-zinc-700 ${
-          compact ? "py-2 px-4" : "py-3 px-5"
-        } transition rounded-lg text-sm text-white ${
-          !workspace
-            ? "hover:bg-firefli/80  focus-visible:bg-firefli/80 disabled:bg-firefli/80/50"
-            : "bg-primary dark:bg-zinc-700 hover:bg-primary/50 focus-visible:bg-primary/50 disabled:bg-primary/50"
-        } dark:hover:bg-zinc-300 dark:focus-visible:bg-zinc-300 dark:bg-white dark:disabled:bg-white/50 dark:text-black focus-visible:outline-none`,
-        classoverride
-      )}
+className={
+    bypassClass
+        ? classoverride
+        : twMerge(
+              `ml-auto bg-firefli dark:bg-zinc-700 ${
+                  compact ? 'py-2 px-4' : 'py-3 px-5'
+              } transition rounded-lg text-sm text-white ${
+                  !workspace
+                      ? 'hover:bg-firefli/80 focus-visible:bg-firefli/80 disabled:bg-firefli/80/50'
+                      : 'bg-primary dark:bg-zinc-700 hover:bg-primary/50 focus-visible:bg-primary/50 disabled:bg-primary/50'
+              } dark:hover:bg-zinc-300 dark:focus-visible:bg-zinc-300 dark:bg-white dark:disabled:bg-white/50 dark:text-black focus-visible:outline-none`,
+              classoverride,
+          )
+}
     >
       {loading ? (
         <svg
