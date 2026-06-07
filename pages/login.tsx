@@ -902,10 +902,9 @@ const Login: NextPage = () => {
                         {verificationCode}
                       </p>
                       <div className="mb-4 space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
-                        <p>• Go to your Roblox profile</p>
-                        <p>• Click "Edit Profile"</p>
-                        <p>• Paste the code above into your Bio/About section</p>
-                        <p>• Save your profile and click "Verify" below</p>
+                        <p>• Visit <a href="https://roblox.com/users/profile/edit" target="_blank">https://roblox.com/users/profile/edit</a></p>
+						<p>• Press About</p>
+						<p>• Paste the verification code above into your Bio.</p>
                       </div>
                       {verificationError && (
                         <p className="mb-4 text-center font-semibold text-red-500">
