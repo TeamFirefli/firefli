@@ -492,7 +492,8 @@ const Login: NextPage = () => {
         className="absolute inset-0 w-full h-full"
         style={{ zIndex: 0 }}
       />
-      <div className="relative min-h-screen px-4 py-6 sm:px-6" style={{ zIndex: 1 }}>
+      <div className="absolute inset-y-0 right-0 hidden w-full max-w-[34rem] bg-white/70 shadow-[-24px_0_80px_rgba(15,23,42,0.12)] dark:bg-zinc-900/80 lg:block" />
+      <div className="relative min-h-screen px-4 py-6 sm:px-6 lg:px-10 lg:py-0 lg:pr-0" style={{ zIndex: 1 }}>
         <div className="pointer-events-none absolute left-10 top-8 hidden lg:block">
           <img
             src="/wlogo.svg"
@@ -503,9 +504,11 @@ const Login: NextPage = () => {
         <div className="absolute right-4 top-4 sm:right-6 sm:top-6 lg:hidden">
           <ThemeToggle />
         </div>
-        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-lg items-center justify-center">
-          <div className="flex w-full items-center justify-center">
-            <div className="relative w-full rounded-[2rem] bg-white/90 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-md dark:bg-zinc-800/80 sm:p-9 lg:px-10 lg:py-12">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl items-center lg:min-h-screen lg:max-w-none lg:items-stretch lg:gap-16">
+          <div className="hidden lg:block lg:flex-1" aria-hidden="true" />
+
+          <div className="flex w-full items-center justify-center lg:ml-auto lg:min-w-[30rem] lg:max-w-[34rem] lg:justify-end lg:self-stretch">
+            <div className="relative w-full rounded-[2rem] bg-white/90 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-md dark:bg-zinc-800/80 sm:p-9 lg:flex lg:min-h-screen lg:rounded-none lg:border-l lg:border-zinc-200/70 lg:bg-white/88 lg:px-10 lg:py-24 lg:shadow-none lg:backdrop-blur-xl dark:lg:border-zinc-700/60 dark:lg:bg-zinc-900/82">
               <div className="absolute right-8 top-8 hidden lg:block">
                 <ThemeToggle />
               </div>
