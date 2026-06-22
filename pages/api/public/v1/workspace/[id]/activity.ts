@@ -12,7 +12,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const workspaceId = Number.parseInt(req.query.id as string)
   if (!workspaceId) return res.status(400).json({ success: false, error: "Missing workspace ID" })
 
-  const { startDate, endDate, userId } = req.query
+  const { startDate, endDate, userId, limit: limitParam = "50", page: pageParam = "1" } = req.query
+  const limit = Math.min(100, Math.max(1, Number.parseInt(limitParam as string) || 50))
+  const page = Math.max(1, Number.parseInt(pageParam as string) || 1)
+  const skip = (page - 1) * limit
 
   try {
     const key = await validateApiKey(apiKey, workspaceId)
@@ -35,23 +38,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (endDate) where.startTime.lte = new Date(endDate as string)
     }
 
-    // Fetch activity sessions
-    const sessions = await prisma.activitySession.findMany({
-      where: { ...where, archived: { not: true } },
-      include: {
-        user: {
-          select: {
-            userid: true,
-            username: true,
-            picture: true,
+    const queryWhere = { ...where, archived: { not: true } }
+    const [sessions, totalCount] = await prisma.$transaction([
+      prisma.activitySession.findMany({
+        where: queryWhere,
+        include: {
+          user: {
+            select: {
+              userid: true,
+              username: true,
+              picture: true,
+            },
           },
         },
-      },
-      orderBy: {
-        startTime: "desc",
-      },
-      take: 100, // Limit results
-    })
+        orderBy: {
+          startTime: "desc",
+        },
+        take: limit,
+        skip,
+      }),
+      prisma.activitySession.count({ where: queryWhere }),
+    ])
 
     const formattedSessions = sessions.map((session) => ({
       id: session.id,
@@ -67,7 +74,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({
       success: true,
       sessions: formattedSessions,
-      total: formattedSessions.length,
+      total: totalCount,
+      page,
+      limit,
+      pages: Math.ceil(totalCount / limit),
     })
   } catch (error) {
     console.error("Error in public API:", error)
